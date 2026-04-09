@@ -23,7 +23,8 @@ const fs = require("fs");
 const path = require("path");
 const { pipeline } = require("stream/promises");
 const { createWriteStream } = require("fs");
-const prism = require("prism-media");
+// NOTE: prism-media is pulled in via @discordjs/voice. If we need it later for
+// transcoding/decoding incoming voice, add it as a direct dependency.
 
 // ============================================================
 //  CONFIG

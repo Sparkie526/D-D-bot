@@ -1,0 +1,14 @@
+node_modules/
+
+# Local secrets
+.env
+
+# Runtime artifacts
+dm_response.mp3
+player_input.wav
+
+# Legacy bundle (do not commit)
+node_modules.zip
+
+# Logs
+*.log

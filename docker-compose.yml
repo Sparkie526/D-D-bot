@@ -1,0 +1,30 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama:/root/.ollama
+    # Optional: expose Ollama to the host for debugging.
+    ports:
+      - "11434:11434"
+
+  bot:
+    build: .
+    depends_on:
+      - ollama
+    # Create this file from .env.example.
+    env_file:
+      - .env
+    environment:
+      # Defaults to the compose Ollama service; override in .env to use a remote.
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434/api/chat}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3}
+    volumes:
+      # Optional: edit world notes without rebuilding.
+      - ./world_notes.txt:/app/world_notes.txt:ro
+    extra_hosts:
+      # Allows OLLAMA_URL=http://host.docker.internal:11434/api/chat on Linux.
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  ollama:

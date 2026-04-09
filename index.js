@@ -30,8 +30,9 @@ const { createWriteStream } = require("fs");
 //  CONFIG
 // ============================================================
 
-const OLLAMA_URL = "http://localhost:11434/api/chat";
-const OLLAMA_MODEL = "llama3"; // Change to "mistral" etc. if you prefer
+// In Docker, "localhost" points at the container, so allow overriding.
+const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434/api/chat";
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3"; // e.g. mistral
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID;
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;

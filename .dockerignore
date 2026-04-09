@@ -1,0 +1,10 @@
+node_modules/
+.git/
+.github/
+.env
+*.log
+
+dm_response.mp3
+player_input.wav
+
+node_modules.zip

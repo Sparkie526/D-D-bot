@@ -31,6 +31,18 @@ ollama serve
 npm start
 ```
 
+## Docker
+
+1. Create `.env` from `.env.example`.
+
+2. Run (includes Ollama by default):
+
+```bash
+docker compose up --build
+```
+
+To use a remote Ollama instead of the compose service, set `OLLAMA_URL` in `.env`.
+
 ## Discord Commands
 
 - `!join` join the caller's voice channel

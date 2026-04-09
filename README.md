@@ -33,43 +33,32 @@ npm start
 
 ## Docker
 
-### Docker Desktop (Windows) step-by-step
+1. Install [Docker](https://docs.docker.com/get-docker/) (Docker Desktop or Docker Engine).
 
-1. Install Docker Desktop.
+2. Create `.env` next to `docker-compose.yml`:
 
-2. Ensure WSL 2 backend is enabled:
+   - Copy `.env.example` to `.env`.
+   - Fill in:
+     - `DISCORD_TOKEN`
+     - `ELEVENLABS_API_KEY`
+     - `ELEVENLABS_VOICE_ID`
+   - For the bundled Ollama service set:
+     - `OLLAMA_URL=http://ollama:11434/api/chat`
+     - `OLLAMA_MODEL=llama3`
 
-- Docker Desktop -> Settings -> General -> Enable "Use the WSL 2 based engine".
-
-3. Open a terminal in the repo folder.
-
-- PowerShell: right-click in the folder -> "Open in Terminal".
-- Or use a WSL terminal if you already work in WSL.
-
-4. Create `.env` next to `docker-compose.yml`.
-
-- Copy `.env.example` to `.env`.
-- Fill in:
-  - `DISCORD_TOKEN`
-  - `ELEVENLABS_API_KEY`
-  - `ELEVENLABS_VOICE_ID`
-- For Docker Compose + Ollama service, set:
-  - `OLLAMA_URL=http://ollama:11434/api/chat`
-  - `OLLAMA_MODEL=llama3`
-
-5. Start the stack (build + run bot + run Ollama):
+3. Start the stack (builds the bot image, starts bot + Ollama):
 
 ```bash
 docker compose up --build
 ```
 
-6. First-time only: download the Ollama model into the Ollama container:
+4. First-time only — pull the model into the Ollama container:
 
 ```bash
 docker compose exec ollama ollama pull llama3
 ```
 
-7. To stop:
+5. To stop:
 
 ```bash
 docker compose down
@@ -77,10 +66,10 @@ docker compose down
 
 ### Notes
 
-- Inside Docker, `localhost` means "inside the container".
-  - If you use the compose `ollama` service, `OLLAMA_URL` must be `http://ollama:11434/api/chat`.
-  - If you run Ollama on your host, use `http://host.docker.internal:11434/api/chat`.
-- To use a remote Ollama instead of the compose service, set `OLLAMA_URL` in `.env`.
+- Inside Docker, `localhost` refers to the container itself.
+  - Use `http://ollama:11434/api/chat` when running the bundled Ollama service.
+  - Use `http://host.docker.internal:11434/api/chat` to reach Ollama on your host machine.
+- To use a remote Ollama instance, set `OLLAMA_URL` in `.env`.
 
 ## Discord Commands
 
@@ -95,5 +84,6 @@ docker compose down
 
 ## Notes
 
-- `node_modules/` is intentionally not committed. Install with `npm ci --include=optional` per platform.
-- If you see a native-binding error from `@snazzah/davey` after install, wipe `node_modules/` and reinstall.
+- `node_modules/` is intentionally not committed. The Docker image handles all native dependency compilation.
+- If running outside Docker, install with `npm ci --include=optional` (required for the native `@discordjs/opus` binding).
+- If you see a native-binding error after install, wipe `node_modules/` and reinstall.

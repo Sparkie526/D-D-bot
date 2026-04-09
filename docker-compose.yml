@@ -3,9 +3,9 @@ services:
     image: ollama/ollama:latest
     volumes:
       - ollama:/root/.ollama
-    # Optional: expose Ollama to the host for debugging.
-    ports:
-      - "11434:11434"
+    # No host port published by default. The bot talks to Ollama over the
+    # compose network at http://ollama:11434.
+    # If you want to reach Ollama from your host, add a ports mapping.
 
   bot:
     build: .

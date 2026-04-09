@@ -1,0 +1,130 @@
+# ============================================================
+#  WORLD NOTES — Dungeon Master Reference Sheet
+#  The bot reads this file every time it responds.
+#  Edit freely. Use !reloadnotes in Discord to reload mid-session.
+#  Lines starting with # are comments and won't affect the DM.
+# ============================================================
+
+
+=== CAMPAIGN NAME ===
+The Curse of Ashmore Keep
+
+
+=== NUMBER OF PLAYERS IN THE CAMPAIGN ===
+2 Players
+Scarp
+Dex
+
+
+=== SETTING ===
+A dark fantasy world. The town of Millhaven sits on the edge of a cursed forest.
+The locals are superstitious and fearful. Strange disappearances have been happening for weeks.
+The weather is always overcast. Ravens watch from the rooftops.
+
+
+=== CURRENT QUEST ===
+The players have been hired by Elder Brynn to investigate Ashmore Keep, an abandoned fortress
+on the hill north of Millhaven. Townsfolk say lights have been seen there at night.
+The real secret (players don't know yet): A necromancer named Serafin has taken up residence
+and is raising the old soldiers buried in the keep's catacombs.
+
+
+=== MAP — MILLHAVEN TOWN ===
+
+THE INN (The Broken Antler)
+  A warm, smoky inn. Mira the innkeeper runs it.
+  Exits: Front door to the Main Street. Back door to the alley.
+  Notable: A noticeboard with missing persons flyers. A drunk guard named Pol sleeps in the corner.
+
+MAIN STREET
+  Connects: The Inn to the north, the Blacksmith to the east, the Town Gate to the north.
+  Notable: A well in the center. Townspeople avoid eye contact with strangers.
+
+BLACKSMITH (Aldric's Forge)
+  A large stone building, always warm.
+  Exits: Main Street.
+  Notable: Aldric is here during the day. Closed at night.
+
+
+=== MAP — ASHMORE KEEP ===
+
+ROOM 1 - The Gatehouse
+  Crumbling stone walls. Iron portcullis is jammed open.
+  Exits: South leads back to the forest path. North leads to the Courtyard.
+  Contains: Two skeletons in rusted armor (not animated, just remains). A broken cart.
+  Secrets: None.
+
+ROOM 2 - The Courtyard
+  Open to the sky. Overgrown with weeds. A dry fountain in the center.
+  Exits: North leads to the Main Hall. East leads to the Barracks. West leads to the Chapel.
+  Contains: 2 skeleton guards patrolling (hostile). A well (dried up, 20ft deep).
+  Secrets: The well has iron rungs going down — leads to the Catacombs (Room 6).
+
+ROOM 3 - The Main Hall
+  Grand but ruined. A long table, rotted. Tattered banners on the walls.
+  Exits: South to Courtyard. Stairs up to the Tower (Room 5). Door north to Serafin's Chamber (Room 4, locked).
+  Contains: 3 skeleton warriors (hostile). A chest with 40 gold pieces and a healing potion.
+  Secrets: One banner hides a switch that unlocks Room 4 without needing the key.
+
+ROOM 4 - Serafin's Chamber (LOCKED — needs key or the hidden switch in Room 3)
+  Cluttered with books, candles, alchemical equipment. Smells of sulfur.
+  Exits: South to Main Hall.
+  Contains: SERAFIN THE NECROMANCER (boss fight). His spellbook. A crystal orb glowing green.
+  Secrets: The crystal orb is the source of the curse. Destroying it ends the necromancy.
+  Serafin's weakness: He cannot cast spells if silenced. He will try to flee if below half health.
+
+ROOM 5 - The Tower (top floor)
+  Windy. Panoramic view of the forest and Millhaven below.
+  Exits: Stairs down to Main Hall.
+  Contains: An old telescope. A journal from the keep's last captain (reveals Serafin's history).
+  Secrets: A loose stone hides the key to Room 4.
+
+ROOM 6 - The Catacombs (accessed via well in Courtyard)
+  Dark, damp, and narrow. Torchlight flickers.
+  Exits: Iron rungs up to the Courtyard well.
+  Contains: 20 coffins. 4 are open and empty (those skeletons are now upstairs).
+  Secrets: One coffin contains the skeleton of Lord Ashmore himself — he is NOT hostile and
+  will speak to the players if awakened with a Speak with Dead spell. He will warn them
+  about Serafin and beg them to destroy the crystal orb.
+
+
+=== NPCS ===
+
+MIRA (Innkeeper, The Broken Antler)
+  Personality: Cautious, motherly, tired. Distrusts outsiders but warms up quickly.
+  Knows: The disappearances started 3 weeks ago. People who go near the Keep don't come back.
+  Secret: Her son was one of the first to disappear. She suspects the Keep but is too afraid to say.
+  Will offer: Free room and board if players agree to find out what happened to her son.
+
+ALDRIC (Blacksmith)
+  Personality: Gruff, honest, respects strength. Short sentences.
+  Knows: He's been secretly supplying Serafin with iron for "building projects" — he didn't ask questions.
+  Secret: He is guilt-ridden and suspects something is wrong. He won't admit this unless pressed hard.
+  Will offer: Weapon repairs at half price. Will give players a silver sword if they promise to stop Serafin.
+
+ELDER BRYNN (Quest giver)
+  Personality: Old, formal, nervous. Speaks in long sentences.
+  Knows: The history of Ashmore Keep. That a scholar named Serafin rented the keep 2 months ago.
+  Secret: He paid Serafin to research a cure for a plague — he didn't know Serafin would turn to necromancy.
+  Will offer: 200 gold on completion of the quest.
+
+POL (Drunk guard at the inn)
+  Personality: Bumbling, chatty when drunk, surprisingly brave when sober.
+  Knows: He saw a green light at the top of the Keep's tower last Tuesday night.
+  Will offer: To join the party as a hireling (cheap, unreliable, occasionally heroic).
+
+
+=== HOUSE RULES ===
+- Critical hits deal maximum damage on both dice rolls
+- Players can attempt any creative action even without a matching skill
+- If a player roleplay action is clever enough, the DM may grant advantage without a roll
+- Death saving throws: players are not out of the game on 3 failures — they are unconscious and
+  can be revived by another player spending an action
+
+
+=== TONE NOTES FOR THE DM ===
+- This campaign leans gothic horror — describe things as unsettling, cold, and foreboding
+- NPCs are scared and desperate, not heroic
+- Reward clever thinking and roleplay, not just combat
+- The necromancer Serafin is not purely evil — he believed he was doing good research. 
+  Players can choose to talk him down instead of fighting him if they are persuasive enough.

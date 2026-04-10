@@ -36,6 +36,11 @@ const { createWriteStream } = require("fs");
 // In Docker, "localhost" points at the container, so allow overriding.
 const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434/api/chat";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3"; // e.g. mistral
+const LLM_PROVIDER = (process.env.LLM_PROVIDER || (process.env.OPENAI_API_KEY ? "openai" : "ollama")).toLowerCase();
+
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || "https://api.openai.com/v1";
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID;
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
@@ -132,8 +137,135 @@ function addToHistory(guildId, role, content) {
 }
 
 // ============================================================
-//  OLLAMA — AI BRAIN
+//  LLM — AI BRAIN
 // ============================================================
+
+let ollamaReady = false;
+
+async function checkOpenAIReady() {
+  if (!OPENAI_API_KEY) return false;
+  try {
+    // Doesn't spend tokens; just validates the key/model access.
+    const response = await axios.get(`${OPENAI_BASE_URL}/models/${OPENAI_MODEL}`, {
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      timeout: 5000,
+    });
+    return response.status === 200;
+  } catch (_) {
+    return false;
+  }
+}
+
+async function checkOllamaReady() {
+  try {
+    // Don't generate text here: on CPU this can take a long time and will
+    // monopolize the single-runner queue. Just verify the server is up and the
+    // model is present locally.
+    const tagsUrl = new URL(OLLAMA_URL);
+    tagsUrl.pathname = "/api/tags";
+
+    const response = await axios.get(tagsUrl.toString(), { timeout: 5000 });
+    const models = response?.data?.models || [];
+    const want = OLLAMA_MODEL;
+    return models.some((m) => {
+      const name = m?.name || "";
+      if (!name) return false;
+      return want.includes(":") ? name === want : name.startsWith(`${want}:`);
+    });
+  } catch (err) {
+    return false;
+  }
+}
+
+async function waitForOllama() {
+  console.log("⏳ Waiting for Ollama to be ready...");
+  let attempts = 0;
+  const maxAttempts = 120; // 2 minutes timeout
+  
+  while (!ollamaReady && attempts < maxAttempts) {
+    if (await checkOllamaReady()) {
+      ollamaReady = true;
+      console.log("✅ Ollama model loaded and ready!");
+      return true;
+    }
+    attempts++;
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second between checks
+  }
+  
+  console.error("❌ Ollama failed to load within timeout");
+  return false;
+}
+
+async function waitForLLM() {
+  if (LLM_PROVIDER === "openai") {
+    if (!OPENAI_API_KEY) {
+      console.error("❌ OPENAI_API_KEY is required when LLM_PROVIDER=openai");
+      return false;
+    }
+
+    console.log(`⏳ Checking OpenAI access for model: ${OPENAI_MODEL}...`);
+    const ok = await checkOpenAIReady();
+    if (ok) {
+      console.log("✅ OpenAI is reachable and ready!");
+      return true;
+    }
+    console.error("❌ OpenAI check failed (invalid key/model or network issue)");
+    return false;
+  }
+
+  return waitForOllama();
+}
+
+async function askOpenAI(messages) {
+  const response = await axios.post(
+    `${OPENAI_BASE_URL}/chat/completions`,
+    {
+      model: OPENAI_MODEL,
+      messages,
+      // Keep replies short for voice.
+      max_tokens: 220,
+      temperature: 0.7,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      timeout: 60 * 1000,
+    }
+  );
+
+  const content = response?.data?.choices?.[0]?.message?.content;
+  if (!content) {
+    throw new Error("OpenAI returned no message content");
+  }
+
+  return content.trim();
+}
+
+async function askOllama(messages) {
+  const response = await axios.post(
+    OLLAMA_URL,
+    {
+      model: OLLAMA_MODEL,
+      messages,
+      stream: false,
+    },
+    {
+      // CPU-only can be slow; avoid socket hangups on longer generations.
+      timeout: 10 * 60 * 1000,
+    }
+  );
+
+  const content = response?.data?.message?.content;
+  if (!content) {
+    throw new Error("Ollama returned no message content");
+  }
+
+  return content.trim();
+}
 
 async function askDM(guildId, userMessage, playerName) {
   const session = getSession(guildId);
@@ -142,22 +274,21 @@ async function askDM(guildId, userMessage, playerName) {
   addToHistory(guildId, "user", fullMessage);
 
   try {
-    const response = await axios.post(OLLAMA_URL, {
-      model: OLLAMA_MODEL,
-      messages: [
-        { role: "system", content: buildSystemPrompt() },
-        ...session.history,
-      ],
-      stream: false,
-    });
+    const messages = [
+      { role: "system", content: buildSystemPrompt() },
+      ...session.history,
+    ];
 
-    const reply = response.data.message.content;
+    const reply =
+      LLM_PROVIDER === "openai" ? await askOpenAI(messages) : await askOllama(messages);
+
     addToHistory(guildId, "assistant", reply);
     return reply;
 
   } catch (err) {
-    console.error("Ollama error:", err.message);
-    return "The ancient tomes are silent... (Ollama may not be running. Try: ollama serve)";
+    const providerLabel = LLM_PROVIDER === "openai" ? "OpenAI" : "Ollama";
+    console.error(`${providerLabel} error:`, err.message);
+    return "The ancient tomes are silent... (the LLM is unavailable right now)";
   }
 }
 
@@ -345,8 +476,13 @@ const rest = new REST().setToken(DISCORD_TOKEN);
 
 client.once(Events.ClientReady, async (c) => {
   console.log(`\n🎲 Dungeon Master Bot is online as ${c.user.tag}`);
-  console.log(`   Ollama model: ${OLLAMA_MODEL}`);
-  console.log(`   Make sure "ollama serve" is running!`);
+  console.log(`   LLM provider: ${LLM_PROVIDER}`);
+  if (LLM_PROVIDER === "openai") {
+    console.log(`   OpenAI model: ${OPENAI_MODEL}`);
+  } else {
+    console.log(`   Ollama model: ${OLLAMA_MODEL}`);
+    console.log(`   If using Docker Ollama: docker compose --profile ollama up`);
+  }
   console.log(`   Edit world_notes.txt to add your maps, NPCs, and lore.\n`);
 
   try {
@@ -359,6 +495,28 @@ client.once(Events.ClientReady, async (c) => {
   } catch (err) {
     console.error("Failed to register commands:", err.message);
   }
+
+  // Start waiting for the LLM in the background
+  (async () => {
+    const ready = await waitForLLM();
+    if (ready) {
+      // Find a channel to send the ready message to
+      for (const guild of c.guilds.cache.values()) {
+        // Try to find a general or first text channel
+        const channel = guild.channels.cache.find(
+          ch => ch.isTextBased() && ch.permissionsFor(guild.members.me).has("SendMessages")
+        );
+        if (channel) {
+          try {
+            await channel.send("🎲 **The Dungeon Master has arrived!** The ancient tomes glow with arcane energy. The model is ready. Type `/help` to see available commands, or `/join` to begin your adventure!");
+            console.log(`✅ Ready message sent to ${guild.name}`);
+          } catch (err) {
+            console.error(`Failed to send ready message: ${err.message}`);
+          }
+        }
+      }
+    }
+  })();
 });
 
 // ============================================================

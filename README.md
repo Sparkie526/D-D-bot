@@ -1,6 +1,6 @@
 # D-D-bot
 
-Discord D&D "AI Dungeon Master" bot with Ollama AI integration and ElevenLabs voice synthesis.
+Discord D&D "AI Dungeon Master" bot with OpenAI or Ollama (optional) and ElevenLabs voice synthesis.
 
 ## Quick Start (Docker)
 
@@ -11,6 +11,7 @@ Discord D&D "AI Dungeon Master" bot with Ollama AI integration and ElevenLabs vo
 - [Docker](https://docs.docker.com/get-docker/) (Docker Desktop or Docker Engine)
 - Discord bot token
 - ElevenLabs API key and voice ID
+- OpenAI API key (recommended for sanity testing)
 
 ### Setup
 
@@ -31,8 +32,11 @@ cp .env.example .env
    - `DISCORD_TOKEN` - Your Discord bot token
    - `ELEVENLABS_API_KEY` - Your ElevenLabs API key
    - `ELEVENLABS_VOICE_ID` - Your ElevenLabs voice ID
-   - `OLLAMA_URL` - Leave as `http://ollama:11434/api/chat` (internal Docker network)
-   - `OLLAMA_MODEL` - Set to `mistral` (or your preferred model)
+    - `LLM_PROVIDER` - Set to `openai` (recommended) or `ollama`
+    - `OPENAI_API_KEY` - Your OpenAI API key (required when `LLM_PROVIDER=openai`)
+    - `OPENAI_MODEL` - Default is `gpt-4o-mini`
+    - `OLLAMA_URL` - Only needed when `LLM_PROVIDER=ollama` (Compose default: `http://ollama:11434/api/chat`)
+    - `OLLAMA_MODEL` - Only needed when `LLM_PROVIDER=ollama` (e.g. `mistral`)
 
 4. Start everything:
 
@@ -40,7 +44,19 @@ cp .env.example .env
 docker compose up --build
 ```
 
-5. On first run, pull the Ollama model (one-time):
+Optional: sanity-check the LLM without Discord:
+
+```bash
+docker compose run --rm bot npm run llm:sanity
+```
+
+If you want to run Ollama in Docker too:
+
+```bash
+docker compose --profile ollama up --build
+```
+
+5. If you're using Ollama, pull the model (one-time):
 
 ```bash
 docker compose exec ollama ollama pull mistral
@@ -56,12 +72,12 @@ docker compose down
 
 ## Docker Details
 
-- **Ollama service**: Automatically manages the AI model
-- **Bot service**: Runs the Discord bot connected to Ollama
+- **Ollama service**: Optional (disabled by default). Enable with `--profile ollama`.
+- **Bot service**: Runs the Discord bot (uses OpenAI or Ollama for the DM text)
 - **Auto-restart**: Both services restart automatically on failure
 - **Data persistence**: Ollama model data is stored in a Docker volume
 
-For a remote Ollama instance, override `OLLAMA_URL` in `.env`.
+For a remote Ollama instance, override `OLLAMA_URL` in `.env` and set `LLM_PROVIDER=ollama`.
 
 ## Commands (Discord Slash Commands)
 

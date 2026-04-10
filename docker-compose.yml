@@ -1,6 +1,16 @@
 services:
   ollama:
-    image: ollama/ollama:latest
+    # Disabled by default. Enable with: docker compose --profile ollama up
+    profiles: ["ollama"]
+    # Pin to avoid surprise regressions from :latest.
+    image: ollama/ollama:0.20.5
+    environment:
+      # Keep the queue small so the bot can't accidentally pile up work.
+      # Flash attention: leave enabled for better CPU perf.
+      OLLAMA_FLASH_ATTENTION: "true"
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_MAX_QUEUE: "16"
+      OLLAMA_KEEP_ALIVE: "1m"
     volumes:
       - ollama:/root/.ollama
     # No host port published by default. The bot talks to Ollama over the
@@ -9,8 +19,6 @@ services:
 
   bot:
     build: .
-    depends_on:
-      - ollama
     # Create this file from .env.example.
     env_file:
       - .env

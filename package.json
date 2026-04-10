@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "llm:sanity": "node scripts/llm_sanity.js",
     "check": "node -e \"require('@discordjs/voice'); require('@discordjs/opus'); console.log('voice deps ok')\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

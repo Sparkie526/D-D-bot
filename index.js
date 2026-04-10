@@ -291,12 +291,7 @@ async function proceedAfterNames(interaction, guildId, connection) {
     "Game Master"
   );
   
-  interaction.channel.send(`📜 *${reply}*`);
-  
-  const audioFile = await textToSpeech(reply);
-  if (audioFile) {
-    await speakInVoice(connection, audioFile);
-  }
+  await sendDMResponseWithVoice(interaction, connection, reply);
 }
 
 // ============================================================
@@ -378,6 +373,25 @@ async function textToSpeech(text) {
       } catch (_) {}
     }
     return null;
+  }
+}
+
+async function sendDMResponseWithVoice(interaction, connection, dmText) {
+  // Send the text response
+  interaction.channel.send(`📜 **DM:** *${dmText}*`);
+  
+  // Try to send voice
+  const audioFile = await textToSpeech(dmText);
+  if (audioFile) {
+    try {
+      await speakInVoice(connection, audioFile);
+    } catch (err) {
+      console.error("Voice playback error:", err.message);
+      interaction.channel.send("⚠️ *Voice playback failed, but the narration continues...*");
+    }
+  } else {
+    // Voice synthesis failed
+    interaction.channel.send("⚠️ *Voice synthesis failed (service unavailable), but the narration continues...*");
   }
 }
 
@@ -1013,14 +1027,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
       "Game Master"
     );
 
-    // Show the full response in text channel.
-    interaction.channel.send(`📜 *${reply}*`);
-
-    // TTS + voice playback.
-    const audioFile = await textToSpeech(reply);
-    if (audioFile) {
-      await speakInVoice(connection, audioFile);
-    }
+    // Send response with voice
+    await sendDMResponseWithVoice(interaction, connection, reply);
     return;
   }
 
@@ -1056,12 +1064,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
     );
 
-    interaction.channel.send(`📜 **DM:** *${reply}*`);
-
-    const audioFile = await textToSpeech(reply);
-    if (audioFile) {
-      await speakInVoice(connection, audioFile);
-    }
+    await sendDMResponseWithVoice(interaction, connection, reply);
     return;
   }
 
@@ -1096,12 +1099,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         playerName
       );
 
-      const audioFile = await textToSpeech(reply);
-      if (audioFile) {
-        await speakInVoice(connections[guildId], audioFile);
-      }
-
-      interaction.channel.send(`📜 **DM:** *${reply}*`);
+      await sendDMResponseWithVoice(interaction, connections[guildId], reply);
     }
     return;
   }
@@ -1213,15 +1211,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
     // Get a random quirky remark
     const farewell = getRandomEndgameRemark();
     
-    // Send as text
-    interaction.channel.send(`📜 *${farewell}*`);
-
-    // Send as voice
+    // Send as text and voice
     if (connection) {
-      const audioFile = await textToSpeech(farewell);
-      if (audioFile) {
-        await speakInVoice(connection, audioFile);
-      }
+      await sendDMResponseWithVoice(interaction, connection, farewell);
+    } else {
+      interaction.channel.send(`📜 *${farewell}*`);
     }
 
     // Revert nicknames

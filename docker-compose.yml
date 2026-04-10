@@ -14,10 +14,7 @@ services:
     # Create this file from .env.example.
     env_file:
       - .env
-    environment:
-      # Defaults to the compose Ollama service; override in .env to use a remote.
-      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434/api/chat}
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3}
+    environment: {}
     volumes:
       # Optional: edit world notes without rebuilding.
       - ./world_notes.txt:/app/world_notes.txt:ro

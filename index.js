@@ -8,6 +8,9 @@ const {
   Client,
   GatewayIntentBits,
   Events,
+  REST,
+  Routes,
+  ApplicationCommandOptionType,
 } = require("discord.js");
 const {
   joinVoiceChannel,
@@ -279,89 +282,159 @@ const client = new Client({
 // Store active voice connections per guild
 const connections = {};
 
+const commands = [
+  {
+    name: "join",
+    description: "Bot joins your voice channel",
+  },
+  {
+    name: "leave",
+    description: "Bot leaves voice channel and ends session",
+  },
+  {
+    name: "startgame",
+    description: "Start a new D&D adventure",
+  },
+  {
+    name: "action",
+    description: "Describe what your character does",
+    options: [
+      {
+        name: "what",
+        description: "What you want to do",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+      },
+    ],
+  },
+  {
+    name: "roll",
+    description: "Roll dice (e.g. 1d20, 2d6)",
+    options: [
+      {
+        name: "dice",
+        description: "Dice to roll (e.g. 1d20)",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+      },
+    ],
+  },
+  {
+    name: "status",
+    description: "Check if a game is running",
+  },
+  {
+    name: "resetgame",
+    description: "Wipe game state and start fresh",
+  },
+  {
+    name: "reloadnotes",
+    description: "Reload world_notes.txt without restarting",
+  },
+  {
+    name: "help",
+    description: "Show all commands",
+  },
+];
+
+const rest = new REST().setToken(DISCORD_TOKEN);
+
 // ============================================================
 //  BOT READY
 // ============================================================
 
-client.once(Events.ClientReady, (c) => {
+client.once(Events.ClientReady, async (c) => {
   console.log(`\n🎲 Dungeon Master Bot is online as ${c.user.tag}`);
   console.log(`   Ollama model: ${OLLAMA_MODEL}`);
   console.log(`   Make sure "ollama serve" is running!`);
   console.log(`   Edit world_notes.txt to add your maps, NPCs, and lore.\n`);
+
+  try {
+    console.log("Registering slash commands...");
+    await rest.put(
+      Routes.applicationCommands(c.user.id),
+      { body: commands }
+    );
+    console.log("Slash commands registered globally ✅");
+  } catch (err) {
+    console.error("Failed to register commands:", err.message);
+  }
 });
 
 // ============================================================
-//  MESSAGE HANDLER — Text Commands
+//  SLASH COMMAND HANDLER
 // ============================================================
 
-client.on(Events.MessageCreate, async (message) => {
-  if (message.author.bot) return;
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
 
-  const guildId = message.guild?.id;
-  if (!guildId) return;
+  const guildId = interaction.guildId;
+  if (!guildId) {
+    interaction.reply("This command must be used in a server.");
+    return;
+  }
 
   const session = getSession(guildId);
-  const content = message.content.trim();
-  const playerName = message.member?.displayName || message.author.username;
+  const playerName = interaction.member?.displayName || interaction.user.username;
+  const commandName = interaction.commandName;
 
   // ----------------------------------------------------------
-  //  !join — Bot joins your voice channel
+  //  /join — Bot joins your voice channel
   // ----------------------------------------------------------
-  if (content.toLowerCase() === "!join") {
-    const voiceChannel = message.member?.voice?.channel;
+  if (commandName === "join") {
+    const voiceChannel = interaction.member?.voice?.channel;
     if (!voiceChannel) {
-      return message.reply("You need to be in a voice channel first!");
+      return interaction.reply("You need to be in a voice channel first!");
     }
 
     try {
       const connection = joinVoiceChannel({
         channelId: voiceChannel.id,
         guildId: guildId,
-        adapterCreator: message.guild.voiceAdapterCreator,
-        selfDeaf: false, // Must be false to receive audio
+        adapterCreator: interaction.guild.voiceAdapterCreator,
+        selfDeaf: false,
       });
 
       connections[guildId] = connection;
-
       await entersState(connection, VoiceConnectionStatus.Ready, 10_000);
-      message.reply(`🎲 The Dungeon Master has entered **${voiceChannel.name}**! Type \`!startgame\` to begin your adventure.`);
+      interaction.reply(`🎲 The Dungeon Master has entered **${voiceChannel.name}**! Type \`/startgame\` to begin your adventure.`);
 
     } catch (err) {
       console.error("Voice join error:", err);
-      message.reply("Couldn't join the voice channel. Check bot permissions.");
+      interaction.reply("Couldn't join the voice channel. Check bot permissions.");
     }
     return;
   }
 
   // ----------------------------------------------------------
-  //  !leave — Bot leaves voice channel
+  //  /leave — Bot leaves voice channel
   // ----------------------------------------------------------
-  if (content.toLowerCase() === "!leave") {
+  if (commandName === "leave") {
     const connection = connections[guildId];
     if (connection) {
       connection.destroy();
       delete connections[guildId];
-      sessions[guildId] = null; // Reset game state
-      message.reply("The Dungeon Master has departed. Farewell, adventurers.");
+      sessions[guildId] = null;
+      interaction.reply("The Dungeon Master has departed. Farewell, adventurers.");
     } else {
-      message.reply("I'm not in a voice channel.");
+      interaction.reply("I'm not in a voice channel.");
     }
     return;
   }
 
   // ----------------------------------------------------------
-  //  !startgame — Begin the campaign
+  //  /startgame — Begin the campaign
   // ----------------------------------------------------------
-  if (content.toLowerCase() === "!startgame") {
+  if (commandName === "startgame") {
     const connection = connections[guildId];
     if (!connection) {
-      return message.reply("Type `!join` first so I can speak in your voice channel.");
+      return interaction.reply("Type `/join` first so I can speak in your voice channel.");
     }
 
     session.active = true;
-    session.history = []; // Fresh game
+    session.history = [];
 
-    message.channel.send("⚔️ **The adventure begins...** Listen closely, adventurers.");
+    await interaction.reply("⚔️ **The adventure begins...** Listen closely, adventurers.");
 
     const intro = await askDM(
       guildId,
@@ -374,27 +447,27 @@ client.on(Events.MessageCreate, async (message) => {
       await speakInVoice(connection, audioFile);
     }
 
-    message.channel.send(`📜 *${intro}*`);
+    interaction.channel.send(`📜 *${intro}*`);
     return;
   }
 
   // ----------------------------------------------------------
-  //  !action [what you do] — Main gameplay command
+  //  /action [what you do] — Main gameplay command
   // ----------------------------------------------------------
-  if (content.toLowerCase().startsWith("!action ")) {
+  if (commandName === "action") {
     if (!session.active) {
-      return message.reply("No game is running. Type `!startgame` to begin.");
+      return interaction.reply("No game is running. Type `/startgame` to begin.");
     }
 
     const connection = connections[guildId];
     if (!connection) {
-      return message.reply("Bot isn't in a voice channel. Type `!join` first.");
+      return interaction.reply("Bot isn't in a voice channel. Type `/join` first.");
     }
 
-    const action = content.slice(8).trim();
-    if (!action) return message.reply("Tell me what you want to do! e.g. `!action I search the room for traps`");
+    const action = interaction.options.getString("what");
+    if (!action) return interaction.reply("Tell me what you want to do!");
 
-    message.channel.send(`⚔️ *${playerName}: "${action}"*`);
+    await interaction.reply(`⚔️ *${playerName}: "${action}"*`);
 
     const dmResponse = await askDM(guildId, action, playerName);
 
@@ -403,20 +476,19 @@ client.on(Events.MessageCreate, async (message) => {
       await speakInVoice(connection, audioFile);
     }
 
-    message.channel.send(`📜 **DM:** *${dmResponse}*`);
+    interaction.channel.send(`📜 **DM:** *${dmResponse}*`);
     return;
   }
 
   // ----------------------------------------------------------
-  //  !roll [dice] — Roll dice and tell the DM
-  //  Usage: !roll 1d20  or  !roll 2d6
+  //  /roll [dice] — Roll dice and tell the DM
   // ----------------------------------------------------------
-  if (content.toLowerCase().startsWith("!roll")) {
-    const diceArg = content.split(" ")[1] || "1d20";
+  if (commandName === "roll") {
+    const diceArg = interaction.options.getString("dice") || "1d20";
     const [numDice, diceSides] = diceArg.toLowerCase().split("d").map(Number);
 
     if (!numDice || !diceSides) {
-      return message.reply("Invalid dice format. Try `!roll 1d20` or `!roll 2d6`");
+      return interaction.reply("Invalid dice format. Try `/roll 1d20` or `/roll 2d6`");
     }
 
     let total = 0;
@@ -428,7 +500,7 @@ client.on(Events.MessageCreate, async (message) => {
     }
 
     const rollText = `${playerName} rolled ${diceArg}: [${rolls.join(", ")}] = **${total}**`;
-    message.channel.send(`🎲 ${rollText}`);
+    await interaction.reply(`🎲 ${rollText}`);
 
     if (session.active && connections[guildId]) {
       const dmResponse = await askDM(
@@ -442,58 +514,58 @@ client.on(Events.MessageCreate, async (message) => {
         await speakInVoice(connections[guildId], audioFile);
       }
 
-      message.channel.send(`📜 **DM:** *${dmResponse}*`);
+      interaction.channel.send(`📜 **DM:** *${dmResponse}*`);
     }
     return;
   }
 
   // ----------------------------------------------------------
-  //  !status — Show current game history summary
+  //  /status — Show current game history summary
   // ----------------------------------------------------------
-  if (content.toLowerCase() === "!status") {
+  if (commandName === "status") {
     const msgCount = session.history.length;
     const isActive = session.active ? "Active ⚔️" : "No game running";
-    message.reply(`**Game Status:** ${isActive}\n**Story exchanges so far:** ${msgCount / 2}\nType \`!action [what you do]\` to play.`);
+    interaction.reply(`**Game Status:** ${isActive}\n**Story exchanges so far:** ${msgCount / 2}\nType \`/action [what you do]\` to play.`);
     return;
   }
 
   // ----------------------------------------------------------
-  //  !resetgame — Wipe history and start fresh
+  //  /resetgame — Wipe history and start fresh
   // ----------------------------------------------------------
-  if (content.toLowerCase() === "!resetgame") {
+  if (commandName === "resetgame") {
     sessions[guildId] = null;
-    message.reply("🗑️ Game state cleared. Type `!startgame` to begin a new adventure.");
+    interaction.reply("🗑️ Game state cleared. Type `/startgame` to begin a new adventure.");
     return;
   }
 
   // ----------------------------------------------------------
-  //  !reloadnotes — Reload world_notes.txt without restarting
+  //  /reloadnotes — Reload world_notes.txt without restarting
   // ----------------------------------------------------------
-  if (content.toLowerCase() === "!reloadnotes") {
+  if (commandName === "reloadnotes") {
     reloadWorldNotes();
     const status = worldNotes
       ? `✅ World notes reloaded! (${worldNotes.length} characters loaded)`
       : "⚠️ No world_notes.txt found. Create one in your bot folder.";
-    message.reply(status);
+    interaction.reply(status);
     return;
   }
 
   // ----------------------------------------------------------
-  //  !help — Show all commands
+  //  /help — Show all commands
   // ----------------------------------------------------------
-  if (content.toLowerCase() === "!help") {
-    message.reply(`
+  if (commandName === "help") {
+    interaction.reply(`
 **🎲 Dungeon Master Bot Commands**
 
-\`!join\` — Bot joins your voice channel
-\`!leave\` — Bot leaves and ends the session
-\`!startgame\` — Start a new adventure
-\`!action [text]\` — Declare what your character does
-\`!roll [dice]\` — Roll dice (e.g. \`!roll 1d20\`, \`!roll 2d6\`)
-\`!status\` — Check if a game is running
-\`!resetgame\` — Wipe the current game and start fresh
-\`!reloadnotes\` — Reload world_notes.txt without restarting the bot
-\`!help\` — Show this message
+\`/join\` — Bot joins your voice channel
+\`/leave\` — Bot leaves and ends the session
+\`/startgame\` — Start a new adventure
+\`/action [what]\` — Declare what your character does
+\`/roll [dice]\` — Roll dice (e.g. \`/roll 1d20\`, \`/roll 2d6\`)
+\`/status\` — Check if a game is running
+\`/resetgame\` — Wipe the current game and start fresh
+\`/reloadnotes\` — Reload world_notes.txt without restarting the bot
+\`/help\` — Show this message
     `.trim());
     return;
   }

@@ -52,16 +52,21 @@ const MAX_HISTORY = 20;
 //  ENDGAME REMARKS — Quirky DM farewells for early endings
 // ============================================================
 const ENDGAME_REMARKS = [
-  "The mists close in, and your adventure fades to shadow. Until next time, brave souls.",
-  "Alas, the tale ends here, cut short by fate's cruel hand.",
-  "The tavern door swings shut. Your story remains incomplete—for now.",
-  "The candles gutter and die. Your saga pauses, waiting in the darkness.",
-  "The dice fall silent. Perhaps another chapter awaits... another time.",
-  "The spell breaks. The world dissolves. Your adventure ends prematurely, alas.",
-  "The curtain falls. The stage empties. Your quest remains unfinished.",
-  "Reality intrudes upon the story. The adventure must pause.",
-  "And so concludes this brief chapter. The book closes on an unfinished tale.",
-  "The crystal ball goes dark. Your journey ends—but legends live on.",
+  "Well, that was anticlimactic. I had a whole dragon planned, but sure, give up.",
+  "Congratulations! You've discovered the true final boss: commitment issues.",
+  "And they all walked away. Legend has it they're still walking. Very heroic.",
+  "The DM sighs, closes the book, and questions all their life choices.",
+  "Well, there goes four hours of world-building down the drain. But hey, at least you tried!",
+  "Plot twist: The real treasure was the friends you abandoned along the way.",
+  "I'll just be here, adjusting this perfectly balanced encounter... for nobody.",
+  "Your legend will be told for generations—as a cautionary tale.",
+  "The villains won, by default. You're welcome, Serafin.",
+  "Rage quit achieved! Achievement unlocked: 'Quitter'",
+  "I spent three hours on Ashmore Keep's catacombs for THIS ending?",
+  "And that, dear players, is why DMs drink. Story time is over.",
+  "The bard will NOT be singing songs about your swift departure.",
+  "Somewhere, a dragon is breathing a sigh of relief.",
+  "Remember this moment. Remember it well. Then never speak of it again.",
 ];
 
 function getRandomEndgameRemark() {

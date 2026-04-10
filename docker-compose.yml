@@ -1,0 +1,39 @@
+# ============================================================
+#  D&D Dungeon Master Bot — Docker Compose
+#
+#  Secrets (DISCORD_TOKEN, OPENAI_API_KEY, ELEVENLABS_*)
+#  live in .env and are loaded via env_file below.
+#  Copy .env.example to .env and fill in your values.
+#
+#  Usage:
+#    docker compose up -d --build          # bot only (OpenAI)
+#    docker compose --profile ollama up    # bot + Ollama
+# ============================================================
+
+services:
+  ollama:
+    profiles: ["ollama"]
+    image: ollama/ollama:0.20.5
+    environment:
+      OLLAMA_FLASH_ATTENTION: "true"
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_MAX_QUEUE: "16"
+      OLLAMA_KEEP_ALIVE: "1m"
+    volumes:
+      - ollama:/root/.ollama
+
+  bot:
+    build: .
+    env_file:
+      - .env
+    environment:
+      LLM_PROVIDER: openai
+      OPENAI_MODEL: gpt-4o-mini
+    volumes:
+      - ./worlds:/app/worlds:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  ollama:

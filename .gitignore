@@ -8,8 +8,7 @@ dm_response.mp3
 player_input.wav
 tts_cache/
 
-# Compose (may contain secrets/infrastructure-specific config)
-docker-compose.yml
+# Compose overrides (infrastructure-specific, may contain secrets)
 docker-compose.override.yml
 
 # Legacy bundle (do not commit)

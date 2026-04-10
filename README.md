@@ -1,120 +1,148 @@
-# D-D-bot
+# D&D Discord Bot
 
-Discord D&D "AI Dungeon Master" bot with OpenAI or Ollama (optional) and ElevenLabs voice synthesis.
+An AI-powered Dungeon Master for Discord that runs in your voice channel, narrates your adventure, and generates voices with ElevenLabs.
 
-## Quick Start (Docker)
+## Before You Start
 
-**Recommended:** Run everything in Docker for easy setup and reproducibility.
+You'll need:
+- **Discord Bot Token** (from Discord Developer Portal)
+- **OpenAI API Key** (for the AI Dungeon Master)
+- **ElevenLabs API Key + Voice ID** (for voice narration)
+- **Docker Desktop** (Windows/Mac) or Docker (Linux)
 
-### Requirements
+---
 
-- [Docker](https://docs.docker.com/get-docker/) (Docker Desktop or Docker Engine)
-- Discord bot token
-- ElevenLabs API key and voice ID
-- OpenAI API key (recommended for sanity testing)
+## Setup (Windows with Docker Desktop)
 
-### Setup
+### Step 1: Download & Unzip the Bot
 
-1. Clone the repository and enter the directory:
+1. Download this repository as a ZIP file
+2. Unzip it to a folder (e.g., `C:\Users\YourName\D-D-bot`)
 
-```bash
-git clone <repo-url>
-cd D-D-bot
+### Step 2: Install Docker Desktop
+
+1. Go to [Docker Desktop](https://www.docker.com/products/docker-desktop)
+2. Download and install for Windows
+3. Start Docker Desktop (it'll run in the background)
+
+### Step 3: Create the `.env` File
+
+1. Open the bot folder in File Explorer
+2. Find `.env.example` and copy it
+3. Rename the copy to `.env`
+4. Right-click `.env` and open with Notepad
+5. Fill in your credentials:
+
+```
+DISCORD_TOKEN=your_discord_bot_token_here
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-4o
+ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
+ELEVENLABS_VOICE_ID=your_voice_id_here
+LLM_PROVIDER=openai
 ```
 
-2. Create `.env` from `.env.example`:
+Save and close.
 
-```bash
-cp .env.example .env
-```
+### Step 4: Start the Bot
 
-3. Edit `.env` and fill in:
-   - `DISCORD_TOKEN` - Your Discord bot token
-   - `ELEVENLABS_API_KEY` - Your ElevenLabs API key
-   - `ELEVENLABS_VOICE_ID` - Your ElevenLabs voice ID
-    - `LLM_PROVIDER` - Set to `openai` (recommended) or `ollama`
-    - `OPENAI_API_KEY` - Your OpenAI API key (required when `LLM_PROVIDER=openai`)
-    - `OPENAI_MODEL` - Default is `gpt-4o-mini`
-    - `OLLAMA_URL` - Only needed when `LLM_PROVIDER=ollama` (Compose default: `http://ollama:11434/api/chat`)
-    - `OLLAMA_MODEL` - Only needed when `LLM_PROVIDER=ollama` (e.g. `mistral`)
-
-4. Start everything:
-
-```bash
+1. Open PowerShell in your bot folder:
+   - Shift + Right-click in the folder → "Open PowerShell window here"
+2. Run:
+```powershell
 docker compose up --build
 ```
 
-Optional: sanity-check the LLM without Discord:
+3. Wait for the message: **"✅ OpenAI is reachable and ready!"**
+4. The bot is now running!
 
-```bash
-docker compose run --rm bot npm run llm:sanity
-```
+### Step 5: Use the Bot in Discord
 
-If you want to run Ollama in Docker too:
+In your Discord server:
+1. `/join` → Bot joins your voice channel
+2. `/startgame` → DM introduces the setting
+3. `/name [your_character_name]` → Set your character name
+4. `/action [what you do]` → Take actions in the game
+5. `/endgame` → End the adventure gracefully
 
-```bash
-docker compose --profile ollama up --build
-```
+### Stop the Bot
 
-5. If you're using Ollama, pull the model (one-time):
-
-```bash
-docker compose exec ollama ollama pull mistral
-```
-
-6. Check that the bot is online in your Discord server.
-
-7. To stop:
-
-```bash
+In PowerShell, press `Ctrl+C` or run:
+```powershell
 docker compose down
 ```
 
-## Docker Details
+---
 
-- **Ollama service**: Optional (disabled by default). Enable with `--profile ollama`.
-- **Bot service**: Runs the Discord bot (uses OpenAI or Ollama for the DM text)
-- **Auto-restart**: Both services restart automatically on failure
-- **Data persistence**: Ollama model data is stored in a Docker volume
+## Getting Your API Keys
 
-For a remote Ollama instance, override `OLLAMA_URL` in `.env` and set `LLM_PROVIDER=ollama`.
+### Discord Token
+1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
+2. Create New Application
+3. Go to "Bot" → "Add Bot"
+4. Copy the token under "TOKEN"
 
-## Commands (Discord Slash Commands)
+### OpenAI API Key
+1. Go to [OpenAI Platform](https://platform.openai.com)
+2. Click your account → "API keys"
+3. Create new secret key
+4. Copy it immediately (you can't see it again)
 
-- `/join` - Join the caller's voice channel
-- `/leave` - Leave voice and end the session
-- `/startgame` - Start a new adventure (requires `/join` first)
-- `/action <text>` - Main gameplay input
-- `/roll <dice>` - Roll dice (e.g., `1d20`, `2d6`)
-- `/status` - Show session status
-- `/resetgame` - Clear session state
-- `/reloadnotes` - Reload `world_notes.txt`
+### ElevenLabs
+1. Go to [ElevenLabs](https://elevenlabs.io)
+2. Sign up → Dashboard
+3. Go to "API" → Copy API key
+4. Go to "Voices" → Pick a voice → Copy the Voice ID
 
-## Development (Local Setup)
+---
 
-If you want to run the bot locally without Docker (for development):
+## All Commands
 
-1. Install Node.js >= 22.12.0
-2. Install ffmpeg: `apt install ffmpeg` (Linux) or `brew install ffmpeg` (macOS)
-3. Run Ollama separately: `ollama serve`
-4. Install dependencies: `npm ci --include=optional`
-5. Update `.env`: `OLLAMA_URL=http://localhost:11434/api/chat`
-6. Start the bot: `npm start`
+- `/join` — Bot joins your voice channel
+- `/leave` — Bot leaves voice (ends session)
+- `/startgame` — Begin the adventure
+- `/name [character]` — Set your character name
+- `/action [what you do]` — Main gameplay command
+- `/roll [dice]` — Roll dice (e.g., `/roll 1d20`)
+- `/status` — Check game status
+- `/endgame` — End game gracefully
+- `/resetgame` — Wipe game state and start fresh
+- `/reloadnotes` — Reload world settings
+- `/help` — Show all commands in Discord
 
-**Note:** This requires managing Ollama and Node.js separately. Docker is recommended for consistency.
+---
 
-## Notes
+## Customize Your World
 
-- `node_modules/` is intentionally not committed. Docker handles all native dependency compilation.
-- The bot writes `dm_response.mp3` at runtime for voice synthesis.
-- Edit `world_notes.txt` to customize world lore, NPCs, and maps.
+Edit `world_notes.txt` to add:
+- Custom locations
+- NPCs and villains
+- Lore and secrets
+- Your own maps
 
-## Optimizations
+Changes take effect immediately with `/reloadnotes` (no restart needed).
 
-The bot uses several techniques to keep responses fast and costs low:
+---
 
-- **World notes in-memory cache** — `world_notes.txt` is read once and cached in memory. Use `/reloadnotes` to pick up changes mid-session without restarting.
-- **System prompt caching** — The compiled system prompt is cached and only rebuilt when `world_notes.txt` changes. With OpenAI, the system message is also sent with `cache_control` for additional prompt-caching savings.
-- **TTS audio caching** — Repeated DM responses (identical text) are served from `tts_cache/` without calling ElevenLabs. Cache files are keyed by SHA-256 hash of the text.
-- **Streaming LLM responses** — Both OpenAI and Ollama use streaming (`stream: true`). Tokens arrive progressively, reducing perceived latency on long responses.
-- **History truncation** — Conversation history is capped at 20 messages. Older turns are dropped from the tail to stay within context limits.
+## Troubleshooting
+
+**Bot not responding?**
+- Make sure Docker Desktop is running
+- Check that all API keys are correct in `.env`
+- Restart: `docker compose down` then `docker compose up --build`
+
+**"Bot lacks permission to update your Discord nickname"?**
+- Go to Server Settings → Roles
+- Give the bot role "Change Nickname" permission
+
+**Can't see `/endgame` command?**
+- Wait 1-2 minutes and try typing `/` again
+- Restart your Discord app
+
+---
+
+## Need Help?
+
+Check the troubleshooting section above or open an issue on GitHub.
+
+Enjoy your adventure! 🎲

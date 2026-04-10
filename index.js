@@ -49,6 +49,26 @@ const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const MAX_HISTORY = 20;
 
 // ============================================================
+//  ENDGAME REMARKS — Quirky DM farewells for early endings
+// ============================================================
+const ENDGAME_REMARKS = [
+  "The mists close in, and your adventure fades to shadow. Until next time, brave souls.",
+  "Alas, the tale ends here, cut short by fate's cruel hand.",
+  "The tavern door swings shut. Your story remains incomplete—for now.",
+  "The candles gutter and die. Your saga pauses, waiting in the darkness.",
+  "The dice fall silent. Perhaps another chapter awaits... another time.",
+  "The spell breaks. The world dissolves. Your adventure ends prematurely, alas.",
+  "The curtain falls. The stage empties. Your quest remains unfinished.",
+  "Reality intrudes upon the story. The adventure must pause.",
+  "And so concludes this brief chapter. The book closes on an unfinished tale.",
+  "The crystal ball goes dark. Your journey ends—but legends live on.",
+];
+
+function getRandomEndgameRemark() {
+  return ENDGAME_REMARKS[Math.floor(Math.random() * ENDGAME_REMARKS.length)];
+}
+
+// ============================================================
 //  WORLD NOTES — Load from world_notes.txt (in-memory cache)
 // ============================================================
 
@@ -157,6 +177,8 @@ function getSession(guildId) {
       originalNicknames: {}, // { userId: originalNickname } for reverting
       activePlayers: [],  // Array of { userId, displayName, characterName } currently in voice channel
       active: false,      // Is a game running?
+      nameCollectionActive: false, // Currently waiting for player names
+      nameCollectionTimeout: null, // Timer for auto-proceeding with missing names
     };
   }
   return sessions[guildId];
@@ -174,6 +196,35 @@ function getPlayerDisplayName(guildId, userId) {
   const session = getSession(guildId);
   // Return character name if set, otherwise return Discord display name
   return session.players[userId] || null;
+}
+
+async function proceedAfterNames(interaction, guildId, connection) {
+  const session = getSession(guildId);
+  session.nameCollectionActive = false;
+  
+  // Fill in missing names with Discord display names
+  for (const player of session.activePlayers) {
+    if (!session.players[player.userId]) {
+      session.players[player.userId] = player.displayName;
+    }
+  }
+  
+  // Build final player names list
+  const playerNames = session.activePlayers.map(p => session.players[p.userId]).join(" and ");
+  
+  // DM addresses players by name and asks for first action
+  const reply = await askDM(
+    guildId,
+    `The players have introduced themselves as: ${playerNames}. Greet them warmly by their names and set the opening scene. Ask them what they would like to do first.`,
+    "Game Master"
+  );
+  
+  interaction.channel.send(`📜 *${reply}*`);
+  
+  const audioFile = await textToSpeech(reply);
+  if (audioFile) {
+    await speakInVoice(connection, audioFile);
+  }
 }
 
 // ============================================================
@@ -710,6 +761,10 @@ const commands = [
     ],
   },
   {
+    name: "endgame",
+    description: "End the current game gracefully with a DM farewell",
+  },
+  {
     name: "help",
     description: "Show all commands",
   },
@@ -858,30 +913,27 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return interaction.reply("There are no players in the voice channel!");
     }
 
-    // Build active players list with character names or Discord display names
+    // Build active players list
     session.activePlayers = voiceMembers.map(member => {
-      const characterName = session.players[member.id] || (member.nickname || member.user.username);
       return {
         userId: member.id,
         displayName: member.nickname || member.user.username,
-        characterName: characterName,
+        characterName: null, // Will be set by /name command
       };
     });
 
     session.active = true;
     session.history = [];
-
-    const playerNames = session.activePlayers.map(p => p.characterName).join(" and ");
+    session.nameCollectionActive = true;
 
     await interaction.reply(
       "⚔️ **The adventure begins...** Listen closely, adventurers."
     );
 
-    // Track accumulated text for display.
-    let dmText = "";
-    const reply = await askDMStream(
+    // DM intro asking for character names
+    const reply = await askDM(
       guildId,
-      `Begin the adventure. The players present are: ${playerNames}. Introduce the setting dramatically and ask them who they are if you haven't heard their introductions yet.`,
+      `Begin the adventure. Ask the players to introduce themselves with their character names. The players here are: ${session.activePlayers.map(p => p.displayName).join(", ")}. Ask them to declare their names.`,
       "Game Master"
     );
 
@@ -1013,6 +1065,38 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return interaction.reply("Tell me your character's name!");
     }
     await setPlayerName(interaction, characterName);
+    
+    // If we're in name collection mode, check if we should proceed
+    if (session.nameCollectionActive) {
+      const allNamesSet = session.activePlayers.every(p => session.players[p.userId]);
+      
+      if (allNamesSet) {
+        // All players have set names, proceed immediately
+        const connection = connections[guildId];
+        if (connection) {
+          await proceedAfterNames(interaction, guildId, connection);
+        }
+      } else if (session.activePlayers.length === 1) {
+        // Only one player, proceed immediately
+        const connection = connections[guildId];
+        if (connection) {
+          await proceedAfterNames(interaction, guildId, connection);
+        }
+      } else {
+        // Multiple players, start a 10 second timer
+        if (session.nameCollectionTimeout) {
+          clearTimeout(session.nameCollectionTimeout);
+        }
+        
+        session.nameCollectionTimeout = setTimeout(async () => {
+          // Timer fired, proceed with remaining Discord names
+          const connection = connections[guildId];
+          if (connection && session.active && session.nameCollectionActive) {
+            await proceedAfterNames(interaction, guildId, connection);
+          }
+        }, 10000);
+      }
+    }
     return;
   }
 
@@ -1030,6 +1114,53 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 
   // ----------------------------------------------------------
+  //  /endgame — End the game gracefully with a DM farewell
+  // ----------------------------------------------------------
+  if (commandName === "endgame") {
+    if (!session.active) {
+      return interaction.reply(
+        "No game is running. Type `/startgame` to begin."
+      );
+    }
+
+    const connection = connections[guildId];
+    
+    // Clear the name collection timeout if active
+    if (session.nameCollectionTimeout) {
+      clearTimeout(session.nameCollectionTimeout);
+    }
+
+    await interaction.reply(
+      "⚔️ **The adventure pauses...** Hear the DM's farewell."
+    );
+
+    // Get a random quirky remark
+    const farewell = getRandomEndgameRemark();
+    
+    // Send as text
+    interaction.channel.send(`📜 *${farewell}*`);
+
+    // Send as voice
+    if (connection) {
+      const audioFile = await textToSpeech(farewell);
+      if (audioFile) {
+        await speakInVoice(connection, audioFile);
+      }
+    }
+
+    // Revert nicknames
+    await revertAllNicknames(interaction);
+
+    // Reset game state
+    session.active = false;
+    session.nameCollectionActive = false;
+    session.activePlayers = [];
+    session.history = [];
+    
+    return;
+  }
+
+  // ----------------------------------------------------------
   //  /help — Show all commands
   // ----------------------------------------------------------
   if (commandName === "help") {
@@ -1043,6 +1174,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 \`/action [what]\` — Declare what your character does
 \`/roll [dice]\` — Roll dice (e.g. \`/roll 1d20\`, \`/roll 2d6\`)
 \`/status\` — Check if a game is running
+\`/endgame\` — End the game gracefully with a DM farewell
 \`/resetgame\` — Wipe the current game and start fresh
 \`/reloadnotes\` — Reload world_notes.txt without restarting the bot
 \`/help\` — Show this message

@@ -24,10 +24,9 @@ const {
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const { pipeline } = require("stream/promises");
 const { createWriteStream } = require("fs");
-// NOTE: prism-media is pulled in via @discordjs/voice. If we need it later for
-// transcoding/decoding incoming voice, add it as a direct dependency.
 
 // ============================================================
 //  CONFIG
@@ -45,43 +44,60 @@ const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID;
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 
-// How many past messages to remember (keeps token use low)
+// How many past messages to remember (keeps token use low).
+// Older messages are dropped from the tail to stay within context.
 const MAX_HISTORY = 20;
 
 // ============================================================
-//  WORLD NOTES — Load from world_notes.txt
+//  WORLD NOTES — Load from world_notes.txt (in-memory cache)
 // ============================================================
 
 const WORLD_NOTES_PATH = path.join(__dirname, "world_notes.txt");
 let worldNotes = "";
+let lastWorldNotesMtime = null;
 
 function loadWorldNotes() {
   try {
-    if (fs.existsSync(WORLD_NOTES_PATH)) {
-      worldNotes = fs.readFileSync(WORLD_NOTES_PATH, "utf-8").trim();
-      console.log(`📖 World notes loaded (${worldNotes.length} characters)`);
-    } else {
+    if (!fs.existsSync(WORLD_NOTES_PATH)) {
+      worldNotes = "";
+      lastWorldNotesMtime = null;
       console.log("📖 No world_notes.txt found — starting with no reference material.");
       console.log("   Create a world_notes.txt file in your bot folder to add maps, NPCs, lore etc.");
+      return;
     }
+    const stat = fs.statSync(WORLD_NOTES_PATH);
+    // Skip re-read if file hasn't changed since last load.
+    if (lastWorldNotesMtime !== null && stat.mtimeMs === lastWorldNotesMtime) {
+      return;
+    }
+    worldNotes = fs.readFileSync(WORLD_NOTES_PATH, "utf-8").trim();
+    lastWorldNotesMtime = stat.mtimeMs;
+    console.log(`📖 World notes loaded (${worldNotes.length} characters)`);
   } catch (err) {
     console.error("Failed to load world_notes.txt:", err.message);
   }
 }
 
-// Call this to reload notes mid-session without restarting the bot
 function reloadWorldNotes() {
+  lastWorldNotesMtime = null; // force re-read
   loadWorldNotes();
 }
 
-// Load notes on startup
+// Load notes on startup.
 loadWorldNotes();
 
 // ============================================================
 //  BUILD SYSTEM PROMPT — Combines DM personality + world notes
+//  Result is cached; only rebuilt when world_notes.txt changes.
 // ============================================================
 
+let cachedSystemPrompt = null;
+
 function buildSystemPrompt() {
+  if (cachedSystemPrompt !== null) {
+    return cachedSystemPrompt;
+  }
+
   const basePrompt = `You are an experienced, dramatic, and immersive Dungeon Master running a D&D 5e campaign.
 Your personality is wise, mysterious, and theatrical — like a storyteller around a campfire.
 Keep your responses concise (2-4 sentences max) since they will be spoken aloud in a voice chat.
@@ -95,8 +111,12 @@ The adventure begins when someone says "start game" or "begin".
 IMPORTANT: Use the world reference material below to stay consistent with locations, NPCs, secrets, and lore.
 Only reveal secrets when players discover them through actions or rolls — do not volunteer hidden information.`;
 
-  if (worldNotes) {
-    return `${basePrompt}
+  if (!worldNotes) {
+    cachedSystemPrompt = basePrompt;
+    return cachedSystemPrompt;
+  }
+
+  cachedSystemPrompt = `${basePrompt}
 
 ============================
 WORLD REFERENCE MATERIAL
@@ -104,24 +124,35 @@ WORLD REFERENCE MATERIAL
 ============================
 ${worldNotes}
 ============================`;
-  }
+  return cachedSystemPrompt;
+}
 
-  return basePrompt;
+function invalidateSystemPromptCache() {
+  cachedSystemPrompt = null;
+}
+
+function sanitizeLLMOutput(text) {
+  if (!text) return text;
+  return text
+    .replace(/<system-reminder>[\s\S]*?<\/system-reminder>/gi, "")
+    .replace(/<system[^>]*>[\s\S]*?<\/system[^>]*>/gi, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 // ============================================================
 //  GAME STATE
 // ============================================================
 
-// Stores conversation history and player info per Discord server
+// Stores conversation history and player info per Discord server.
 const sessions = {};
 
 function getSession(guildId) {
   if (!sessions[guildId]) {
     sessions[guildId] = {
-      history: [],       // Chat history sent to Ollama
-      players: {},       // { userId: characterName }
-      active: false,     // Is a game running?
+      history: [],       // Chat history sent to LLM
+      players: {},        // { userId: characterName }
+      active: false,      // Is a game running?
     };
   }
   return sessions[guildId];
@@ -130,180 +161,53 @@ function getSession(guildId) {
 function addToHistory(guildId, role, content) {
   const session = getSession(guildId);
   session.history.push({ role, content });
-  // Trim old messages to keep context window manageable
   if (session.history.length > MAX_HISTORY) {
     session.history = session.history.slice(-MAX_HISTORY);
   }
 }
 
 // ============================================================
-//  LLM — AI BRAIN
+//  ELEVENLABS TTS — with audio caching
 // ============================================================
 
-let ollamaReady = false;
+const TTS_CACHE_DIR = path.join(__dirname, "tts_cache");
 
-async function checkOpenAIReady() {
-  if (!OPENAI_API_KEY) return false;
+function initTTSCache() {
   try {
-    // Doesn't spend tokens; just validates the key/model access.
-    const response = await axios.get(`${OPENAI_BASE_URL}/models/${OPENAI_MODEL}`, {
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      timeout: 5000,
-    });
-    return response.status === 200;
-  } catch (_) {
-    return false;
-  }
-}
-
-async function checkOllamaReady() {
-  try {
-    // Don't generate text here: on CPU this can take a long time and will
-    // monopolize the single-runner queue. Just verify the server is up and the
-    // model is present locally.
-    const tagsUrl = new URL(OLLAMA_URL);
-    tagsUrl.pathname = "/api/tags";
-
-    const response = await axios.get(tagsUrl.toString(), { timeout: 5000 });
-    const models = response?.data?.models || [];
-    const want = OLLAMA_MODEL;
-    return models.some((m) => {
-      const name = m?.name || "";
-      if (!name) return false;
-      return want.includes(":") ? name === want : name.startsWith(`${want}:`);
-    });
-  } catch (err) {
-    return false;
-  }
-}
-
-async function waitForOllama() {
-  console.log("⏳ Waiting for Ollama to be ready...");
-  let attempts = 0;
-  const maxAttempts = 120; // 2 minutes timeout
-  
-  while (!ollamaReady && attempts < maxAttempts) {
-    if (await checkOllamaReady()) {
-      ollamaReady = true;
-      console.log("✅ Ollama model loaded and ready!");
-      return true;
+    if (!fs.existsSync(TTS_CACHE_DIR)) {
+      fs.mkdirSync(TTS_CACHE_DIR, { recursive: true });
     }
-    attempts++;
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second between checks
-  }
-  
-  console.error("❌ Ollama failed to load within timeout");
-  return false;
+  } catch (_) {}
 }
 
-async function waitForLLM() {
-  if (LLM_PROVIDER === "openai") {
-    if (!OPENAI_API_KEY) {
-      console.error("❌ OPENAI_API_KEY is required when LLM_PROVIDER=openai");
-      return false;
-    }
-
-    console.log(`⏳ Checking OpenAI access for model: ${OPENAI_MODEL}...`);
-    const ok = await checkOpenAIReady();
-    if (ok) {
-      console.log("✅ OpenAI is reachable and ready!");
-      return true;
-    }
-    console.error("❌ OpenAI check failed (invalid key/model or network issue)");
-    return false;
-  }
-
-  return waitForOllama();
+function ttsCacheKey(text) {
+  return crypto.createHash("sha256").update(text).digest("hex").slice(0, 16);
 }
 
-async function askOpenAI(messages) {
-  const response = await axios.post(
-    `${OPENAI_BASE_URL}/chat/completions`,
-    {
-      model: OPENAI_MODEL,
-      messages,
-      // Keep replies short for voice.
-      max_tokens: 220,
-      temperature: 0.7,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      timeout: 60 * 1000,
-    }
-  );
-
-  const content = response?.data?.choices?.[0]?.message?.content;
-  if (!content) {
-    throw new Error("OpenAI returned no message content");
-  }
-
-  return content.trim();
+function ttsCachePath(text) {
+  return path.join(TTS_CACHE_DIR, `${ttsCacheKey(text)}.mp3`);
 }
 
-async function askOllama(messages) {
-  const response = await axios.post(
-    OLLAMA_URL,
-    {
-      model: OLLAMA_MODEL,
-      messages,
-      stream: false,
-    },
-    {
-      // CPU-only can be slow; avoid socket hangups on longer generations.
-      timeout: 10 * 60 * 1000,
-    }
-  );
-
-  const content = response?.data?.message?.content;
-  if (!content) {
-    throw new Error("Ollama returned no message content");
-  }
-
-  return content.trim();
-}
-
-async function askDM(guildId, userMessage, playerName) {
-  const session = getSession(guildId);
-
-  const fullMessage = `${playerName} says: "${userMessage}"`;
-  addToHistory(guildId, "user", fullMessage);
-
-  try {
-    const messages = [
-      { role: "system", content: buildSystemPrompt() },
-      ...session.history,
-    ];
-
-    const reply =
-      LLM_PROVIDER === "openai" ? await askOpenAI(messages) : await askOllama(messages);
-
-    addToHistory(guildId, "assistant", reply);
-    return reply;
-
-  } catch (err) {
-    const providerLabel = LLM_PROVIDER === "openai" ? "OpenAI" : "Ollama";
-    console.error(`${providerLabel} error:`, err.message);
-    return "The ancient tomes are silent... (the LLM is unavailable right now)";
-  }
-}
-
-// ============================================================
-//  ELEVENLABS — DM VOICE
-// ============================================================
+initTTSCache();
 
 async function textToSpeech(text) {
+  const cleanText = sanitizeLLMOutput(text);
+  if (!cleanText) return null;
+
+  const cacheFile = ttsCachePath(cleanText);
+
+  // Serve from cache if available.
+  if (fs.existsSync(cacheFile)) {
+    return cacheFile;
+  }
+
   const outputPath = path.join(__dirname, "dm_response.mp3");
 
   try {
     const response = await axios.post(
       `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`,
       {
-        text,
+        text: cleanText,
         model_id: "eleven_multilingual_v2",
         voice_settings: {
           stability: 0.4,
@@ -325,6 +229,9 @@ async function textToSpeech(text) {
       return null;
     }
 
+    // Cache the audio.
+    fs.writeFileSync(cacheFile, buf);
+    // Also write to the live playback path.
     fs.writeFileSync(outputPath, buf);
     return outputPath;
 
@@ -342,6 +249,274 @@ async function textToSpeech(text) {
 }
 
 // ============================================================
+//  LLM — AI BRAIN
+// ============================================================
+
+let ollamaReady = false;
+
+async function checkOpenAIReady() {
+  if (!OPENAI_API_KEY) return false;
+  try {
+    const response = await axios.get(`${OPENAI_BASE_URL}/models/${OPENAI_MODEL}`, {
+      headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
+      timeout: 5000,
+    });
+    return response.status === 200;
+  } catch (_) {
+    return false;
+  }
+}
+
+async function checkOllamaReady() {
+  try {
+    const tagsUrl = new URL(OLLAMA_URL);
+    tagsUrl.pathname = "/api/tags";
+    const response = await axios.get(tagsUrl.toString(), { timeout: 5000 });
+    const models = response?.data?.models || [];
+    const want = OLLAMA_MODEL;
+    return models.some((m) => {
+      const name = m?.name || "";
+      if (!name) return false;
+      return want.includes(":") ? name === want : name.startsWith(`${want}:`);
+    });
+  } catch (_) {
+    return false;
+  }
+}
+
+async function waitForOllama() {
+  console.log("⏳ Waiting for Ollama to be ready...");
+  let attempts = 0;
+  const maxAttempts = 120;
+  while (!ollamaReady && attempts < maxAttempts) {
+    if (await checkOllamaReady()) {
+      ollamaReady = true;
+      console.log("✅ Ollama model loaded and ready!");
+      return true;
+    }
+    attempts++;
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+  console.error("❌ Ollama failed to load within timeout");
+  return false;
+}
+
+async function waitForLLM() {
+  if (LLM_PROVIDER === "openai") {
+    if (!OPENAI_API_KEY) {
+      console.error("❌ OPENAI_API_KEY is required when LLM_PROVIDER=openai");
+      return false;
+    }
+    console.log(`⏳ Checking OpenAI access for model: ${OPENAI_MODEL}...`);
+    const ok = await checkOpenAIReady();
+    if (ok) {
+      console.log("✅ OpenAI is reachable and ready!");
+      return true;
+    }
+    console.error("❌ OpenAI check failed (invalid key/model or network issue)");
+    return false;
+  }
+  return waitForOllama();
+}
+
+// ---- OpenAI (streaming + prompt caching) ----
+
+async function* streamOpenAI(messages) {
+  const systemContent = buildSystemPrompt();
+  // Mark the system prompt for OpenAI's prompt caching (saves tokens on repeat calls).
+  const cachedMessages = [
+    { role: "system", content: systemContent, cache_control: { type: "ephemeral" } },
+    ...messages.slice(1), // strip the system message we just prepended
+  ];
+
+  const response = await axios.post(
+    `${OPENAI_BASE_URL}/chat/completions`,
+    {
+      model: OPENAI_MODEL,
+      messages: cachedMessages,
+      max_tokens: 220,
+      temperature: 0.7,
+      stream: true,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      responseType: "stream",
+      timeout: 60 * 1000,
+    }
+  );
+
+  const stream = response.data;
+  stream.on("error", (err) => {
+    // Error events may fire after stream has ended; handled via generator return.
+  });
+
+  let buffer = "";
+  for await (const chunk of stream) {
+    const text = chunk.toString();
+    const lines = text.split("\n");
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const data = line.slice(6).trim();
+      if (data === "[DONE]") return;
+      try {
+        const parsed = JSON.parse(data);
+        const token = parsed?.choices?.[0]?.delta?.content;
+        if (token) {
+          buffer += token;
+          yield token;
+        }
+      } catch (_) {}
+    }
+  }
+
+  return buffer;
+}
+
+// ---- Ollama (streaming) ----
+
+async function* streamOllama(messages) {
+  const response = await axios.post(
+    OLLAMA_URL,
+    {
+      model: OLLAMA_MODEL,
+      messages,
+      stream: true,
+    },
+    {
+      headers: { "Content-Type": "application/json" },
+      responseType: "stream",
+      timeout: 10 * 60 * 1000,
+    }
+  );
+
+  const stream = response.data;
+  let buffer = "";
+  for await (const chunk of stream) {
+    const text = chunk.toString();
+    const lines = text.split("\n");
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const data = line.slice(6).trim();
+      if (!data || data === "[DONE]") continue;
+      try {
+        const parsed = JSON.parse(data);
+        const token = parsed?.message?.content;
+        if (token) {
+          buffer += token;
+          yield token;
+        }
+      } catch (_) {}
+    }
+  }
+
+  return buffer;
+}
+
+// ---- Unified streaming askDM ----
+
+// onToken: called for each token as it arrives.
+// Returns the (possibly updated) accumulated text so far.
+async function askDMStream(guildId, userMessage, playerName, onToken) {
+  const session = getSession(guildId);
+  const fullMessage = `${playerName} says: "${userMessage}"`;
+  addToHistory(guildId, "user", fullMessage);
+
+  const messages = [
+    { role: "system", content: buildSystemPrompt() },
+    ...session.history,
+  ];
+
+  let fullText = "";
+
+  try {
+    const generator =
+      LLM_PROVIDER === "openai" ? streamOpenAI(messages) : streamOllama(messages);
+
+    for await (const token of generator) {
+      fullText += token;
+      if (onToken) {
+        const updated = onToken(fullText);
+        if (updated !== undefined) fullText = updated;
+      }
+    }
+
+    const reply = sanitizeLLMOutput(fullText);
+    addToHistory(guildId, "assistant", reply);
+    return reply;
+
+  } catch (err) {
+    const label = LLM_PROVIDER === "openai" ? "OpenAI" : "Ollama";
+    console.error(`${label} error:`, err.message);
+    return "The ancient tomes are silent... (the LLM is unavailable right now)";
+  }
+}
+
+// ---- Non-streaming fallback (still used for readiness checks) ----
+
+async function askOpenAI(messages) {
+  const response = await axios.post(
+    `${OPENAI_BASE_URL}/chat/completions`,
+    {
+      model: OPENAI_MODEL,
+      messages,
+      max_tokens: 220,
+      temperature: 0.7,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      timeout: 60 * 1000,
+    }
+  );
+  const content = response?.data?.choices?.[0]?.message?.content;
+  if (!content) throw new Error("OpenAI returned no message content");
+  return content.trim();
+}
+
+async function askOllama(messages) {
+  const response = await axios.post(
+    OLLAMA_URL,
+    {
+      model: OLLAMA_MODEL,
+      messages,
+      stream: false,
+    },
+    {
+      timeout: 10 * 60 * 1000,
+    }
+  );
+  const content = response?.data?.message?.content;
+  if (!content) throw new Error("Ollama returned no message content");
+  return content.trim();
+}
+
+async function askDM(guildId, userMessage, playerName) {
+  const session = getSession(guildId);
+  const fullMessage = `${playerName} says: "${userMessage}"`;
+  addToHistory(guildId, "user", fullMessage);
+  try {
+    const messages = [
+      { role: "system", content: buildSystemPrompt() },
+      ...session.history,
+    ];
+    const reply =
+      LLM_PROVIDER === "openai" ? await askOpenAI(messages) : await askOllama(messages);
+    const cleaned = sanitizeLLMOutput(reply);
+    addToHistory(guildId, "assistant", cleaned);
+    return cleaned;
+  } catch (err) {
+    const label = LLM_PROVIDER === "openai" ? "OpenAI" : "Ollama";
+    console.error(`${label} error:`, err.message);
+    return "The ancient tomes are silent... (the LLM is unavailable right now)";
+  }
+}
+
+// ============================================================
 //  DISCORD VOICE — PLAYBACK
 // ============================================================
 
@@ -349,14 +524,9 @@ async function speakInVoice(connection, audioFilePath) {
   return new Promise((resolve, reject) => {
     const player = createAudioPlayer();
     const resource = createAudioResource(audioFilePath);
-
     player.play(resource);
     connection.subscribe(player);
-
-    player.on(AudioPlayerStatus.Idle, () => {
-      resolve();
-    });
-
+    player.on(AudioPlayerStatus.Idle, resolve);
     player.on("error", (err) => {
       console.error("Audio player error:", err.message);
       reject(err);
@@ -378,18 +548,14 @@ async function transcribeAudio(audioBuffer) {
   try {
     const { OpenAI } = require("openai");
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
     const tmpPath = path.join(__dirname, "player_input.wav");
     fs.writeFileSync(tmpPath, audioBuffer);
-
     const transcription = await openai.audio.transcriptions.create({
       file: fs.createReadStream(tmpPath),
       model: "whisper-1",
     });
-
     fs.unlinkSync(tmpPath);
     return transcription.text;
-
   } catch (err) {
     console.error("Whisper transcription error:", err.message);
     return null;
@@ -410,7 +576,7 @@ const client = new Client({
   ],
 });
 
-// Store active voice connections per guild
+// Store active voice connections per guild.
 const connections = {};
 
 const commands = [
@@ -487,28 +653,26 @@ client.once(Events.ClientReady, async (c) => {
 
   try {
     console.log("Registering slash commands...");
-    await rest.put(
-      Routes.applicationCommands(c.user.id),
-      { body: commands }
-    );
+    await rest.put(Routes.applicationCommands(c.user.id), { body: commands });
     console.log("Slash commands registered globally ✅");
   } catch (err) {
     console.error("Failed to register commands:", err.message);
   }
 
-  // Start waiting for the LLM in the background
   (async () => {
     const ready = await waitForLLM();
     if (ready) {
-      // Find a channel to send the ready message to
       for (const guild of c.guilds.cache.values()) {
-        // Try to find a general or first text channel
         const channel = guild.channels.cache.find(
-          ch => ch.isTextBased() && ch.permissionsFor(guild.members.me).has("SendMessages")
+          (ch) =>
+            ch.isTextBased() &&
+            ch.permissionsFor(guild.members.me).has("SendMessages")
         );
         if (channel) {
           try {
-            await channel.send("🎲 **The Dungeon Master has arrived!** The ancient tomes glow with arcane energy. The model is ready. Type `/help` to see available commands, or `/join` to begin your adventure!");
+            await channel.send(
+              "🎲 **The Dungeon Master has arrived!** The ancient tomes glow with arcane energy. The model is ready. Type `/help` to see available commands, or `/join` to begin your adventure!"
+            );
             console.log(`✅ Ready message sent to ${guild.name}`);
           } catch (err) {
             console.error(`Failed to send ready message: ${err.message}`);
@@ -533,7 +697,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 
   const session = getSession(guildId);
-  const playerName = interaction.member?.displayName || interaction.user.username;
+  const playerName =
+    interaction.member?.displayName || interaction.user.username;
   const commandName = interaction.commandName;
 
   // ----------------------------------------------------------
@@ -548,18 +713,25 @@ client.on(Events.InteractionCreate, async (interaction) => {
     try {
       const connection = joinVoiceChannel({
         channelId: voiceChannel.id,
-        guildId: guildId,
-        adapterCreator: interaction.guild.voiceAdapterCreator,
-        selfDeaf: false,
+        guildId: voiceChannel.guild.id,
+        adapterCreator: voiceChannel.guild.voiceAdapterCreator,
       });
 
       connections[guildId] = connection;
-      await entersState(connection, VoiceConnectionStatus.Ready, 10_000);
-      interaction.reply(`🎲 The Dungeon Master has entered **${voiceChannel.name}**! Type \`/startgame\` to begin your adventure.`);
 
+      connection.on(VoiceConnectionStatus.Ready, () => {
+        console.log(`Connected to voice in guild ${guildId}`);
+      });
+
+      await entersState(connection, VoiceConnectionStatus.Ready, 30_000);
+      await interaction.reply(
+        `🎲 The Dungeon Master has entered **${voiceChannel.name}**! Type \`/startgame\` to begin your adventure.`
+      );
     } catch (err) {
       console.error("Voice join error:", err);
-      interaction.reply("Couldn't join the voice channel. Check bot permissions.");
+      interaction.reply(
+        "Couldn't join the voice channel. Check bot permissions."
+      );
     }
     return;
   }
@@ -573,7 +745,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
       connection.destroy();
       delete connections[guildId];
       sessions[guildId] = null;
-      interaction.reply("The Dungeon Master has departed. Farewell, adventurers.");
+      interaction.reply(
+        "The Dungeon Master has departed. Farewell, adventurers."
+      );
     } else {
       interaction.reply("I'm not in a voice channel.");
     }
@@ -586,26 +760,37 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (commandName === "startgame") {
     const connection = connections[guildId];
     if (!connection) {
-      return interaction.reply("Type `/join` first so I can speak in your voice channel.");
+      return interaction.reply(
+        "Type `/join` first so I can speak in your voice channel."
+      );
     }
 
     session.active = true;
     session.history = [];
 
-    await interaction.reply("⚔️ **The adventure begins...** Listen closely, adventurers.");
-
-    const intro = await askDM(
-      guildId,
-      "Begin the adventure. Introduce the setting dramatically and ask the players who they are.",
-      "Game Master"
+    await interaction.reply(
+      "⚔️ **The adventure begins...** Listen closely, adventurers."
     );
 
-    const audioFile = await textToSpeech(intro);
+    // Track accumulated text for display.
+    let dmText = "";
+    const reply = await askDMStream(
+      guildId,
+      "Begin the adventure. Introduce the setting dramatically and ask the players who they are.",
+      "Game Master",
+      (text) => {
+        dmText = text;
+      }
+    );
+
+    // Show the full response in text channel.
+    interaction.channel.send(`📜 *${reply}*`);
+
+    // TTS + voice playback.
+    const audioFile = await textToSpeech(reply);
     if (audioFile) {
       await speakInVoice(connection, audioFile);
     }
-
-    interaction.channel.send(`📜 *${intro}*`);
     return;
   }
 
@@ -614,12 +799,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
   // ----------------------------------------------------------
   if (commandName === "action") {
     if (!session.active) {
-      return interaction.reply("No game is running. Type `/startgame` to begin.");
+      return interaction.reply(
+        "No game is running. Type `/startgame` to begin."
+      );
     }
 
     const connection = connections[guildId];
     if (!connection) {
-      return interaction.reply("Bot isn't in a voice channel. Type `/join` first.");
+      return interaction.reply(
+        "Bot isn't in a voice channel. Type `/join` first."
+      );
     }
 
     const action = interaction.options.getString("what");
@@ -627,14 +816,22 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     await interaction.reply(`⚔️ *${playerName}: "${action}"*`);
 
-    const dmResponse = await askDM(guildId, action, playerName);
+    let dmText = "";
+    const reply = await askDMStream(
+      guildId,
+      action,
+      playerName,
+      (text) => {
+        dmText = text;
+      }
+    );
 
-    const audioFile = await textToSpeech(dmResponse);
+    interaction.channel.send(`📜 **DM:** *${reply}*`);
+
+    const audioFile = await textToSpeech(reply);
     if (audioFile) {
       await speakInVoice(connection, audioFile);
     }
-
-    interaction.channel.send(`📜 **DM:** *${dmResponse}*`);
     return;
   }
 
@@ -646,7 +843,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const [numDice, diceSides] = diceArg.toLowerCase().split("d").map(Number);
 
     if (!numDice || !diceSides) {
-      return interaction.reply("Invalid dice format. Try `/roll 1d20` or `/roll 2d6`");
+      return interaction.reply(
+        "Invalid dice format. Try `/roll 1d20` or `/roll 2d6`"
+      );
     }
 
     let total = 0;
@@ -661,18 +860,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
     await interaction.reply(`🎲 ${rollText}`);
 
     if (session.active && connections[guildId]) {
-      const dmResponse = await askDM(
+      const reply = await askDM(
         guildId,
         `I rolled ${diceArg} and got a ${total}.`,
         playerName
       );
 
-      const audioFile = await textToSpeech(dmResponse);
+      const audioFile = await textToSpeech(reply);
       if (audioFile) {
         await speakInVoice(connections[guildId], audioFile);
       }
 
-      interaction.channel.send(`📜 **DM:** *${dmResponse}*`);
+      interaction.channel.send(`📜 **DM:** *${reply}*`);
     }
     return;
   }
@@ -683,7 +882,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (commandName === "status") {
     const msgCount = session.history.length;
     const isActive = session.active ? "Active ⚔️" : "No game running";
-    interaction.reply(`**Game Status:** ${isActive}\n**Story exchanges so far:** ${msgCount / 2}\nType \`/action [what you do]\` to play.`);
+    interaction.reply(
+      `**Game Status:** ${isActive}\n**Story exchanges so far:** ${Math.floor(
+        msgCount / 2
+      )}\nType \`/action [what you do]\` to play.`
+    );
     return;
   }
 
@@ -692,7 +895,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
   // ----------------------------------------------------------
   if (commandName === "resetgame") {
     sessions[guildId] = null;
-    interaction.reply("🗑️ Game state cleared. Type `/startgame` to begin a new adventure.");
+    interaction.reply(
+      "🗑️ Game state cleared. Type `/startgame` to begin a new adventure."
+    );
     return;
   }
 
@@ -700,10 +905,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
   //  /reloadnotes — Reload world_notes.txt without restarting
   // ----------------------------------------------------------
   if (commandName === "reloadnotes") {
+    invalidateSystemPromptCache();
     reloadWorldNotes();
     const status = worldNotes
       ? `✅ World notes reloaded! (${worldNotes.length} characters loaded)`
-      : "⚠️ No world_notes.txt found. Create one in your bot folder.";
+      : "⚠️ No world_notes.txt found.";
     interaction.reply(status);
     return;
   }
@@ -728,9 +934,5 @@ client.on(Events.InteractionCreate, async (interaction) => {
     return;
   }
 });
-
-// ============================================================
-//  LOGIN
-// ============================================================
 
 client.login(DISCORD_TOKEN);

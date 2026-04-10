@@ -6,6 +6,7 @@ node_modules/
 # Runtime artifacts
 dm_response.mp3
 player_input.wav
+tts_cache/
 
 # Compose (may contain secrets/infrastructure-specific config)
 docker-compose.yml

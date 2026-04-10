@@ -108,3 +108,13 @@ If you want to run the bot locally without Docker (for development):
 - `node_modules/` is intentionally not committed. Docker handles all native dependency compilation.
 - The bot writes `dm_response.mp3` at runtime for voice synthesis.
 - Edit `world_notes.txt` to customize world lore, NPCs, and maps.
+
+## Optimizations
+
+The bot uses several techniques to keep responses fast and costs low:
+
+- **World notes in-memory cache** — `world_notes.txt` is read once and cached in memory. Use `/reloadnotes` to pick up changes mid-session without restarting.
+- **System prompt caching** — The compiled system prompt is cached and only rebuilt when `world_notes.txt` changes. With OpenAI, the system message is also sent with `cache_control` for additional prompt-caching savings.
+- **TTS audio caching** — Repeated DM responses (identical text) are served from `tts_cache/` without calling ElevenLabs. Cache files are keyed by SHA-256 hash of the text.
+- **Streaming LLM responses** — Both OpenAI and Ollama use streaming (`stream: true`). Tokens arrive progressively, reducing perceived latency on long responses.
+- **History truncation** — Conversation history is capped at 20 messages. Older turns are dropped from the tail to stay within context limits.

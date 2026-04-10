@@ -1,13 +1,11 @@
 # ============================================================
 #  WORLD NOTES — Dungeon Master Reference Sheet
 #  The bot reads this file every time it responds.
-#  Edit freely. Use !reloadnotes in Discord to reload mid-session.
+#  Edit freely. Use /reloadnotes in Discord to reload mid-session.
 #  Lines starting with # are comments and won't affect the DM.
 # ============================================================
 
-
-=== CAMPAIGN NAME ===
-The Curse of Ashmore Keep
+=== TITLE: The Curse of Ashmore Keep ===
 
 
 === SETTING ===

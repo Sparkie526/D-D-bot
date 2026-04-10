@@ -43,6 +43,7 @@ const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || "https://api.openai.com/v
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID;
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
+const WORLD_FILE = process.env.WORLD_FILE || null; // Specific world file, or null for random
 
 // How many past messages to remember (keeps token use low).
 // Older messages are dropped from the tail to stay within context.
@@ -74,42 +75,102 @@ function getRandomEndgameRemark() {
 }
 
 // ============================================================
-//  WORLD NOTES — Load from world_notes.txt (in-memory cache)
+//  WORLD NOTES — Load from worlds/ folder (in-memory cache)
 // ============================================================
 
-const WORLD_NOTES_PATH = path.join(__dirname, "world_notes.txt");
+const WORLDS_PATH = path.join(__dirname, "worlds");
 let worldNotes = "";
-let lastWorldNotesMtime = null;
+let currentWorldName = null;
+let worldsCache = {};
+let lastWorldsMtimes = {};
 
-function loadWorldNotes() {
+function getAllWorlds() {
   try {
-    if (!fs.existsSync(WORLD_NOTES_PATH)) {
-      worldNotes = "";
-      lastWorldNotesMtime = null;
-      console.log("📖 No world_notes.txt found — starting with no reference material.");
-      console.log("   Create a world_notes.txt file in your bot folder to add maps, NPCs, lore etc.");
-      return;
+    if (!fs.existsSync(WORLDS_PATH)) {
+      fs.mkdirSync(WORLDS_PATH, { recursive: true });
+      return [];
     }
-    const stat = fs.statSync(WORLD_NOTES_PATH);
-    // Skip re-read if file hasn't changed since last load.
-    if (lastWorldNotesMtime !== null && stat.mtimeMs === lastWorldNotesMtime) {
-      return;
-    }
-    worldNotes = fs.readFileSync(WORLD_NOTES_PATH, "utf-8").trim();
-    lastWorldNotesMtime = stat.mtimeMs;
-    console.log(`📖 World notes loaded (${worldNotes.length} characters)`);
+    const files = fs.readdirSync(WORLDS_PATH);
+    return files
+      .filter(file => file.endsWith(".txt") && file !== "TEMPLATE.txt")
+      .sort();
   } catch (err) {
-    console.error("Failed to load world_notes.txt:", err.message);
+    console.error("Failed to list worlds:", err.message);
+    return [];
   }
 }
 
-function reloadWorldNotes() {
-  lastWorldNotesMtime = null; // force re-read
-  loadWorldNotes();
+function getWorldTitle(filePath) {
+  try {
+    const content = fs.readFileSync(filePath, "utf-8");
+    const match = content.match(/===\s*TITLE:\s*(.+?)\s*===/);
+    return match ? match[1] : path.basename(filePath, ".txt");
+  } catch (err) {
+    return path.basename(filePath, ".txt");
+  }
 }
 
-// Load notes on startup.
-loadWorldNotes();
+function loadWorld(worldFile) {
+  try {
+    const filePath = path.join(WORLDS_PATH, worldFile);
+    if (!fs.existsSync(filePath)) {
+      console.error(`World file not found: ${worldFile}`);
+      return "";
+    }
+    
+    const stat = fs.statSync(filePath);
+    // Skip re-read if file hasn't changed since last load.
+    if (lastWorldsMtimes[worldFile] && stat.mtimeMs === lastWorldsMtimes[worldFile]) {
+      return worldsCache[worldFile] || "";
+    }
+    
+    const content = fs.readFileSync(filePath, "utf-8").trim();
+    const title = getWorldTitle(filePath);
+    
+    worldsCache[worldFile] = content;
+    lastWorldsMtimes[worldFile] = stat.mtimeMs;
+    currentWorldName = title;
+    
+    console.log(`📖 World loaded: "${title}" (${content.length} characters)`);
+    return content;
+  } catch (err) {
+    console.error(`Failed to load world ${worldFile}:`, err.message);
+    return "";
+  }
+}
+
+function loadRandomWorld() {
+  const worlds = getAllWorlds();
+  if (worlds.length === 0) {
+    console.log("📖 No worlds found in worlds/ folder.");
+    console.log("   Copy worlds/TEMPLATE.txt to create a new world.");
+    worldNotes = "";
+    currentWorldName = null;
+    return;
+  }
+  
+  let worldToLoad;
+  if (WORLD_FILE && worlds.includes(WORLD_FILE)) {
+    worldToLoad = WORLD_FILE;
+    console.log(`📖 Using world specified in WORLD_FILE: ${WORLD_FILE}`);
+  } else if (WORLD_FILE) {
+    console.warn(`⚠️ WORLD_FILE="${WORLD_FILE}" not found. Using random world instead.`);
+    worldToLoad = worlds[Math.floor(Math.random() * worlds.length)];
+  } else {
+    worldToLoad = worlds[Math.floor(Math.random() * worlds.length)];
+  }
+  
+  worldNotes = loadWorld(worldToLoad);
+}
+
+function reloadWorldNotes() {
+  worldsCache = {};
+  lastWorldsMtimes = {};
+  loadRandomWorld();
+}
+
+// Load a random world on startup.
+loadRandomWorld();
 
 // ============================================================
 //  BUILD SYSTEM PROMPT — Combines DM personality + world notes
@@ -770,6 +831,10 @@ const commands = [
     description: "End the current game gracefully with a DM farewell",
   },
   {
+    name: "showworlds",
+    description: "List all available worlds",
+  },
+  {
     name: "help",
     description: "Show all commands",
   },
@@ -1166,6 +1231,32 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 
   // ----------------------------------------------------------
+  //  /showworlds — List all available worlds
+  // ----------------------------------------------------------
+  if (commandName === "showworlds") {
+    const worlds = getAllWorlds();
+    if (worlds.length === 0) {
+      return interaction.reply(
+        "📖 No worlds found! Copy `worlds/TEMPLATE.txt` and give it a name to create a new world."
+      );
+    }
+    
+    const worldsList = worlds.map((world, idx) => {
+      const title = getWorldTitle(path.join(WORLDS_PATH, world));
+      return `${idx + 1}. **${title}** (\`${world}\`)`;
+    }).join("\n");
+    
+    interaction.reply(`
+📖 **Available Worlds:**
+
+${worldsList}
+
+Use \`/startgame\` to start with a random world, or set \`WORLD_FILE\` in your .env to choose a specific one (e.g., \`ashmore_keep.txt\`).
+    `.trim());
+    return;
+  }
+
+  // ----------------------------------------------------------
   //  /help — Show all commands
   // ----------------------------------------------------------
   if (commandName === "help") {
@@ -1181,7 +1272,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
 \`/status\` — Check if a game is running
 \`/endgame\` — End the game gracefully with a DM farewell
 \`/resetgame\` — Wipe the current game and start fresh
-\`/reloadnotes\` — Reload world_notes.txt without restarting the bot
+\`/showworlds\` — List all available worlds
+\`/reloadnotes\` — Reload world files without restarting the bot
 \`/help\` — Show this message
     `.trim());
     return;

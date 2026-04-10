@@ -1,0 +1,85 @@
+# ============================================================
+#  WORLD TEMPLATE
+#  Copy this file to create a new world. Rename it to your world name.
+#  The first line (title) is required and must start with "=== TITLE: "
+#  Edit freely. Use /reloadnotes to reload mid-session without restarting.
+#  Lines starting with # are comments and won't affect the DM.
+# ============================================================
+
+=== TITLE: Your World Name Here ===
+
+=== SETTING ===
+Describe the overall tone and geography of your world. What's the climate? What's the political situation? What's the general vibe?
+
+Example: A coastal kingdom plagued by storms, where sailors whisper of strange creatures in the deep.
+
+=== CURRENT QUEST ===
+What's the main adventure hook? What are the players hired or asked to do?
+
+Example: The players have been hired by the Harbor Master to investigate why ships are going missing near Devil's Reef.
+
+=== MAP — MAJOR LOCATION 1 ===
+
+AREA/ROOM 1
+  Description of the location and what's here.
+  Exits: Where players can go from here.
+  Contains: Objects, NPCs, enemies.
+  Secrets: Hidden information.
+
+AREA/ROOM 2
+  Description.
+  Exits: Where players can go.
+  Contains: Objects, NPCs, enemies.
+  Secrets: Hidden information.
+
+=== MAP — MAJOR LOCATION 2 ===
+
+AREA/ROOM 1
+  Description.
+  Exits: Where players can go.
+  Contains: Objects, NPCs, enemies.
+  Secrets: Hidden information.
+
+=== NPCS ===
+
+NPC NAME (Role/Title)
+  Personality: How do they talk and act?
+  Knows: What information do they have?
+  Secret: What don't they want players to know?
+  Will offer: What can they give/do for the party?
+
+NPC NAME 2 (Role/Title)
+  Personality: How do they talk and act?
+  Knows: What information do they have?
+  Secret: What don't they want players to know?
+  Will offer: What can they give/do for the party?
+
+=== BOSSES & ENCOUNTERS ===
+
+BOSS NAME (Challenge Level)
+  Description: Physical appearance and aura.
+  Stats: Health estimate, special abilities.
+  Weakness: How can players defeat them?
+  Loot: What do they drop?
+  Story: Why are they important?
+
+=== HOUSE RULES ===
+- Any special rules for this world?
+- Custom mechanics?
+- Difficulty tweaks?
+
+Example:
+- Critical hits deal maximum damage on both dice rolls
+- Players can attempt any creative action even without a matching skill
+
+=== TONE NOTES FOR THE DM ===
+- What's the overall tone? (Dark, whimsical, comedic, etc.)
+- How should NPCs behave?
+- What should the DM reward?
+- What's the style of combat?
+
+Example:
+- This world leans toward dark fantasy with moments of dark humor
+- NPCs are morally gray—even villains have good reasons for their actions
+- Reward creative thinking over combat
+- Combats should be dangerous and dramatic

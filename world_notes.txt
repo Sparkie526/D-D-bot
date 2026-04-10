@@ -10,12 +10,6 @@
 The Curse of Ashmore Keep
 
 
-=== NUMBER OF PLAYERS IN THE CAMPAIGN ===
-2 Players
-Scarp
-Dex
-
-
 === SETTING ===
 A dark fantasy world. The town of Millhaven sits on the edge of a cursed forest.
 The locals are superstitious and fearful. Strange disappearances have been happening for weeks.

@@ -102,6 +102,7 @@ function buildSystemPrompt() {
 Your personality is wise, mysterious, and theatrical — like a storyteller around a campfire.
 Keep your responses concise (2-4 sentences max) since they will be spoken aloud in a voice chat.
 IMPORTANT: Prioritize grammatically correct, complete sentences above all else. Ensure every response is polished and flows naturally.
+Always address ONLY the players present in the game. Do not mention or reference any NPCs or players who are not actively participating.
 Always end your response by either:
    - Describing what happens next and asking what the players do, OR
    - Asking for a dice roll (e.g. "Roll for Perception")
@@ -154,6 +155,7 @@ function getSession(guildId) {
       history: [],       // Chat history sent to LLM
       players: {},        // { userId: characterName }
       originalNicknames: {}, // { userId: originalNickname } for reverting
+      activePlayers: [],  // Array of { userId, displayName, characterName } currently in voice channel
       active: false,      // Is a game running?
     };
   }
@@ -166,6 +168,12 @@ function addToHistory(guildId, role, content) {
   if (session.history.length > MAX_HISTORY) {
     session.history = session.history.slice(-MAX_HISTORY);
   }
+}
+
+function getPlayerDisplayName(guildId, userId) {
+  const session = getSession(guildId);
+  // Return character name if set, otherwise return Discord display name
+  return session.players[userId] || null;
 }
 
 // ============================================================
@@ -839,8 +847,31 @@ client.on(Events.InteractionCreate, async (interaction) => {
       );
     }
 
+    // Detect active players in the voice channel
+    const voiceChannel = interaction.member?.voice?.channel;
+    if (!voiceChannel) {
+      return interaction.reply("You must be in a voice channel to start the game!");
+    }
+
+    const voiceMembers = voiceChannel.members.filter(m => !m.user.bot);
+    if (voiceMembers.size === 0) {
+      return interaction.reply("There are no players in the voice channel!");
+    }
+
+    // Build active players list with character names or Discord display names
+    session.activePlayers = voiceMembers.map(member => {
+      const characterName = session.players[member.id] || (member.nickname || member.user.username);
+      return {
+        userId: member.id,
+        displayName: member.nickname || member.user.username,
+        characterName: characterName,
+      };
+    });
+
     session.active = true;
     session.history = [];
+
+    const playerNames = session.activePlayers.map(p => p.characterName).join(" and ");
 
     await interaction.reply(
       "⚔️ **The adventure begins...** Listen closely, adventurers."
@@ -850,11 +881,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
     let dmText = "";
     const reply = await askDMStream(
       guildId,
-      "Begin the adventure. Introduce the setting dramatically and ask the players who they are.",
-      "Game Master",
-      (text) => {
-        dmText = text;
-      }
+      `Begin the adventure. The players present are: ${playerNames}. Introduce the setting dramatically and ask them who they are if you haven't heard their introductions yet.`,
+      "Game Master"
     );
 
     // Show the full response in text channel.

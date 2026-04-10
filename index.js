@@ -267,6 +267,8 @@ function getSession(guildId) {
       active: false,      // Is a game running?
       nameCollectionActive: false, // Currently waiting for player names
       nameCollectionTimeout: null, // Timer for auto-proceeding with missing names
+      currentLocation: "generic", // Current location for ambient sounds
+      ambientSoundPlayer: null, // Currently playing ambient sound (for stopping)
     };
   }
   return sessions[guildId];
@@ -307,7 +309,7 @@ async function proceedAfterNames(interaction, guildId, connection) {
     "Game Master"
   );
   
-  await sendDMResponseWithVoice(interaction, connection, reply);
+  await sendDMResponseWithVoice(interaction, connection, reply, guildId);
 }
 
 // ============================================================
@@ -333,6 +335,49 @@ function ttsCachePath(text) {
 }
 
 initTTSCache();
+
+// ============================================================
+//  AMBIENT SOUNDS — Location-based background ambiance
+// ============================================================
+
+const AMBIENT_SOUNDS_DIR = path.join(__dirname, "ambient_sounds");
+const LOCATION_KEYWORDS = {
+  dungeon: ["dungeon", "catacomb", "crypt", "underground", "cellar", "vault"],
+  forest: ["forest", "woods", "wilderness", "tree", "outside", "outdoor"],
+  tavern: ["tavern", "inn", "bar", "pub", "ale house"],
+  town: ["town", "city", "village", "marketplace", "street", "road"],
+  cave: ["cave", "cavern", "grotto"],
+  generic: ["room", "hall", "chamber", "corridor"],
+};
+
+function detectLocationFromText(text) {
+  const lowerText = text.toLowerCase();
+  for (const [location, keywords] of Object.entries(LOCATION_KEYWORDS)) {
+    for (const keyword of keywords) {
+      if (lowerText.includes(keyword)) {
+        return location;
+      }
+    }
+  }
+  return "generic";
+}
+
+function getRandomAmbientSound(location) {
+  try {
+    const locationPath = path.join(AMBIENT_SOUNDS_DIR, location);
+    if (!fs.existsSync(locationPath)) {
+      return null;
+    }
+    const files = fs.readdirSync(locationPath)
+      .filter(f => f.endsWith(".mp3") || f.endsWith(".wav"));
+    if (files.length === 0) return null;
+    const randomFile = files[Math.floor(Math.random() * files.length)];
+    return path.join(locationPath, randomFile);
+  } catch (err) {
+    console.warn(`Failed to get ambient sound for ${location}:`, err.message);
+    return null;
+  }
+}
 
 async function textToSpeech(text) {
   const cleanText = sanitizeLLMOutput(text);
@@ -392,9 +437,18 @@ async function textToSpeech(text) {
   }
 }
 
-async function sendDMResponseWithVoice(interaction, connection, dmText) {
+async function sendDMResponseWithVoice(interaction, connection, dmText, guildId) {
   // Send the text response
   interaction.channel.send(`📜 **DM:** *${dmText}*`);
+  
+  // Detect location from the DM response and update session
+  if (guildId) {
+    const session = getSession(guildId);
+    const detectedLocation = detectLocationFromText(dmText);
+    if (detectedLocation !== session.currentLocation) {
+      session.currentLocation = detectedLocation;
+    }
+  }
   
   // Try to send voice
   const audioFile = await textToSpeech(dmText);
@@ -1044,7 +1098,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     );
 
     // Send response with voice
-    await sendDMResponseWithVoice(interaction, connection, reply);
+    await sendDMResponseWithVoice(interaction, connection, reply, guildId);
     return;
   }
 
@@ -1080,7 +1134,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
     );
 
-    await sendDMResponseWithVoice(interaction, connection, reply);
+    await sendDMResponseWithVoice(interaction, connection, reply, guildId);
     return;
   }
 
@@ -1115,7 +1169,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         playerName
       );
 
-      await sendDMResponseWithVoice(interaction, connections[guildId], reply);
+      await sendDMResponseWithVoice(interaction, connections[guildId], reply, guildId);
     }
     return;
   }
@@ -1229,7 +1283,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     
     // Send as text and voice
     if (connection) {
-      await sendDMResponseWithVoice(interaction, connection, farewell);
+      await sendDMResponseWithVoice(interaction, connection, farewell, guildId);
     } else {
       interaction.channel.send(`📜 *${farewell}*`);
     }

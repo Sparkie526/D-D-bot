@@ -1,89 +1,94 @@
 # D-D-bot
 
-Discord D&D "AI Dungeon Master" bot.
+Discord D&D "AI Dungeon Master" bot with Ollama AI integration and ElevenLabs voice synthesis.
 
-## Requirements
+## Quick Start (Docker)
 
-- Node.js >= 22.12.0
-- ffmpeg on PATH (required for voice playback)
-- Ollama running locally (the bot calls `http://localhost:11434/api/chat`)
-- Discord bot token + ElevenLabs API key/voice id
+**Recommended:** Run everything in Docker for easy setup and reproducibility.
 
-## Setup
+### Requirements
 
-1. Install dependencies (make sure optional/native deps are included):
+- [Docker](https://docs.docker.com/get-docker/) (Docker Desktop or Docker Engine)
+- Discord bot token
+- ElevenLabs API key and voice ID
 
-```bash
-npm ci --include=optional
-```
+### Setup
 
-2. Create `.env` (see `.env.example`).
-
-3. Run Ollama:
+1. Clone the repository and enter the directory:
 
 ```bash
-ollama serve
+git clone <repo-url>
+cd D-D-bot
 ```
 
-4. Start the bot:
+2. Create `.env` from `.env.example`:
 
 ```bash
-npm start
+cp .env.example .env
 ```
 
-## Docker
+3. Edit `.env` and fill in:
+   - `DISCORD_TOKEN` - Your Discord bot token
+   - `ELEVENLABS_API_KEY` - Your ElevenLabs API key
+   - `ELEVENLABS_VOICE_ID` - Your ElevenLabs voice ID
+   - `OLLAMA_URL` - Leave as `http://ollama:11434/api/chat` (internal Docker network)
+   - `OLLAMA_MODEL` - Set to `mistral` (or your preferred model)
 
-1. Install [Docker](https://docs.docker.com/get-docker/) (Docker Desktop or Docker Engine).
-
-2. Create `.env` next to `docker-compose.yml`:
-
-   - Copy `.env.example` to `.env`.
-   - Fill in:
-     - `DISCORD_TOKEN`
-     - `ELEVENLABS_API_KEY`
-     - `ELEVENLABS_VOICE_ID`
-   - For the bundled Ollama service set:
-     - `OLLAMA_URL=http://ollama:11434/api/chat`
-     - `OLLAMA_MODEL=llama3`
-
-3. Start the stack (builds the bot image, starts bot + Ollama):
+4. Start everything:
 
 ```bash
 docker compose up --build
 ```
 
-4. First-time only — pull the model into the Ollama container:
+5. On first run, pull the Ollama model (one-time):
 
 ```bash
-docker compose exec ollama ollama pull llama3
+docker compose exec ollama ollama pull mistral
 ```
 
-5. To stop:
+6. Check that the bot is online in your Discord server.
+
+7. To stop:
 
 ```bash
 docker compose down
 ```
 
-### Notes
+## Docker Details
 
-- Inside Docker, `localhost` refers to the container itself.
-  - Use `http://ollama:11434/api/chat` when running the bundled Ollama service.
-  - Use `http://host.docker.internal:11434/api/chat` to reach Ollama on your host machine.
-- To use a remote Ollama instance, set `OLLAMA_URL` in `.env`.
+- **Ollama service**: Automatically manages the AI model
+- **Bot service**: Runs the Discord bot connected to Ollama
+- **Auto-restart**: Both services restart automatically on failure
+- **Data persistence**: Ollama model data is stored in a Docker volume
 
-## Discord Commands
+For a remote Ollama instance, override `OLLAMA_URL` in `.env`.
 
-- `!join` join the caller's voice channel
-- `!leave` leave voice and end the session
-- `!startgame` start a new adventure (requires `!join` first)
-- `!action <text>` main gameplay input
-- `!roll 1d20` (or `2d6`, etc)
-- `!status` show session status
-- `!resetgame` clear session state
-- `!reloadnotes` reload `world_notes.txt`
+## Commands (Discord Slash Commands)
+
+- `/join` - Join the caller's voice channel
+- `/leave` - Leave voice and end the session
+- `/startgame` - Start a new adventure (requires `/join` first)
+- `/action <text>` - Main gameplay input
+- `/roll <dice>` - Roll dice (e.g., `1d20`, `2d6`)
+- `/status` - Show session status
+- `/resetgame` - Clear session state
+- `/reloadnotes` - Reload `world_notes.txt`
+
+## Development (Local Setup)
+
+If you want to run the bot locally without Docker (for development):
+
+1. Install Node.js >= 22.12.0
+2. Install ffmpeg: `apt install ffmpeg` (Linux) or `brew install ffmpeg` (macOS)
+3. Run Ollama separately: `ollama serve`
+4. Install dependencies: `npm ci --include=optional`
+5. Update `.env`: `OLLAMA_URL=http://localhost:11434/api/chat`
+6. Start the bot: `npm start`
+
+**Note:** This requires managing Ollama and Node.js separately. Docker is recommended for consistency.
 
 ## Notes
 
-- `node_modules/` is intentionally not committed. The Docker image handles all native dependency compilation.
-- If running outside Docker, install with `npm ci --include=optional` (required for the native `@discordjs/opus` binding).
-- If you see a native-binding error after install, wipe `node_modules/` and reinstall.
+- `node_modules/` is intentionally not committed. Docker handles all native dependency compilation.
+- The bot writes `dm_response.mp3` at runtime for voice synthesis.
+- Edit `world_notes.txt` to customize world lore, NPCs, and maps.

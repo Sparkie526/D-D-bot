@@ -434,16 +434,10 @@ async function askDMStream(guildId, userMessage, playerName, onToken) {
   let fullText = "";
 
   try {
-    const generator =
-      LLM_PROVIDER === "openai" ? streamOpenAI(messages) : streamOllama(messages);
-
-    for await (const token of generator) {
-      fullText += token;
-      if (onToken) {
-        const updated = onToken(fullText);
-        if (updated !== undefined) fullText = updated;
-      }
-    }
+    // Use non-streaming mode to avoid token concatenation issues
+    fullText = LLM_PROVIDER === "openai" 
+      ? await askOpenAI(messages) 
+      : await askOllama(messages);
 
     const reply = sanitizeLLMOutput(fullText);
     addToHistory(guildId, "assistant", reply);

@@ -92,7 +92,13 @@ function getAllWorlds() {
     }
     const files = fs.readdirSync(WORLDS_PATH);
     return files
-      .filter(file => file.endsWith(".txt") && file !== "TEMPLATE.txt")
+      .filter(file => {
+        // Only include .txt files that are NOT the template
+        if (!file.endsWith(".txt")) return false;
+        if (file === "TEMPLATE.txt") return false;
+        if (file.toUpperCase() === "TEMPLATE.TXT") return false; // Case-insensitive
+        return true;
+      })
       .sort();
   } catch (err) {
     console.error("Failed to list worlds:", err.message);

@@ -101,9 +101,10 @@ function buildSystemPrompt() {
   const basePrompt = `You are an experienced, dramatic, and immersive Dungeon Master running a D&D 5e campaign.
 Your personality is wise, mysterious, and theatrical — like a storyteller around a campfire.
 Keep your responses concise (2-4 sentences max) since they will be spoken aloud in a voice chat.
+IMPORTANT: Prioritize grammatically correct, complete sentences above all else. Ensure every response is polished and flows naturally.
 Always end your response by either:
-  - Describing what happens next and asking what the players do, OR
-  - Asking for a dice roll (e.g. "Roll for Perception")
+   - Describing what happens next and asking what the players do, OR
+   - Asking for a dice roll (e.g. "Roll for Perception")
 Track player names, their actions, and the consequences in the story.
 When a player rolls dice, acknowledge the result dramatically and narrate the outcome.
 Never break character. Never mention being an AI.
@@ -334,7 +335,7 @@ async function* streamOpenAI(messages) {
     {
       model: OPENAI_MODEL,
       messages: cachedMessages,
-      max_tokens: 220,
+      max_tokens: 350,
       temperature: 0.7,
       stream: true,
     },
@@ -462,7 +463,7 @@ async function askOpenAI(messages) {
     {
       model: OPENAI_MODEL,
       messages,
-      max_tokens: 220,
+      max_tokens: 350,
       temperature: 0.7,
     },
     {

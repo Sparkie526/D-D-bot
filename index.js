@@ -336,7 +336,7 @@ async function* streamOpenAI(messages) {
     {
       model: OPENAI_MODEL,
       messages: cachedMessages,
-      max_tokens: 350,
+      max_tokens: 500,
       temperature: 0.7,
       stream: true,
     },
@@ -464,7 +464,7 @@ async function askOpenAI(messages) {
     {
       model: OPENAI_MODEL,
       messages,
-      max_tokens: 350,
+      max_tokens: 500,
       temperature: 0.7,
     },
     {

@@ -153,6 +153,7 @@ function getSession(guildId) {
     sessions[guildId] = {
       history: [],       // Chat history sent to LLM
       players: {},        // { userId: characterName }
+      originalNicknames: {}, // { userId: originalNickname } for reverting
       active: false,      // Is a game running?
     };
   }
@@ -564,6 +565,71 @@ async function transcribeAudio(audioBuffer) {
 }
 
 // ============================================================
+//  NICKNAME MANAGEMENT
+// ============================================================
+
+async function setPlayerName(interaction, characterName) {
+  const userId = interaction.user.id;
+  const member = interaction.member;
+  const session = getSession(interaction.guildId);
+
+  // Validate name length (Discord nickname max is 32 characters)
+  if (characterName.length > 32) {
+    return interaction.reply(`❌ Character name is too long! Discord nicknames are limited to 32 characters. Yours is ${characterName.length}.`);
+  }
+
+  // Store original nickname if not already stored
+  if (!session.originalNicknames[userId]) {
+    session.originalNicknames[userId] = member.nickname || member.user.username;
+  }
+
+  // Check for duplicate names and add suffix if needed
+  let finalName = characterName;
+  let suffix = 0;
+  let nameWithSuffix = finalName;
+
+  for (const pId in session.players) {
+    if (pId !== userId && session.players[pId] === nameWithSuffix) {
+      suffix++;
+      nameWithSuffix = `${finalName}${suffix}`;
+    }
+  }
+
+  // Update the player's session name
+  session.players[userId] = nameWithSuffix;
+
+  // Try to update Discord nickname
+  try {
+    await member.setNickname(nameWithSuffix);
+    const suffix_msg = suffix > 0 ? ` (numbered as "${nameWithSuffix}" because another player shares that name)` : '';
+    interaction.reply(`✅ You are now **${nameWithSuffix}**${suffix_msg}!`);
+  } catch (err) {
+    console.warn(`Failed to set nickname for ${userId}:`, err.message);
+    session.players[userId] = nameWithSuffix;
+    const suffix_msg = suffix > 0 ? ` (numbered as "${nameWithSuffix}" because another player shares that name)` : '';
+    interaction.reply(`✅ Character name set to **${nameWithSuffix}**${suffix_msg}! (⚠️ Bot lacks permission to update your Discord nickname, but your character name is saved.)`);
+  }
+}
+
+async function revertAllNicknames(interaction) {
+  const session = getSession(interaction.guildId);
+  const guild = interaction.guild;
+
+  for (const userId in session.originalNicknames) {
+    try {
+      const member = await guild.members.fetch(userId);
+      const originalNick = session.originalNicknames[userId];
+      // Only revert if the current nickname matches what we set
+      if (member.nickname && session.players[userId]) {
+        await member.setNickname(originalNick === member.user.username ? null : originalNick);
+      }
+    } catch (err) {
+      console.warn(`Failed to revert nickname for ${userId}:`, err.message);
+    }
+  }
+}
+
+// ============================================================
 //  DISCORD CLIENT SETUP
 // ============================================================
 
@@ -628,6 +694,18 @@ const commands = [
   {
     name: "reloadnotes",
     description: "Reload world_notes.txt without restarting",
+  },
+  {
+    name: "name",
+    description: "Set your character name",
+    options: [
+      {
+        name: "character",
+        description: "Your character's name",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+      },
+    ],
   },
   {
     name: "help",
@@ -743,6 +821,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (commandName === "leave") {
     const connection = connections[guildId];
     if (connection) {
+      await revertAllNicknames(interaction);
       connection.destroy();
       delete connections[guildId];
       sessions[guildId] = null;
@@ -895,10 +974,23 @@ client.on(Events.InteractionCreate, async (interaction) => {
   //  /resetgame — Wipe history and start fresh
   // ----------------------------------------------------------
   if (commandName === "resetgame") {
+    await revertAllNicknames(interaction);
     sessions[guildId] = null;
     interaction.reply(
       "🗑️ Game state cleared. Type `/startgame` to begin a new adventure."
     );
+    return;
+  }
+
+  // ----------------------------------------------------------
+  //  /name [character] — Set character name and update nickname
+  // ----------------------------------------------------------
+  if (commandName === "name") {
+    const characterName = interaction.options.getString("character");
+    if (!characterName) {
+      return interaction.reply("Tell me your character's name!");
+    }
+    await setPlayerName(interaction, characterName);
     return;
   }
 
@@ -925,6 +1017,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 \`/join\` — Bot joins your voice channel
 \`/leave\` — Bot leaves and ends the session
 \`/startgame\` — Start a new adventure
+\`/name [character]\` — Set your character name and update your Discord nickname
 \`/action [what]\` — Declare what your character does
 \`/roll [dice]\` — Roll dice (e.g. \`/roll 1d20\`, \`/roll 2d6\`)
 \`/status\` — Check if a game is running

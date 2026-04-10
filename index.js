@@ -38,7 +38,7 @@ const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3"; // e.g. mistral
 const LLM_PROVIDER = (process.env.LLM_PROVIDER || (process.env.OPENAI_API_KEY ? "openai" : "ollama")).toLowerCase();
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o";
 const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || "https://api.openai.com/v1";
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID;
@@ -337,7 +337,7 @@ async function* streamOpenAI(messages) {
       model: OPENAI_MODEL,
       messages: cachedMessages,
       max_tokens: 500,
-      temperature: 0.7,
+      temperature: 0.5,
       stream: true,
     },
     {
@@ -465,7 +465,7 @@ async function askOpenAI(messages) {
       model: OPENAI_MODEL,
       messages,
       max_tokens: 500,
-      temperature: 0.7,
+      temperature: 0.5,
     },
     {
       headers: {

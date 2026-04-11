@@ -1,0 +1,121 @@
+# D&D 5e Rogue Template
+character:
+  name: "New Rogue"
+  class: "Rogue"
+  multiclass: []
+  level: 1
+  experience: 0
+  background: "Criminal"
+  alignment: "Chaotic Neutral"
+  player: "username"
+  campaign: "Your Campaign"
+  lastPlayed: null
+
+abilities:
+  strength: 8
+  dexterity: 15
+  constitution: 12
+  intelligence: 14
+  wisdom: 11
+  charisma: 10
+
+combat:
+  ac: 15
+  hp:
+    current: 8
+    max: 8
+  initiative: 3
+  proficiencyBonus: 2
+
+skills:
+  acrobatics: {modifier: 4, proficient: true}
+  animal_handling: {modifier: 0, proficient: false}
+  arcana: {modifier: 2, proficient: false}
+  athletics: {modifier: -1, proficient: false}
+  deception: {modifier: 0, proficient: true}
+  history: {modifier: 2, proficient: false}
+  insight: {modifier: 0, proficient: false}
+  intimidation: {modifier: 0, proficient: false}
+  investigation: {modifier: 4, proficient: true}
+  medicine: {modifier: 0, proficient: false}
+  perception: {modifier: 4, proficient: true}
+  performance: {modifier: 0, proficient: false}
+  persuasion: {modifier: 0, proficient: false}
+  sleight_of_hand: {modifier: 4, proficient: true}
+  stealth: {modifier: 4, proficient: true}
+  survival: {modifier: 0, proficient: false}
+
+saves:
+  strength: {modifier: -1, proficient: false}
+  dexterity: {modifier: 4, proficient: true}
+  constitution: {modifier: 1, proficient: false}
+  intelligence: {modifier: 2, proficient: false}
+  wisdom: {modifier: 0, proficient: false}
+  charisma: {modifier: 0, proficient: false}
+
+resistances:
+  damage: []
+  conditions: []
+
+equipment:
+  armor: "Leather Armor"
+  weapons:
+    - name: "Shortsword"
+      type: "Melee"
+      bonus: 4
+      damage: "1d6+3"
+      damageType: "piercing"
+      equipped: true
+    - name: "Dagger"
+      type: "Melee"
+      bonus: 4
+      damage: "1d4+3"
+      damageType: "piercing"
+      equipped: true
+  inventory:
+    - name: "Thieves' Tools"
+      quantity: 1
+    - name: "Backpack"
+      quantity: 1
+    - name: "Bedroll"
+      quantity: 1
+    - name: "Rope (50ft)"
+      quantity: 1
+    - name: "Gold Pieces"
+      quantity: 25
+
+features:
+  - name: "Sneak Attack"
+    description: "Extra 1d6 damage when hitting with advantage or ally nearby"
+    uses:
+      current: 0
+      max: 0
+  - name: "Cunning Action"
+    description: "Bonus action to Dash, Disengage, or Hide"
+    uses:
+      current: 0
+      max: 0
+  - name: "Expertise"
+    description: "Double proficiency on Acrobatics, Sleight of Hand, Stealth, Deception"
+
+spellcasting: {}
+
+conditions:
+  unconscious: false
+  poisoned: false
+  stunned: false
+  paralyzed: false
+  petrified: false
+  blinded: false
+  deafened: false
+  frightened: false
+  grappled: false
+  restrained: false
+  exhaustion: 0
+
+notes:
+  biography: ""
+  bonds: ""
+  ideals: ""
+  flaws: ""
+  treasures: ""

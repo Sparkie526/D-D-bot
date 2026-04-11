@@ -1,0 +1,193 @@
+╔════════════════════════════════════════════════════════════════════════════════════════╗
+║                     D-D-BOT ARCHITECTURE OVERVIEW                                      ║
+╚════════════════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│ DISCORD LAYER                                                                           │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  /join    /startgame   /action   /roll   /name   /endgame   /help   /showworlds   │
+│      ↓         ↓         ↓        ↓       ↓        ↓         ↓         ↓           │
+│  ┌──────────────────────────────────────────────────────────────────────────────────┐  │
+│  │ SLASH COMMAND HANDLER (Events.InteractionCreate)                                │  │
+│  │ • Validates guild context                                                       │  │
+│  │ • Extracts parameters                                                           │  │
+│  │ • Routes to appropriate handler                                                 │  │
+│  └──────────────────────────────────────────────────────────────────────────────────┘  │
+│          ↓                                      ↓                                       │
+│  Discord Text Channel                   Discord Voice Channel                          │
+│  (outgoing messages)                    (audio playback via @discordjs/voice)          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│ SESSION MANAGEMENT LAYER (Per Guild)                                                   │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  sessions[guildId] = {                                                                  │
+│    ┌─ Player Data ─────────────────────────────────────────────────────────────────┐   │
+│    │ • players: { userId → characterName }                                         │   │
+│    │ • activePlayers: [{ userId, displayName, characterName }, ...]              │   │
+│    │ • originalNicknames: { userId → originalName }                              │   │
+│    └────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                         │
+│    ┌─ Game State ──────────────────────────────────────────────────────────────────┐   │
+│    │ • active: boolean                                                             │   │
+│    │ • history: [{ role, content }] (max 20 messages)                             │   │
+│    │ • currentLocation: "dungeon|forest|tavern|generic"                           │   │
+│    └────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                         │
+│    ┌─ Turn-Taking (Multi-Player) ──────────────────────────────────────────────────┐   │
+│    │ • turnOrder: [userId1, userId2, ...]                                         │   │
+│    │ • currentTurnIndex: 0                                                         │   │
+│    │ • turnTimeoutHandle: 75 second auto-advance timer                            │   │
+│    │ • pendingAction: { action, expectedDC } waiting for roll                     │   │
+│    │ • lastRollResult: { playerName, dice, total, dc }                            │   │
+│    └────────────────────────────────────────────────────────────────────────────────┘   │
+│  }                                                                                      │
+│                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                                           ↓
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│ GAMEPLAY ENGINE                                                                        │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  ┌────────────────────────────────────────────────────────────────────────────────┐    │
+│  │ ACTION DETECTION & ROLL HANDLING                                               │    │
+│  │                                                                                │    │
+│  │  detectActionKeywords(action)  →  DEFAULT_DCS  →  DC value                    │    │
+│  │                                                                                │    │
+│  │  [ACTION: "I attack the goblin"]  →  ["attack"]  →  DC 10                    │    │
+│  │                                                                                │    │
+│  │  If roll needed:                                                               │    │
+│  │    1. Prompt player: "Roll 1d20 to attempt"                                    │    │
+│  │    2. Store pending action + expected DC                                       │    │
+│  │    3. Wait for /roll response                                                  │    │
+│  │    4. Compare: roll total >= DC ? SUCCESS : FAILURE                            │    │
+│  │    5. Pass result to LLM with action for context                               │    │
+│  └────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                                           ↓
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│ LLM INTEGRATION LAYER (OpenAI or Ollama)                                              │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  buildSystemPrompt()                                                                    │
+│    ├─ Base DM instructions (personality, rules, turn-taking)                          │
+│    ├─ [OPTIONAL] Character sheet data                                                  │
+│    ├─ World notes (from worlds/*.txt)                                                  │
+│    └─ Turn/narrative guidance                                                          │
+│                                                                                         │
+│  askDM(guildId, userMessage, playerName)                                               │
+│    ├─ Adds message to session.history                                                  │
+│    ├─ Constructs: [systemPrompt, ...history]                                          │
+│    ├─ Calls OpenAI/Ollama                                                              │
+│    ├─ Returns narration (2-4 sentences)                                                │
+│    └─ Adds response to history (keeps last 20)                                        │
+│                                                                                         │
+│  Context Window Budget (4K tokens):                                                    │
+│    • System prompt: 400-500 tokens                                                     │
+│    • World notes: 100-1000 tokens                                                      │
+│    • Chat history: 200-300 tokens                                                      │
+│    • Available: ~2700 tokens remaining                                                 │
+│                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                                           ↓
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│ VOICE & FILE LAYER                                                                    │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  Text Response                         Audio Response                                  │
+│  sendDMResponseWithVoice()             textToSpeech()                                 │
+│    ↓                                       ↓                                            │
+│  Discord Text Channel            ElevenLabs API                                        │
+│  (formatted message)                    ↓                                              │
+│                                    MP3 Buffer                                          │
+│                                         ↓                                              │
+│                                    Cache Check (SHA256)                                │
+│                                         ├─ Hit: Load from tts_cache/                  │
+│                                         └─ Miss: Write new file                        │
+│                                         ↓                                              │
+│                                    Voice Channel Playback                              │
+│                                    (createAudioPlayer)                                 │
+│                                                                                         │
+│  AMBIENT SOUNDS (Location-based)                                                       │
+│    detectLocationFromText() → location (dungeon/forest/tavern/town/cave/generic)      │
+│    getRandomAmbientSound(location) → ambient_sounds/{location}/*.mp3                  │
+│                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│ WORLD & FILE SYSTEM LAYER                                                             │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  File System Hierarchy:                                                                │
+│                                                                                         │
+│  D-D-bot/                                                                               │
+│  ├── index.js (main bot code)                                                         │
+│  ├── package.json                                                                      │
+│  ├── .env (config: API keys, LLM provider)                                            │
+│  │                                                                                     │
+│  ├── worlds/                                                                           │
+│  │   ├── TEMPLATE.txt (copy to create new worlds)                                     │
+│  │   ├── aethoria.txt (=== TITLE: ... ===)                                           │
+│  │   └── ashmore_keep.txt                                                            │
+│  │                                                                                     │
+│  ├── tts_cache/                                                                       │
+│  │   ├── {sha256hash}.mp3                                                            │
+│  │   └── {sha256hash}.mp3                                                            │
+│  │                                                                                     │
+│  ├── ambient_sounds/                                                                  │
+│  │   ├── dungeon/ ├── sound1.mp3                                                     │
+│  │   ├── forest/  ├── sound2.mp3                                                     │
+│  │   ├── tavern/  └── ...                                                            │
+│  │   ├── town/                                                                        │
+│  │   ├── cave/                                                                        │
+│  │   └── generic/                                                                     │
+│  │                                                                                     │
+│  └── character_sheets/ [RECOMMENDED FOR FUTURE]                                       │
+│      ├── {guildId}/                                                                   │
+│      │   ├── {userId}.json                                                           │
+│      │   └── {userId}.json                                                           │
+│      └── templates/                                                                   │
+│          └── TEMPLATE.json                                                           │
+│                                                                                         │
+│  World File Format:                                                                    │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐  │
+│  │ === TITLE: World Name ===                                                       │  │
+│  │ === SETTING ===                                                                 │  │
+│  │ === CURRENT QUEST ===                                                           │  │
+│  │ === MAP — MAJOR LOCATION ===                                                    │  │
+│  │   ROOM NAME                                                                     │  │
+│  │     Description                                                                 │  │
+│  │     Exits: ...                                                                  │  │
+│  │     Contains: ...                                                               │  │
+│  │     Secrets: ...                                                                │  │
+│  │ === NPCS ===                                                                    │  │
+│  │ === BOSSES & ENCOUNTERS ===                                                     │  │
+│  │ === HOUSE RULES ===                                                             │  │
+│  │ === TONE NOTES FOR THE DM ===                                                   │  │
+│  └─────────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                         │
+│  Loading & Caching:                                                                    │
+│  • loadWorld() checks mtime, returns cached if unchanged                              │
+│  • /reloadnotes invalidates cache, reloads from disk                                  │
+│  • worldsCache[filename] = content                                                    │
+│  • lastWorldsMtimes[filename] = stat.mtimeMs                                         │
+│                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+
+╔════════════════════════════════════════════════════════════════════════════════════════╗
+║ CHARACTER SHEET INTEGRATION OPPORTUNITY                                                ║
+║                                                                                        ║
+║ Recommended Storage Location:  character_sheets/{guildId}/{userId}.json                ║
+║ Session Cache:                 session.characterSheets[userId]                         ║
+║ LLM Integration:               Compact summary in system prompt (~50 tokens)           ║
+║ Slash Command:                 /character [view|create|set|import|export]             ║
+║                                                                                        ║
+║ Data Size per Player:          ~5-10 KB (minimal context window impact)                ║
+║ File Format:                   JSON (matches world files pattern)                      ║
+║ Persistence:                   Optional (can be in-memory or file-based)               ║
+║                                                                                        ║
+╚════════════════════════════════════════════════════════════════════════════════════════╝
+

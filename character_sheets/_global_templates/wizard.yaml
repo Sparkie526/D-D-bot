@@ -1,0 +1,135 @@
+# D&D 5e Wizard Template
+character:
+  name: "New Wizard"
+  class: "Wizard"
+  multiclass: []
+  level: 1
+  experience: 0
+  background: "Sage"
+  alignment: "Neutral"
+  player: "username"
+  campaign: "Your Campaign"
+  lastPlayed: null
+
+abilities:
+  strength: 8
+  dexterity: 14
+  constitution: 13
+  intelligence: 15
+  wisdom: 12
+  charisma: 10
+
+combat:
+  ac: 12
+  hp:
+    current: 6
+    max: 6
+  initiative: 2
+  proficiencyBonus: 2
+
+skills:
+  acrobatics: {modifier: 2, proficient: false}
+  animal_handling: {modifier: 1, proficient: false}
+  arcana: {modifier: 4, proficient: true}
+  athletics: {modifier: -1, proficient: false}
+  deception: {modifier: 0, proficient: false}
+  history: {modifier: 4, proficient: true}
+  insight: {modifier: 1, proficient: false}
+  intimidation: {modifier: 0, proficient: false}
+  investigation: {modifier: 4, proficient: true}
+  medicine: {modifier: 1, proficient: false}
+  perception: {modifier: 1, proficient: false}
+  performance: {modifier: 0, proficient: false}
+  persuasion: {modifier: 0, proficient: false}
+  sleight_of_hand: {modifier: 2, proficient: false}
+  stealth: {modifier: 2, proficient: false}
+  survival: {modifier: 1, proficient: false}
+
+saves:
+  strength: {modifier: -1, proficient: false}
+  dexterity: {modifier: 2, proficient: false}
+  constitution: {modifier: 1, proficient: false}
+  intelligence: {modifier: 4, proficient: true}
+  wisdom: {modifier: 1, proficient: false}
+  charisma: {modifier: 0, proficient: false}
+
+resistances:
+  damage: []
+  conditions: []
+
+equipment:
+  armor: "None"
+  weapons:
+    - name: "Dagger"
+      type: "Melee"
+      bonus: 2
+      damage: "1d4+2"
+      damageType: "piercing"
+      equipped: true
+  inventory:
+    - name: "Spellbook"
+      quantity: 1
+    - name: "Backpack"
+      quantity: 1
+    - name: "Bedroll"
+      quantity: 1
+    - name: "Torch"
+      quantity: 5
+    - name: "Gold Pieces"
+      quantity: 25
+
+features:
+  - name: "Spellcasting"
+    description: "Use intelligence for spell attacks and DCs"
+  - name: "Arcane Recovery"
+    description: "Recover 1d4 + 1 spell levels, 1/long rest"
+    uses:
+      current: 0
+      max: 1
+      resets: "long rest"
+
+spellcasting:
+  ability: "Intelligence"
+  spellSaveDC: 12
+  spellAttackBonus: 4
+  spells:
+    cantrips:
+      - name: "Mage Hand"
+        description: "Invisible servant hand, 30ft range, 1 minute"
+        prepared: true
+      - name: "Fire Bolt"
+        description: "1d10 fire damage, 120ft range"
+        prepared: true
+    level_1:
+      slots: {current: 2, max: 2}
+      spells:
+        - name: "Magic Missile"
+          prepared: true
+          description: "3 darts, 1d4+1 each, never miss"
+          range: "120 ft"
+          duration: "Instantaneous"
+        - name: "Shield"
+          prepared: true
+          description: "+5 AC until end of turn, reaction"
+          range: "Self"
+          duration: "1 round"
+
+conditions:
+  unconscious: false
+  poisoned: false
+  stunned: false
+  paralyzed: false
+  petrified: false
+  blinded: false
+  deafened: false
+  frightened: false
+  grappled: false
+  restrained: false
+  exhaustion: 0
+
+notes:
+  biography: ""
+  bonds: ""
+  ideals: ""
+  flaws: ""
+  treasures: ""

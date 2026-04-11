@@ -1,0 +1,125 @@
+# D&D 5e Warlock Template
+character:
+  name: "New Warlock"
+  class: "Warlock"
+  multiclass: []
+  level: 1
+  experience: 0
+  background: "Sage"
+  alignment: "Neutral Evil"
+  player: "username"
+  campaign: "Your Campaign"
+  lastPlayed: null
+
+abilities:
+  strength: 8
+  dexterity: 13
+  constitution: 12
+  intelligence: 12
+  wisdom: 11
+  charisma: 15
+
+combat:
+  ac: 12
+  hp:
+    current: 6
+    max: 6
+  initiative: 1
+  proficiencyBonus: 2
+
+skills:
+  acrobatics: {modifier: 1, proficient: false}
+  animal_handling: {modifier: 0, proficient: false}
+  arcana: {modifier: 1, proficient: true}
+  athletics: {modifier: -1, proficient: false}
+  deception: {modifier: 4, proficient: true}
+  history: {modifier: 1, proficient: false}
+  insight: {modifier: 0, proficient: false}
+  intimidation: {modifier: 4, proficient: false}
+  investigation: {modifier: 1, proficient: false}
+  medicine: {modifier: 0, proficient: false}
+  perception: {modifier: 0, proficient: false}
+  performance: {modifier: 4, proficient: false}
+  persuasion: {modifier: 4, proficient: true}
+  sleight_of_hand: {modifier: 1, proficient: false}
+  stealth: {modifier: 1, proficient: true}
+  survival: {modifier: 0, proficient: false}
+
+saves:
+  strength: {modifier: -1, proficient: false}
+  dexterity: {modifier: 1, proficient: false}
+  constitution: {modifier: 1, proficient: false}
+  intelligence: {modifier: 1, proficient: false}
+  wisdom: {modifier: 0, proficient: true}
+  charisma: {modifier: 4, proficient: false}
+
+resistances:
+  damage: []
+  conditions: []
+
+equipment:
+  armor: "Leather Armor"
+  weapons:
+    - name: "Dagger"
+      type: "Melee"
+      bonus: 3
+      damage: "1d4+1"
+      damageType: "piercing"
+      equipped: true
+  inventory:
+    - name: "Arcane Focus"
+      quantity: 1
+    - name: "Backpack"
+      quantity: 1
+    - name: "Bedroll"
+      quantity: 1
+    - name: "Torch"
+      quantity: 5
+    - name: "Gold Pieces"
+      quantity: 30
+
+features:
+  - name: "Spellcasting"
+    description: "Use charisma for spell attacks and DCs"
+  - name: "Eldritch Invocations"
+    description: "Magical enhancements from your patron"
+  - name: "Pact Magic"
+    description: "Cast spells using warlock spell slots"
+
+spellcasting:
+  ability: "Charisma"
+  spellSaveDC: 12
+  spellAttackBonus: 4
+  spells:
+    cantrips:
+      - name: "Eldritch Blast"
+        description: "1d10 force damage, 120ft, can push enemy"
+        prepared: true
+    level_1:
+      slots: {current: 1, max: 1}
+      spells:
+        - name: "Hex"
+          prepared: true
+          description: "Enemy disadvantage on one ability, 1 hour, bonus action"
+          range: "90 ft"
+          duration: "1 hour"
+
+conditions:
+  unconscious: false
+  poisoned: false
+  stunned: false
+  paralyzed: false
+  petrified: false
+  blinded: false
+  deafened: false
+  frightened: false
+  grappled: false
+  restrained: false
+  exhaustion: 0
+
+notes:
+  biography: ""
+  bonds: ""
+  ideals: ""
+  flaws: ""
+  treasures: ""

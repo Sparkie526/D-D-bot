@@ -1,0 +1,174 @@
+# D&D 5e Fighter Template
+# Standard Array: 15, 14, 13, 12, 10, 8
+
+character:
+  name: "New Fighter"
+  class: "Fighter"
+  multiclass: []
+  level: 1
+  experience: 0
+  background: "Soldier"
+  alignment: "Neutral"
+  player: "username"
+  campaign: "Your Campaign"
+  lastPlayed: null
+
+abilities:
+  strength: 15
+  dexterity: 10
+  constitution: 14
+  intelligence: 8
+  wisdom: 12
+  charisma: 13
+
+combat:
+  ac: 16
+  hp:
+    current: 10
+    max: 10
+  initiative: 0
+  proficiencyBonus: 2
+
+skills:
+  acrobatics:
+    modifier: 0
+    proficient: false
+  animal_handling:
+    modifier: 1
+    proficient: true
+  arcana:
+    modifier: -1
+    proficient: false
+  athletics:
+    modifier: 4
+    proficient: true
+  deception:
+    modifier: 1
+    proficient: false
+  history:
+    modifier: -1
+    proficient: false
+  insight:
+    modifier: 1
+    proficient: false
+  intimidation:
+    modifier: 4
+    proficient: true
+  investigation:
+    modifier: -1
+    proficient: false
+  medicine:
+    modifier: 1
+    proficient: false
+  perception:
+    modifier: 1
+    proficient: false
+  performance:
+    modifier: 1
+    proficient: false
+  persuasion:
+    modifier: 1
+    proficient: false
+  sleight_of_hand:
+    modifier: 0
+    proficient: false
+  stealth:
+    modifier: 0
+    proficient: false
+  survival:
+    modifier: 1
+    proficient: false
+
+saves:
+  strength:
+    modifier: 4
+    proficient: true
+  dexterity:
+    modifier: 0
+    proficient: false
+  constitution:
+    modifier: 3
+    proficient: false
+  intelligence:
+    modifier: -1
+    proficient: false
+  wisdom:
+    modifier: 1
+    proficient: false
+  charisma:
+    modifier: 1
+    proficient: false
+
+resistances:
+  damage: []
+  conditions: []
+
+equipment:
+  armor: "Chain Mail"
+  weapons:
+    - name: "Longsword"
+      type: "Melee"
+      bonus: 4
+      damage: "1d8+4"
+      damageType: "slashing"
+      equipped: true
+    - name: "Shield"
+      type: "Defense"
+      bonus: 2
+      equipped: true
+  inventory:
+    - name: "Backpack"
+      quantity: 1
+    - name: "Bedroll"
+      quantity: 1
+    - name: "Rope (50ft)"
+      quantity: 1
+    - name: "Torch"
+      quantity: 5
+    - name: "Gold Pieces"
+      quantity: 50
+
+features:
+  - name: "Fighting Style: Dueling"
+    description: "When holding melee weapon and no other weapon, +2 damage"
+    uses:
+      current: 0
+      max: 0
+  - name: "Second Wind"
+    description: "1d10 + 1 HP, 1/short rest"
+    uses:
+      current: 0
+      max: 1
+      resets: "short rest"
+  - name: "Action Surge"
+    description: "Extra action on turn, 1/short rest"
+    uses:
+      current: 0
+      max: 1
+      resets: "short rest"
+
+spellcasting:
+  ability: null
+  spellSaveDC: null
+  spellAttackBonus: null
+  spells: {}
+
+conditions:
+  unconscious: false
+  poisoned: false
+  stunned: false
+  paralyzed: false
+  petrified: false
+  blinded: false
+  deafened: false
+  frightened: false
+  grappled: false
+  restrained: false
+  exhaustion: 0
+
+notes:
+  biography: ""
+  bonds: ""
+  ideals: ""
+  flaws: ""
+  treasures: ""

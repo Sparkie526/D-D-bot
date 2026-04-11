@@ -1,0 +1,125 @@
+# D&D 5e Ranger Template
+character:
+  name: "New Ranger"
+  class: "Ranger"
+  multiclass: []
+  level: 1
+  experience: 0
+  background: "Outlander"
+  alignment: "Chaotic Good"
+  player: "username"
+  campaign: "Your Campaign"
+  lastPlayed: null
+
+abilities:
+  strength: 13
+  dexterity: 15
+  constitution: 14
+  intelligence: 10
+  wisdom: 12
+  charisma: 8
+
+combat:
+  ac: 15
+  hp:
+    current: 10
+    max: 10
+  initiative: 3
+  proficiencyBonus: 2
+
+skills:
+  acrobatics: {modifier: 4, proficient: true}
+  animal_handling: {modifier: 3, proficient: true}
+  arcana: {modifier: 0, proficient: false}
+  athletics: {modifier: 3, proficient: true}
+  deception: {modifier: -1, proficient: false}
+  history: {modifier: 0, proficient: false}
+  insight: {modifier: 1, proficient: false}
+  intimidation: {modifier: -1, proficient: false}
+  investigation: {modifier: 3, proficient: true}
+  medicine: {modifier: 1, proficient: false}
+  perception: {modifier: 3, proficient: true}
+  performance: {modifier: -1, proficient: false}
+  persuasion: {modifier: -1, proficient: false}
+  sleight_of_hand: {modifier: 4, proficient: false}
+  stealth: {modifier: 4, proficient: true}
+  survival: {modifier: 3, proficient: true}
+
+saves:
+  strength: {modifier: 1, proficient: false}
+  dexterity: {modifier: 4, proficient: true}
+  constitution: {modifier: 2, proficient: false}
+  intelligence: {modifier: 0, proficient: false}
+  wisdom: {modifier: 1, proficient: false}
+  charisma: {modifier: -1, proficient: false}
+
+resistances:
+  damage: []
+  conditions: []
+
+equipment:
+  armor: "Leather Armor"
+  weapons:
+    - name: "Longsword"
+      type: "Melee"
+      bonus: 3
+      damage: "1d8+1"
+      damageType: "slashing"
+      equipped: true
+    - name: "Longbow"
+      type: "Ranged"
+      bonus: 4
+      damage: "1d8+3"
+      damageType: "piercing"
+      equipped: true
+  inventory:
+    - name: "Arrows"
+      quantity: 20
+    - name: "Backpack"
+      quantity: 1
+    - name: "Bedroll"
+      quantity: 1
+    - name: "Rope (50ft)"
+      quantity: 1
+    - name: "Gold Pieces"
+      quantity: 35
+
+features:
+  - name: "Favored Enemy"
+    description: "Beasts: +2 damage, advantage on tracking"
+  - name: "Natural Explorer"
+    description: "Forest: double proficiency, extra movement"
+
+spellcasting:
+  ability: "Wisdom"
+  spellSaveDC: 11
+  spellAttackBonus: 3
+  spells:
+    level_1:
+      slots: {current: 1, max: 1}
+      spells:
+        - name: "Hunter's Mark"
+          prepared: true
+          description: "+1d6 damage per turn, 1 hour, bonus action"
+          range: "90 ft"
+          duration: "1 hour"
+
+conditions:
+  unconscious: false
+  poisoned: false
+  stunned: false
+  paralyzed: false
+  petrified: false
+  blinded: false
+  deafened: false
+  frightened: false
+  grappled: false
+  restrained: false
+  exhaustion: 0
+
+notes:
+  biography: ""
+  bonds: ""
+  ideals: ""
+  flaws: ""
+  treasures: ""

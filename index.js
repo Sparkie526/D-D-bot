@@ -27,6 +27,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { pipeline } = require("stream/promises");
 const { createWriteStream } = require("fs");
+const yaml = require("js-yaml");
 
 // ============================================================
 //  CONFIG
@@ -379,6 +380,93 @@ function sanitizeLLMOutput(text) {
 }
 
 // ============================================================
+//  CHARACTER SHEET SYSTEM
+// ============================================================
+
+const CHARACTER_SHEETS_PATH = path.join(__dirname, "character_sheets");
+const TEMPLATES_PATH = path.join(CHARACTER_SHEETS_PATH, "_global_templates");
+
+// D&D 5e class list
+const DND_CLASSES = [
+  "Barbarian", "Bard", "Cleric", "Druid", "Fighter",
+  "Monk", "Paladin", "Ranger", "Rogue", "Sorcerer",
+  "Warlock", "Wizard"
+];
+
+// Standard Array for ability scores
+const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
+
+function ensureCharacterDirectory(guildId, userId) {
+  const userPath = path.join(CHARACTER_SHEETS_PATH, guildId, userId);
+  if (!fs.existsSync(userPath)) {
+    fs.mkdirSync(userPath, { recursive: true });
+  }
+}
+
+function loadCharacterTemplate(className) {
+  const templatePath = path.join(TEMPLATES_PATH, `${className.toLowerCase()}.yaml`);
+  if (!fs.existsSync(templatePath)) {
+    console.error(`Template not found: ${templatePath}`);
+    return null;
+  }
+  try {
+    const content = fs.readFileSync(templatePath, "utf-8");
+    return yaml.load(content);
+  } catch (err) {
+    console.error(`Failed to load template ${className}:`, err.message);
+    return null;
+  }
+}
+
+function saveCharacter(guildId, userId, character) {
+  ensureCharacterDirectory(guildId, userId);
+  const fileName = `${character.character.name.toLowerCase().replace(/\s+/g, "_")}.yaml`;
+  const filePath = path.join(CHARACTER_SHEETS_PATH, guildId, userId, fileName);
+  try {
+    const content = yaml.dump(character, { lineWidth: -1 });
+    fs.writeFileSync(filePath, content, "utf-8");
+    // Also save auto-save version with timestamp
+    const autoSavePath = path.join(CHARACTER_SHEETS_PATH, guildId, userId, `.${fileName}.autosave`);
+    fs.writeFileSync(autoSavePath, content, "utf-8");
+    return true;
+  } catch (err) {
+    console.error(`Failed to save character:`, err.message);
+    return false;
+  }
+}
+
+function loadCharacter(guildId, userId, characterName) {
+  const fileName = `${characterName.toLowerCase().replace(/\s+/g, "_")}.yaml`;
+  const filePath = path.join(CHARACTER_SHEETS_PATH, guildId, userId, fileName);
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+  try {
+    const content = fs.readFileSync(filePath, "utf-8");
+    return yaml.load(content);
+  } catch (err) {
+    console.error(`Failed to load character ${characterName}:`, err.message);
+    return null;
+  }
+}
+
+function listPlayerCharacters(guildId, userId) {
+  const userPath = path.join(CHARACTER_SHEETS_PATH, guildId, userId);
+  if (!fs.existsSync(userPath)) {
+    return [];
+  }
+  try {
+    const files = fs.readdirSync(userPath);
+    return files
+      .filter(f => f.endsWith(".yaml") && !f.startsWith("."))
+      .map(f => f.replace(".yaml", "").replace(/_/g, " "));
+  } catch (err) {
+    console.error(`Failed to list characters:`, err.message);
+    return [];
+  }
+}
+
+// ============================================================
 //  GAME STATE
 // ============================================================
 
@@ -404,6 +492,9 @@ function getSession(guildId) {
       turnTimeoutHandle: null, // Handle for turn auto-advance timer
       lastRollResult: null, // { playerName, dice, total } from last roll
       pendingAction: null, // { action, playerName, expectedDC } waiting for roll
+      // Character Sheet System
+      characterSheets: {},  // { userId: characterSheetData }
+      currentCharacters: {}, // { userId: characterName }
     };
   }
   return sessions[guildId];
@@ -827,13 +918,43 @@ async function* streamOllama(messages) {
 
 // onToken: called for each token as it arrives.
 // Returns the (possibly updated) accumulated text so far.
-async function askDMStream(guildId, userMessage, playerName, onToken) {
+async function askDMStream(guildId, userMessage, playerName, onToken, userId) {
   const session = getSession(guildId);
   const fullMessage = `${playerName} says: "${userMessage}"`;
   addToHistory(guildId, "user", fullMessage);
 
+  // Build system prompt with character context if available
+  let systemPrompt = buildSystemPrompt();
+  
+  if (userId && session.characterSheets[userId]) {
+    const char = session.characterSheets[userId];
+    const charData = char.character;
+    const combat = char.combat;
+    const abilities = char.abilities;
+    
+    // Calculate ability modifiers
+    const mods = {};
+    for (const [ability, score] of Object.entries(abilities)) {
+      mods[ability] = Math.floor((score - 10) / 2);
+    }
+    
+    const modStr = Object.keys(mods)
+      .map(k => `${k.toUpperCase().slice(0, 3)}: ${abilities[k]}(${mods[k] > 0 ? '+' : ''}${mods[k]})`)
+      .join(" | ");
+    
+    const characterContext = `
+[CHARACTER CONTEXT - ${playerName}]
+Name: ${charData.name} (${charData.class} Level ${charData.level})
+Health: ${combat.hp.current}/${combat.hp.max} | AC: ${combat.ac} | Initiative: ${combat.initiative}
+Abilities: ${modStr}
+Background: ${charData.background}
+[END CHARACTER CONTEXT]`;
+    
+    systemPrompt += "\n" + characterContext;
+  }
+
   const messages = [
-    { role: "system", content: buildSystemPrompt() },
+    { role: "system", content: systemPrompt },
     ...session.history,
   ];
 
@@ -1197,6 +1318,67 @@ const commands = [
     description: "List all available worlds",
   },
   {
+    name: "character",
+    description: "Manage your D&D character sheet",
+    options: [
+      {
+        name: "create",
+        description: "Create a new character from a class template",
+        type: ApplicationCommandOptionType.Subcommand,
+        options: [
+          {
+            name: "class",
+            description: "Character class (Fighter, Wizard, Rogue, etc.)",
+            type: ApplicationCommandOptionType.String,
+            required: true,
+            choices: DND_CLASSES.map(c => ({ name: c, value: c })),
+          },
+          {
+            name: "name",
+            description: "Character name",
+            type: ApplicationCommandOptionType.String,
+            required: true,
+          },
+        ],
+      },
+      {
+        name: "select",
+        description: "Load an existing character to use in this game",
+        type: ApplicationCommandOptionType.Subcommand,
+        options: [
+          {
+            name: "character",
+            description: "Character name",
+            type: ApplicationCommandOptionType.String,
+            required: true,
+          },
+        ],
+      },
+      {
+        name: "view",
+        description: "View your current character sheet",
+        type: ApplicationCommandOptionType.Subcommand,
+      },
+      {
+        name: "list",
+        description: "List all your characters",
+        type: ApplicationCommandOptionType.Subcommand,
+      },
+    ],
+  },
+  {
+    name: "hp",
+    description: "Track character health points",
+    options: [
+      {
+        name: "value",
+        description: "Amount to heal (positive) or damage (negative), or set max with 'max:'",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+      },
+    ],
+  },
+  {
     name: "help",
     description: "Show all commands",
   },
@@ -1250,6 +1432,93 @@ client.once(Events.ClientReady, async (c) => {
     }
   })();
 });
+
+// ============================================================
+//  CHARACTER SHEET COMMAND HANDLERS
+// ============================================================
+
+function buildCharacterEmbed(character, userName) {
+  const char = character.character;
+  const combat = character.combat;
+  const abilities = character.abilities;
+  
+  // Calculate ability modifiers
+  const modifiers = {};
+  for (const [ability, score] of Object.entries(abilities)) {
+    modifiers[ability] = Math.floor((score - 10) / 2);
+  }
+  
+  const embedFields = [];
+  
+  // Basic Info
+  embedFields.push({
+    name: "Class & Level",
+    value: `${char.class} (Level ${char.level})`,
+    inline: true
+  });
+  embedFields.push({
+    name: "Background",
+    value: char.background,
+    inline: true
+  });
+  embedFields.push({
+    name: "Alignment",
+    value: char.alignment,
+    inline: true
+  });
+  
+  // Combat Stats
+  embedFields.push({
+    name: "Combat",
+    value: `**AC:** ${combat.ac} | **HP:** ${combat.hp.current}/${combat.hp.max} | **Initiative:** ${combat.initiative > 0 ? '+' : ''}${combat.initiative}`,
+    inline: false
+  });
+  
+  // Ability Scores
+  const abilityStr = Object.entries(abilities)
+    .map(([name, score]) => `**${name.toUpperCase().slice(0, 3)}** ${score}(${modifiers[name] > 0 ? '+' : ''}${modifiers[name]})`)
+    .join(" | ");
+  embedFields.push({
+    name: "Ability Scores",
+    value: abilityStr,
+    inline: false
+  });
+  
+  // Equipment
+  if (character.equipment.weapons.length > 0) {
+    const weaponList = character.equipment.weapons
+      .filter(w => w.equipped)
+      .map(w => `${w.name} (${w.damage})`)
+      .join(", ");
+    embedFields.push({
+      name: "Equipment",
+      value: `${character.equipment.armor} | ${weaponList || "No weapons"}`,
+      inline: false
+    });
+  }
+  
+  // Active Conditions
+  const activeConditions = Object.entries(character.conditions)
+    .filter(([key, val]) => val === true || (typeof val === 'number' && val > 0))
+    .map(([cond]) => cond)
+    .join(", ");
+  
+  if (activeConditions) {
+    embedFields.push({
+      name: "Active Conditions",
+      value: activeConditions,
+      inline: false
+    });
+  }
+  
+  return {
+    title: char.name,
+    description: `Player: ${userName}`,
+    color: 0x0099ff,
+    fields: embedFields,
+    footer: { text: `Campaign: ${char.campaign}` }
+  };
+}
 
 // ============================================================
 //  SLASH COMMAND HANDLER
@@ -1475,7 +1744,8 @@ Use the world's title or filename in the \`world\` parameter.
       playerName,
       (text) => {
         dmText = text;
-      }
+      },
+      interaction.user.id
     );
 
     // Add next turn prompt if multiple players
@@ -1685,6 +1955,164 @@ Use the world's title or filename in the \`world\` parameter.
       ? `✅ World notes reloaded! (${worldNotes.length} characters loaded)`
       : "⚠️ No world_notes.txt found.";
     interaction.reply(status);
+    return;
+  }
+
+  // ----------------------------------------------------------
+  //  /character — Manage D&D character sheets
+  // ----------------------------------------------------------
+  if (commandName === "character") {
+    const subcommand = interaction.options.getSubcommand();
+    const userId = interaction.user.id;
+
+    if (subcommand === "create") {
+      const className = interaction.options.getString("class");
+      const characterName = interaction.options.getString("name");
+
+      if (characterName.length > 50) {
+        return interaction.reply("❌ Character name too long! Max 50 characters.");
+      }
+
+      const template = loadCharacterTemplate(className);
+      if (!template) {
+        return interaction.reply(`❌ Unknown class: ${className}`);
+      }
+
+      // Create character from template
+      const character = JSON.parse(JSON.stringify(template)); // Deep copy
+      character.character.name = characterName;
+      character.character.player = interaction.user.username;
+      character.character.lastPlayed = new Date().toISOString();
+
+      // Save character
+      if (!saveCharacter(guildId, userId, character)) {
+        return interaction.reply("❌ Failed to save character. Please try again.");
+      }
+
+      // Load into current session
+      session.characterSheets[userId] = character;
+      session.currentCharacters[userId] = characterName;
+
+      const embed = buildCharacterEmbed(character, interaction.user.username);
+      interaction.reply({
+        content: `✅ **${characterName}** the **${className}** has been created!`,
+        embeds: [embed],
+      });
+      return;
+    }
+
+    if (subcommand === "select") {
+      const characterName = interaction.options.getString("character");
+      const character = loadCharacter(guildId, userId, characterName);
+
+      if (!character) {
+        const available = listPlayerCharacters(guildId, userId);
+        return interaction.reply(
+          `❌ Character not found.\n\nYour characters: ${available.length > 0 ? available.join(", ") : "None yet"}`
+        );
+      }
+
+      // Save old character if one is loaded
+      if (session.currentCharacters[userId]) {
+        const oldChar = session.characterSheets[userId];
+        if (oldChar) {
+          saveCharacter(guildId, userId, oldChar);
+        }
+      }
+
+      // Load new character
+      character.character.lastPlayed = new Date().toISOString();
+      session.characterSheets[userId] = character;
+      session.currentCharacters[userId] = characterName;
+
+      const embed = buildCharacterEmbed(character, interaction.user.username);
+      interaction.reply({
+        content: `✅ **${characterName}** loaded!`,
+        embeds: [embed],
+      });
+      return;
+    }
+
+    if (subcommand === "view") {
+      const characterName = session.currentCharacters[userId];
+      if (!characterName) {
+        return interaction.reply("❌ No character loaded. Use `/character select` or `/character create` first.");
+      }
+
+      const character = session.characterSheets[userId];
+      if (!character) {
+        return interaction.reply("❌ Character data not found. Please reload with `/character select`.");
+      }
+
+      const embed = buildCharacterEmbed(character, interaction.user.username);
+      interaction.reply({ embeds: [embed] });
+      return;
+    }
+
+    if (subcommand === "list") {
+      const characters = listPlayerCharacters(guildId, userId);
+      if (characters.length === 0) {
+        return interaction.reply("❌ You have no characters yet. Use `/character create` to make one!");
+      }
+
+      const list = characters.map((c, i) => `${i + 1}. **${c}**`).join("\n");
+      interaction.reply(`📜 **Your Characters:**\n\n${list}`);
+      return;
+    }
+  }
+
+  // ----------------------------------------------------------
+  //  /hp — Track HP and damage
+  // ----------------------------------------------------------
+  if (commandName === "hp") {
+    const userId = interaction.user.id;
+    const valueStr = interaction.options.getString("value");
+
+    if (!session.characterSheets[userId]) {
+      return interaction.reply("❌ No character loaded! Use `/character select` or `/character create` first.");
+    }
+
+    const character = session.characterSheets[userId];
+    const hp = character.combat.hp;
+
+    // Handle "max" syntax
+    if (valueStr.toLowerCase().startsWith("max:")) {
+      const newMax = parseInt(valueStr.slice(4).trim());
+      if (isNaN(newMax) || newMax < 1) {
+        return interaction.reply("❌ Invalid max HP value. Use: `/hp max:40`");
+      }
+      hp.max = newMax;
+      hp.current = Math.min(hp.current, newMax);
+      saveCharacter(guildId, userId, character);
+      return interaction.reply(`✅ Max HP set to **${newMax}**. Current: **${hp.current}/${hp.max}**`);
+    }
+
+    // Handle damage/heal
+    const value = parseInt(valueStr);
+    if (isNaN(value)) {
+      return interaction.reply("❌ Invalid value. Use: `/hp 5` to heal, `/hp -10` to damage, or `/hp max:40` to set max HP.");
+    }
+
+    const oldHp = hp.current;
+    hp.current = Math.max(0, Math.min(hp.max, hp.current + value));
+
+    const healthBar = "█".repeat(Math.ceil((hp.current / hp.max) * 20)) + 
+                      "░".repeat(20 - Math.ceil((hp.current / hp.max) * 20));
+
+    let message = `**${character.character.name}** `;
+    if (value > 0) {
+      message += `heals **+${value}** HP`;
+    } else {
+      message += `takes **${Math.abs(value)}** damage`;
+    }
+    message += `\n\n[${healthBar}] **${hp.current}/${hp.max}**`;
+
+    if (hp.current === 0) {
+      message += "\n\n☠️ **CHARACTER UNCONSCIOUS!**";
+    }
+
+    saveCharacter(guildId, userId, character);
+    interaction.reply(message);
     return;
   }
 

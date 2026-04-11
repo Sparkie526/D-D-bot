@@ -1,0 +1,138 @@
+# D&D 5e Bard Template
+character:
+  name: "New Bard"
+  class: "Bard"
+  multiclass: []
+  level: 1
+  experience: 0
+  background: "Entertainer"
+  alignment: "Chaotic Good"
+  player: "username"
+  campaign: "Your Campaign"
+  lastPlayed: null
+
+abilities:
+  strength: 8
+  dexterity: 14
+  constitution: 12
+  intelligence: 13
+  wisdom: 10
+  charisma: 15
+
+combat:
+  ac: 13
+  hp:
+    current: 8
+    max: 8
+  initiative: 2
+  proficiencyBonus: 2
+
+skills:
+  acrobatics: {modifier: 4, proficient: true}
+  animal_handling: {modifier: 0, proficient: false}
+  arcana: {modifier: 1, proficient: false}
+  athletics: {modifier: -1, proficient: false}
+  deception: {modifier: 4, proficient: true}
+  history: {modifier: 1, proficient: false}
+  insight: {modifier: 0, proficient: true}
+  intimidation: {modifier: 4, proficient: false}
+  investigation: {modifier: 1, proficient: false}
+  medicine: {modifier: 0, proficient: false}
+  perception: {modifier: 0, proficient: false}
+  performance: {modifier: 4, proficient: true}
+  persuasion: {modifier: 4, proficient: true}
+  sleight_of_hand: {modifier: 4, proficient: true}
+  stealth: {modifier: 4, proficient: false}
+  survival: {modifier: 0, proficient: false}
+
+saves:
+  strength: {modifier: -1, proficient: false}
+  dexterity: {modifier: 2, proficient: false}
+  constitution: {modifier: 1, proficient: false}
+  intelligence: {modifier: 1, proficient: false}
+  wisdom: {modifier: 0, proficient: false}
+  charisma: {modifier: 4, proficient: true}
+
+resistances:
+  damage: []
+  conditions: []
+
+equipment:
+  armor: "Leather Armor"
+  weapons:
+    - name: "Longsword"
+      type: "Melee"
+      bonus: 2
+      damage: "1d8+0"
+      damageType: "slashing"
+      equipped: true
+    - name: "Dagger"
+      type: "Melee"
+      bonus: 4
+      damage: "1d4+2"
+      damageType: "piercing"
+      equipped: true
+  inventory:
+    - name: "Lute"
+      quantity: 1
+    - name: "Backpack"
+      quantity: 1
+    - name: "Bedroll"
+      quantity: 1
+    - name: "Rope (50ft)"
+      quantity: 1
+    - name: "Gold Pieces"
+      quantity: 35
+
+features:
+  - name: "Spellcasting"
+    description: "Use charisma for spell attacks and DCs"
+  - name: "Bardic Inspiration"
+    description: "Grant ally 1d6 bonus, 1 minute"
+    uses:
+      current: 0
+      max: 1
+      resets: "short rest"
+
+spellcasting:
+  ability: "Charisma"
+  spellSaveDC: 12
+  spellAttackBonus: 4
+  spells:
+    cantrips:
+      - name: "Vicious Mockery"
+        description: "1d4 psychic damage, enemy disadvantage next attack, 60ft"
+        prepared: true
+    level_1:
+      slots: {current: 2, max: 2}
+      spells:
+        - name: "Healing Word"
+          prepared: true
+          description: "Heal 1d4+2, 60ft range, bonus action"
+          range: "60 ft"
+          duration: "Instantaneous"
+        - name: "Tasha's Hideous Laughter"
+          prepared: true
+          description: "Enemy incapacitated, concentration, 1 minute"
+          range: "60 ft"
+          duration: "1 minute"
+
+conditions:
+  unconscious: false
+  poisoned: false
+  stunned: false
+  paralyzed: false
+  petrified: false
+  blinded: false
+  deafened: false
+  frightened: false
+  grappled: false
+  restrained: false
+  exhaustion: 0
+
+notes:
+  biography: ""
+  bonds: ""
+  ideals: ""
+  flaws: ""
+  treasures: ""

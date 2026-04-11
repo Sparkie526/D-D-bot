@@ -1,0 +1,135 @@
+# D&D 5e Cleric Template
+character:
+  name: "New Cleric"
+  class: "Cleric"
+  multiclass: []
+  level: 1
+  experience: 0
+  background: "Acolyte"
+  alignment: "Lawful Good"
+  player: "username"
+  campaign: "Your Campaign"
+  lastPlayed: null
+
+abilities:
+  strength: 10
+  dexterity: 12
+  constitution: 14
+  intelligence: 13
+  wisdom: 15
+  charisma: 8
+
+combat:
+  ac: 16
+  hp:
+    current: 8
+    max: 8
+  initiative: 1
+  proficiencyBonus: 2
+
+skills:
+  acrobatics: {modifier: 1, proficient: false}
+  animal_handling: {modifier: 4, proficient: true}
+  arcana: {modifier: 1, proficient: false}
+  athletics: {modifier: 0, proficient: false}
+  deception: {modifier: -1, proficient: false}
+  history: {modifier: 1, proficient: false}
+  insight: {modifier: 4, proficient: true}
+  intimidation: {modifier: -1, proficient: false}
+  investigation: {modifier: 1, proficient: false}
+  medicine: {modifier: 4, proficient: true}
+  perception: {modifier: 4, proficient: true}
+  performance: {modifier: -1, proficient: false}
+  persuasion: {modifier: -1, proficient: false}
+  sleight_of_hand: {modifier: 1, proficient: false}
+  stealth: {modifier: 1, proficient: false}
+  survival: {modifier: 4, proficient: true}
+
+saves:
+  strength: {modifier: 0, proficient: false}
+  dexterity: {modifier: 1, proficient: false}
+  constitution: {modifier: 2, proficient: false}
+  intelligence: {modifier: 1, proficient: false}
+  wisdom: {modifier: 4, proficient: true}
+  charisma: {modifier: -1, proficient: false}
+
+resistances:
+  damage: []
+  conditions: []
+
+equipment:
+  armor: "Scale Mail"
+  weapons:
+    - name: "Mace"
+      type: "Melee"
+      bonus: 2
+      damage: "1d6+0"
+      damageType: "bludgeoning"
+      equipped: true
+  inventory:
+    - name: "Holy Symbol"
+      quantity: 1
+    - name: "Backpack"
+      quantity: 1
+    - name: "Bedroll"
+      quantity: 1
+    - name: "Torch"
+      quantity: 5
+    - name: "Gold Pieces"
+      quantity: 40
+
+features:
+  - name: "Spellcasting"
+    description: "Use wisdom for spell attacks and DCs"
+  - name: "Channel Divinity"
+    description: "Turn undead or other class features, 1/short rest"
+    uses:
+      current: 0
+      max: 1
+      resets: "short rest"
+
+spellcasting:
+  ability: "Wisdom"
+  spellSaveDC: 12
+  spellAttackBonus: 4
+  spells:
+    cantrips:
+      - name: "Guidance"
+        description: "+1d4 to ability check, 1 minute, touch"
+        prepared: true
+      - name: "Light"
+        description: "Object shines 20ft radius, 1 hour"
+        prepared: true
+    level_1:
+      slots: {current: 2, max: 2}
+      spells:
+        - name: "Healing Word"
+          prepared: true
+          description: "Heal 1d4+3, 60ft range, bonus action"
+          range: "60 ft"
+          duration: "Instantaneous"
+        - name: "Cure Wounds"
+          prepared: true
+          description: "Heal 1d8+3, touch, 1 minute cast"
+          range: "Touch"
+          duration: "Instantaneous"
+
+conditions:
+  unconscious: false
+  poisoned: false
+  stunned: false
+  paralyzed: false
+  petrified: false
+  blinded: false
+  deafened: false
+  frightened: false
+  grappled: false
+  restrained: false
+  exhaustion: 0
+
+notes:
+  biography: ""
+  bonds: ""
+  ideals: ""
+  flaws: ""
+  treasures: ""

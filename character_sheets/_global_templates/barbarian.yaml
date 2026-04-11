@@ -1,0 +1,111 @@
+# D&D 5e Barbarian Template
+character:
+  name: "New Barbarian"
+  class: "Barbarian"
+  multiclass: []
+  level: 1
+  experience: 0
+  background: "Outlander"
+  alignment: "Chaotic Good"
+  player: "username"
+  campaign: "Your Campaign"
+  lastPlayed: null
+
+abilities:
+  strength: 15
+  dexterity: 12
+  constitution: 15
+  intelligence: 8
+  wisdom: 10
+  charisma: 10
+
+combat:
+  ac: 12
+  hp:
+    current: 12
+    max: 12
+  initiative: 1
+  proficiencyBonus: 2
+
+skills:
+  acrobatics: {modifier: 1, proficient: false}
+  animal_handling: {modifier: 0, proficient: true}
+  arcana: {modifier: -1, proficient: false}
+  athletics: {modifier: 4, proficient: true}
+  deception: {modifier: 0, proficient: false}
+  history: {modifier: -1, proficient: false}
+  insight: {modifier: 0, proficient: false}
+  intimidation: {modifier: 3, proficient: true}
+  investigation: {modifier: -1, proficient: false}
+  medicine: {modifier: 0, proficient: false}
+  perception: {modifier: 0, proficient: true}
+  performance: {modifier: 0, proficient: false}
+  persuasion: {modifier: 0, proficient: false}
+  sleight_of_hand: {modifier: 1, proficient: false}
+  stealth: {modifier: 1, proficient: false}
+  survival: {modifier: 0, proficient: true}
+
+saves:
+  strength: {modifier: 4, proficient: true}
+  dexterity: {modifier: 1, proficient: false}
+  constitution: {modifier: 4, proficient: true}
+  intelligence: {modifier: -1, proficient: false}
+  wisdom: {modifier: 0, proficient: false}
+  charisma: {modifier: 0, proficient: false}
+
+resistances:
+  damage: []
+  conditions: []
+
+equipment:
+  armor: "Hide Armor"
+  weapons:
+    - name: "Greataxe"
+      type: "Melee"
+      bonus: 4
+      damage: "1d12+2"
+      damageType: "slashing"
+      equipped: true
+  inventory:
+    - name: "Backpack"
+      quantity: 1
+    - name: "Bedroll"
+      quantity: 1
+    - name: "Rope (50ft)"
+      quantity: 1
+    - name: "Torch"
+      quantity: 5
+    - name: "Gold Pieces"
+      quantity: 45
+
+features:
+  - name: "Rage"
+    description: "+2 damage, resistance to damage, 10 rounds"
+    uses:
+      current: 0
+      max: 2
+      resets: "long rest"
+  - name: "Unarmored Defense"
+    description: "AC = 10 + DEX + CON mod when not wearing armor"
+
+spellcasting: {}
+
+conditions:
+  unconscious: false
+  poisoned: false
+  stunned: false
+  paralyzed: false
+  petrified: false
+  blinded: false
+  deafened: false
+  frightened: false
+  grappled: false
+  restrained: false
+  exhaustion: 0
+
+notes:
+  biography: ""
+  bonds: ""
+  ideals: ""
+  flaws: ""
+  treasures: ""

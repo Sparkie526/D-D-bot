@@ -1,0 +1,137 @@
+# D&D 5e Paladin Template
+character:
+  name: "New Paladin"
+  class: "Paladin"
+  multiclass: []
+  level: 1
+  experience: 0
+  background: "Folk Hero"
+  alignment: "Lawful Good"
+  player: "username"
+  campaign: "Your Campaign"
+  lastPlayed: null
+
+abilities:
+  strength: 15
+  dexterity: 10
+  constitution: 14
+  intelligence: 10
+  wisdom: 13
+  charisma: 14
+
+combat:
+  ac: 18
+  hp:
+    current: 10
+    max: 10
+  initiative: 0
+  proficiencyBonus: 2
+
+skills:
+  acrobatics: {modifier: 0, proficient: false}
+  animal_handling: {modifier: 2, proficient: true}
+  arcana: {modifier: 0, proficient: false}
+  athletics: {modifier: 4, proficient: true}
+  deception: {modifier: 2, proficient: false}
+  history: {modifier: 0, proficient: false}
+  insight: {modifier: 2, proficient: true}
+  intimidation: {modifier: 2, proficient: false}
+  investigation: {modifier: 0, proficient: false}
+  medicine: {modifier: 2, proficient: true}
+  perception: {modifier: 2, proficient: false}
+  performance: {modifier: 2, proficient: false}
+  persuasion: {modifier: 4, proficient: true}
+  sleight_of_hand: {modifier: 0, proficient: false}
+  stealth: {modifier: 0, proficient: false}
+  survival: {modifier: 2, proficient: false}
+
+saves:
+  strength: {modifier: 4, proficient: true}
+  dexterity: {modifier: 0, proficient: false}
+  constitution: {modifier: 2, proficient: false}
+  intelligence: {modifier: 0, proficient: false}
+  wisdom: {modifier: 2, proficient: false}
+  charisma: {modifier: 4, proficient: true}
+
+resistances:
+  damage: []
+  conditions: []
+
+equipment:
+  armor: "Plate Armor"
+  weapons:
+    - name: "Longsword"
+      type: "Melee"
+      bonus: 4
+      damage: "1d8+2"
+      damageType: "slashing"
+      equipped: true
+    - name: "Shield"
+      type: "Defense"
+      bonus: 2
+      equipped: true
+  inventory:
+    - name: "Holy Symbol"
+      quantity: 1
+    - name: "Backpack"
+      quantity: 1
+    - name: "Bedroll"
+      quantity: 1
+    - name: "Torch"
+      quantity: 5
+    - name: "Gold Pieces"
+      quantity: 50
+
+features:
+  - name: "Spellcasting"
+    description: "Use charisma for spell attacks and DCs"
+  - name: "Divine Smite"
+    description: "Add 1d8 radiant damage, burn spell slots"
+    uses:
+      current: 0
+      max: 0
+  - name: "Lay on Hands"
+    description: "Heal 10 HP per day, touch"
+    uses:
+      current: 10
+      max: 10
+      resets: "long rest"
+
+spellcasting:
+  ability: "Charisma"
+  spellSaveDC: 12
+  spellAttackBonus: 4
+  spells:
+    level_1:
+      slots: {current: 2, max: 2}
+      spells:
+        - name: "Cure Wounds"
+          prepared: true
+          description: "Heal 1d8+2, touch, 1 minute cast"
+          range: "Touch"
+          duration: "Instantaneous"
+        - name: "Bless"
+          prepared: true
+          description: "+1d4 attacks/saves, 3 creatures, 1 minute"
+          range: "30 ft"
+          duration: "1 minute"
+
+conditions:
+  unconscious: false
+  poisoned: false
+  stunned: false
+  paralyzed: false
+  petrified: false
+  blinded: false
+  deafened: false
+  frightened: false
+  grappled: false
+  restrained: false
+  exhaustion: 0
+
+notes:
+  biography: ""
+  bonds: ""
+  ideals: ""
+  flaws: ""
+  treasures: ""

@@ -1331,19 +1331,38 @@ Use \`/startgame\` to start with a random world, or set \`WORLD_FILE\` in your .
   // ----------------------------------------------------------
   if (commandName === "help") {
     interaction.reply(`
-**🎲 Dungeon Master Bot Commands**
+**🎲 Dungeon Master Bot — Getting Started**
 
+**QUICK START (3 steps):**
+1️⃣ \`/join\` — Bot joins your voice channel
+2️⃣ \`/startgame\` — DM introduces the setting and asks for your character names
+3️⃣ \`/name [your character name]\` — Everyone sets their character name (one at a time)
+   → DM greets you all by name and asks what you do first
+
+Then use \`/action [what you do]\` to play!
+
+---
+
+**DETAILED COMMANDS:**
+
+🎮 **Game Control**
 \`/join\` — Bot joins your voice channel
-\`/leave\` — Bot leaves and ends the session
+\`/leave\` — Bot leaves voice and ends session
 \`/startgame\` — Start a new adventure
-\`/name [character]\` — Set your character name and update your Discord nickname
-\`/action [what]\` — Declare what your character does
-\`/roll [dice]\` — Roll dice (e.g. \`/roll 1d20\`, \`/roll 2d6\`)
+\`/endgame\` — End the game gracefully
+\`/resetgame\` — Wipe game state and start fresh
 \`/status\` — Check if a game is running
-\`/endgame\` — End the game gracefully with a DM farewell
-\`/resetgame\` — Wipe the current game and start fresh
+
+🎭 **Gameplay**
+\`/name [character]\` — Set your character name (plays during /startgame)
+\`/action [what]\` — Describe what your character does (main command)
+\`/roll [dice]\` — Roll dice (e.g. \`/roll 1d20\`, \`/roll 2d6\`)
+
+🌍 **Worlds & Settings**
 \`/showworlds\` — List all available worlds
-\`/reloadnotes\` — Reload world files without restarting the bot
+\`/reloadnotes\` — Reload world files without restarting
+
+ℹ️ **Other**
 \`/help\` — Show this message
     `.trim());
     return;

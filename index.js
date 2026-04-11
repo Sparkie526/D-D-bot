@@ -75,6 +75,92 @@ function getRandomEndgameRemark() {
 }
 
 // ============================================================
+//  D&D 5e DIFFICULTY CLASSES & ACTION DETECTION
+// ============================================================
+
+// Standard D&D 5e Difficulty Classes
+const DND_DIFFICULTY_CLASSES = {
+  5: "Very Easy",
+  10: "Easy",
+  12: "Medium",
+  15: "Hard",
+  20: "Very Hard",
+  25: "Nearly Impossible",
+};
+
+// Action keywords that trigger automatic roll prompting
+const ACTION_KEYWORDS = {
+  // Combat/Physical
+  combat: ["attack", "hit", "stab", "slash", "shoot", "punch", "kick", "kill"],
+  dodge: ["dodge", "duck", "evade", "avoid", "parry", "block", "deflect"],
+  grapple: ["grapple", "grab", "wrestle", "hold", "pin", "restrain"],
+  // Stealth/Movement
+  stealth: ["sneak", "hide", "creep", "slink", "tiptoe", "lurk", "skulk"],
+  climb: ["climb", "scale", "ascend", "clamber", "scramble"],
+  swim: ["swim", "wade", "float", "dive", "paddle"],
+  acrobatics: ["tumble", "roll", "flip", "cartwheel", "balance"],
+  // Social
+  persuade: ["persuade", "convince", "talk", "negotiate", "reason", "appeal"],
+  deception: ["lie", "deceive", "bluff", "trick", "fool", "mislead"],
+  intimidate: ["intimidate", "threaten", "menace", "scare", "frighten"],
+  seduce: ["seduce", "charm", "flirt", "seduce", "woo"],
+  // Interaction with Objects
+  disable: ["disarm", "disable", "sabotage", "break"],
+  pick: ["pick", "unlock", "lock", "jimmy", "pry"],
+  heal: ["heal", "mend", "cure", "treat", "bandage"],
+  climb: ["break", "smash", "bash", "force", "shatter"],
+  // Perception/Investigation
+  perceive: ["notice", "spot", "see", "detect", "find", "search", "examine", "investigate"],
+};
+
+// Build a flat set of all keywords for quick lookup
+const ALL_ACTION_KEYWORDS = new Set();
+for (const keywords of Object.values(ACTION_KEYWORDS)) {
+  keywords.forEach(k => ALL_ACTION_KEYWORDS.add(k.toLowerCase()));
+}
+
+// Suggested DC by action keyword
+const DEFAULT_DCS = {
+  attack: 10,           // Base monster AC (MM)
+  dodge: 12,            // Medium difficulty
+  grapple: 12,
+  stealth: 12,          // Medium difficulty to notice
+  climb: 12,
+  swim: 15,             // Hard difficulty
+  acrobatics: 15,
+  persuade: 12,         // Medium difficulty
+  deception: 12,
+  intimidate: 12,
+  seduce: 15,           // Hard difficulty
+  disable: 15,
+  pick: 15,
+  heal: 12,
+  perceive: 12,
+  break: 12,
+};
+
+function detectActionKeywords(actionText) {
+  const lowerText = actionText.toLowerCase();
+  const foundKeywords = [];
+  
+  for (const keyword of ALL_ACTION_KEYWORDS) {
+    if (lowerText.includes(keyword)) {
+      foundKeywords.push(keyword);
+    }
+  }
+  
+  return foundKeywords;
+}
+
+function getDefaultDCForAction(actionText) {
+  const keywords = detectActionKeywords(actionText);
+  if (keywords.length === 0) return null;
+  
+  // Return DC for the first matched keyword
+  return DEFAULT_DCS[keywords[0]] || 12;
+}
+
+// ============================================================
 //  WORLD NOTES — Load from worlds/ folder (in-memory cache)
 // ============================================================
 
@@ -114,6 +200,30 @@ function getWorldTitle(filePath) {
   } catch (err) {
     return path.basename(filePath, ".txt");
   }
+}
+
+function findWorldByTitleOrFilename(query) {
+  const worlds = getAllWorlds();
+  const queryLower = query.toLowerCase();
+  
+  // First try exact filename match (case-insensitive)
+  for (const world of worlds) {
+    if (world.toLowerCase() === queryLower || world.toLowerCase() === `${queryLower}.txt`) {
+      return world;
+    }
+  }
+  
+  // Then try matching by title (case-insensitive)
+  for (const world of worlds) {
+    const filePath = path.join(WORLDS_PATH, world);
+    const title = getWorldTitle(filePath).toLowerCase();
+    if (title === queryLower) {
+      return world;
+    }
+  }
+  
+  // No match found
+  return null;
 }
 
 function loadWorld(worldFile) {
@@ -196,6 +306,12 @@ Keep your responses concise (2-4 sentences max) since they will be spoken aloud 
 IMPORTANT: Prioritize grammatically correct, complete sentences above all else. Ensure every response is polished and flows naturally.
 Always address ONLY the players present in the game. Do not mention or reference any NPCs or players who are not actively participating.
 
+TURN-TAKING (Multiple Players):
+When multiple players are in the game, address them one at a time in turn order.
+After each player's action is resolved, ALWAYS end your narration by explicitly addressing the NEXT player by name.
+Example: "The goblin staggers back. Okay, Aragon, what do you do?"
+This ensures every player knows when it's their turn.
+
 RESPONSE STYLE — Make your narration feel like a real D&D game:
 - Describe consequences and reactions NATURALLY, showing don't telling.
 - Vary how you prompt for the next action. Don't always say "what do you do?"
@@ -212,10 +328,22 @@ Examples of varied prompts (don't repeat the same one):
   • "What's your move?" (simple and direct)
   • "Do you push forward, or reconsider?"
 
-When rolling is needed, ask for the roll INSTEAD of a description action.
+DICE ROLLS AND DIFFICULTY CLASSES (D&D 5e):
+When a player attempts an action that requires a skill check (combat, stealth, persuasion, etc.):
+1. Ask the player to roll a d20 if they haven't already.
+2. When you receive a roll result, compare it to the appropriate Difficulty Class (DC):
+   - DC 5: Very Easy
+   - DC 10: Easy
+   - DC 12: Medium
+   - DC 15: Hard
+   - DC 20: Very Hard
+   - DC 25: Nearly Impossible
+3. Narrate success or failure based on the ACTUAL ROLL RESULT, not just narrative preference.
+4. A successful roll (meeting or exceeding the DC) results in success. A failed roll results in failure or complication.
+5. If a roll result is provided in the context, always use it to determine the outcome.
 
 Track player names, their actions, and the consequences in the story.
-When a player rolls dice, acknowledge the result dramatically and narrate the outcome.
+When a player rolls dice, acknowledge the result dramatically and narrate the outcome based on whether they succeeded.
 Never break character. Never mention being an AI.
 The adventure begins when someone says "start game" or "begin".
 IMPORTANT: Use the world reference material below to stay consistent with locations, NPCs, secrets, and lore.
@@ -269,6 +397,13 @@ function getSession(guildId) {
       nameCollectionTimeout: null, // Timer for auto-proceeding with missing names
       currentLocation: "generic", // Current location for ambient sounds
       ambientSoundPlayer: null, // Currently playing ambient sound (for stopping)
+      // Turn-taking system
+      turnOrder: [],      // Array of userId in turn order
+      currentTurnIndex: 0, // Index into turnOrder
+      lastActionTime: null, // Timestamp of last action (for 75-sec timeout)
+      turnTimeoutHandle: null, // Handle for turn auto-advance timer
+      lastRollResult: null, // { playerName, dice, total } from last roll
+      pendingAction: null, // { action, playerName, expectedDC } waiting for roll
     };
   }
   return sessions[guildId];
@@ -288,6 +423,57 @@ function getPlayerDisplayName(guildId, userId) {
   return session.players[userId] || null;
 }
 
+// ============================================================
+//  TURN-TAKING SYSTEM
+// ============================================================
+
+function initializeTurnOrder(guildId) {
+  const session = getSession(guildId);
+  // Initialize turn order with active player IDs
+  session.turnOrder = session.activePlayers.map(p => p.userId);
+  session.currentTurnIndex = 0;
+  session.lastActionTime = Date.now();
+  console.log(`📋 Turn order initialized: ${session.turnOrder.map(id => session.players[id]).join(" → ")}`);
+}
+
+function getCurrentTurnPlayer(guildId) {
+  const session = getSession(guildId);
+  if (session.turnOrder.length === 0) return null;
+  const currentUserId = session.turnOrder[session.currentTurnIndex];
+  return {
+    userId: currentUserId,
+    characterName: session.players[currentUserId],
+  };
+}
+
+function advanceTurn(guildId) {
+  const session = getSession(guildId);
+  if (session.turnOrder.length === 0) return null;
+  
+  session.currentTurnIndex = (session.currentTurnIndex + 1) % session.turnOrder.length;
+  session.lastActionTime = Date.now();
+  resetTurnTimeout(guildId);
+  
+  const nextPlayer = getCurrentTurnPlayer(guildId);
+  return nextPlayer;
+}
+
+function resetTurnTimeout(guildId) {
+  const session = getSession(guildId);
+  
+  // Clear any existing timeout
+  if (session.turnTimeoutHandle) {
+    clearTimeout(session.turnTimeoutHandle);
+  }
+  
+  // Set new 75-second timeout
+  session.turnTimeoutHandle = setTimeout(() => {
+    console.log(`⏱️ Turn timeout for ${session.players[session.turnOrder[session.currentTurnIndex]]}`);
+    // Auto-advance to next player
+    advanceTurn(guildId);
+  }, 75000); // 75 seconds
+}
+
 async function proceedAfterNames(interaction, guildId, connection) {
   const session = getSession(guildId);
   session.nameCollectionActive = false;
@@ -297,6 +483,11 @@ async function proceedAfterNames(interaction, guildId, connection) {
     if (!session.players[player.userId]) {
       session.players[player.userId] = player.displayName;
     }
+  }
+  
+  // Initialize turn order for multiple players
+  if (session.activePlayers.length > 1) {
+    initializeTurnOrder(guildId);
   }
   
   // Build final player names list
@@ -855,6 +1046,61 @@ const client = new Client({
 // Store active voice connections per guild.
 const connections = {};
 
+// ============================================================
+//  ACTION ROLL CHECKING & PROMPTING
+// ============================================================
+
+// Bug log for testing/story override scenarios
+const bugLog = [];
+
+function logBug(guildId, userId, playerName, reason) {
+  bugLog.push({
+    timestamp: new Date().toISOString(),
+    guildId,
+    userId,
+    playerName,
+    reason,
+  });
+  console.log(`🐛 Bug Log: ${playerName} - ${reason}`);
+}
+
+async function checkAndPromptForRoll(interaction, guildId, action, playerName, connection) {
+  const session = getSession(guildId);
+  
+  // Detect keywords in the action
+  const detectedKeywords = detectActionKeywords(action);
+  const defaultDC = getDefaultDCForAction(action);
+  
+  // If keywords detected, prompt for roll
+  if (detectedKeywords.length > 0 && defaultDC) {
+    const dc = defaultDC;
+    const difficulty = DND_DIFFICULTY_CLASSES[dc] || "Unknown";
+    
+    // Ask player if they want to roll
+    await interaction.channel.send(
+      `🎲 **${playerName}** — This action requires a check! (DC ${dc} - ${difficulty})\nUse \`/roll 1d20\` to attempt it, or type a new \`/action\` if you want to do something else.`
+    );
+    
+    return { requiresRoll: true, expectedDC: dc };
+  }
+  
+  // Check if LLM should also judge based on narrative weight
+  // For now, return no roll needed
+  return { requiresRoll: false, expectedDC: null };
+}
+
+async function handleActionWithRollContext(guildId, action, playerName, lastRoll, expectedDC) {
+  let enhancedPrompt = action;
+  
+  if (lastRoll && expectedDC) {
+    // Add roll context to the message
+    const success = lastRoll.total >= expectedDC;
+    enhancedPrompt = `${action}\n[ROLL CONTEXT: ${playerName} rolled ${lastRoll.total} vs DC ${expectedDC} - ${success ? "SUCCESS" : "FAILURE"}]`;
+  }
+  
+  return enhancedPrompt;
+}
+
 const commands = [
   {
     name: "join",
@@ -867,6 +1113,14 @@ const commands = [
   {
     name: "startgame",
     description: "Start a new D&D adventure",
+    options: [
+      {
+        name: "world",
+        description: "World to play in (by title or filename, case-insensitive)",
+        type: ApplicationCommandOptionType.String,
+        required: false,
+      },
+    ],
   },
   {
     name: "action",
@@ -878,17 +1132,31 @@ const commands = [
         type: ApplicationCommandOptionType.String,
         required: true,
       },
+      {
+        name: "force",
+        description: "[DEV ONLY] Skip roll requirements (logs bug for testing)",
+        type: ApplicationCommandOptionType.Boolean,
+        required: false,
+      },
     ],
   },
   {
     name: "roll",
-    description: "Roll dice (e.g. 1d20, 2d6)",
+    description: "Roll dice (e.g. 1d20, 2d6) with optional DC for difficulty checking",
     options: [
       {
         name: "dice",
         description: "Dice to roll (e.g. 1d20)",
         type: ApplicationCommandOptionType.String,
         required: true,
+      },
+      {
+        name: "dc",
+        description: "Difficulty Class to check against (5-25)",
+        type: ApplicationCommandOptionType.Integer,
+        required: false,
+        min_value: 5,
+        max_value: 25,
       },
     ],
   },
@@ -915,6 +1183,10 @@ const commands = [
         required: true,
       },
     ],
+  },
+  {
+    name: "pass",
+    description: "Pass your turn to the next player",
   },
   {
     name: "endgame",
@@ -1073,6 +1345,34 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return interaction.reply("There are no players in the voice channel!");
     }
 
+    // Handle world selection
+    const worldQuery = interaction.options.getString("world");
+    let selectedWorldFile = null;
+    
+    if (worldQuery) {
+      selectedWorldFile = findWorldByTitleOrFilename(worldQuery);
+      if (!selectedWorldFile) {
+        const worlds = getAllWorlds();
+        const worldsList = worlds.map((w, idx) => {
+          const title = getWorldTitle(path.join(WORLDS_PATH, w));
+          return `${idx + 1}. **${title}** (\`${w}\`)`;
+        }).join("\n");
+        return interaction.reply(`
+❌ World not found: "${worldQuery}"
+
+📖 **Available Worlds:**
+
+${worldsList}
+
+Use the world's title or filename in the \`world\` parameter.
+        `.trim());
+      }
+      worldNotes = loadWorld(selectedWorldFile);
+    } else {
+      // No world specified, use random or env var
+      loadRandomWorld();
+    }
+
     // Build active players list
     session.activePlayers = voiceMembers.map(member => {
       return {
@@ -1121,20 +1421,76 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     const action = interaction.options.getString("what");
     if (!action) return interaction.reply("Tell me what you want to do!");
+    
+    const forceSkipRoll = interaction.options.getBoolean("force") || false;
+
+    // ===== TURN-TAKING CHECK (for multiple players) =====
+    if (session.turnOrder.length > 1) {
+      const currentPlayer = getCurrentTurnPlayer(guildId);
+      const isPlayersTurn = currentPlayer && currentPlayer.userId === interaction.user.id;
+      
+      if (!isPlayersTurn) {
+        const nextPlayerName = currentPlayer ? currentPlayer.characterName : "someone";
+        return interaction.reply(
+          `⏳ It's not your turn yet! It's **${nextPlayerName}**'s turn. Use \`/pass\` to skip your turn or wait for the timeout.`
+        );
+      }
+    }
 
     await interaction.reply(`⚔️ *${playerName}: "${action}"*`);
+
+    // ===== ROLL PROMPT CHECK =====
+    // Check if action requires a roll (unless force override is set)
+    let rollCheck = { requiresRoll: false, expectedDC: null };
+    
+    if (!forceSkipRoll) {
+      rollCheck = await checkAndPromptForRoll(interaction, guildId, action, playerName, connection);
+    } else {
+      // Log the override for debugging
+      logBug(guildId, interaction.user.id, playerName, `Force skipped roll requirement for action: "${action}"`);
+    }
+    
+    if (rollCheck.requiresRoll) {
+      // Player needs to roll, don't process action yet
+      // Store the action and expected DC for when they roll
+      session.pendingAction = {
+        action,
+        playerName,
+        expectedDC: rollCheck.expectedDC,
+      };
+      return;
+    }
+
+    // ===== PROCESS ACTION (no roll needed) =====
+    // Add turn context if multiple players
+    let actionMessage = action;
+    if (session.turnOrder.length > 1) {
+      actionMessage += `\n[TURN CONTEXT: It is now ${playerName}'s turn]`;
+    }
 
     let dmText = "";
     const reply = await askDMStream(
       guildId,
-      action,
+      actionMessage,
       playerName,
       (text) => {
         dmText = text;
       }
     );
 
-    await sendDMResponseWithVoice(interaction, connection, reply, guildId);
+    // Add next turn prompt if multiple players
+    let finalReply = reply;
+    if (session.turnOrder.length > 1) {
+      const nextPlayer = advanceTurn(guildId);
+      if (nextPlayer) {
+        finalReply += `\n\nOkay, **${nextPlayer.characterName}**, what do you do?`;
+      }
+    } else {
+      // Single player: just reset the turn timer
+      resetTurnTimeout(guildId);
+    }
+
+    await sendDMResponseWithVoice(interaction, connection, finalReply, guildId);
     return;
   }
 
@@ -1143,6 +1499,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   // ----------------------------------------------------------
   if (commandName === "roll") {
     const diceArg = interaction.options.getString("dice") || "1d20";
+    const dcArg = interaction.options.getInteger("dc");
     const [numDice, diceSides] = diceArg.toLowerCase().split("d").map(Number);
 
     if (!numDice || !diceSides) {
@@ -1159,18 +1516,86 @@ client.on(Events.InteractionCreate, async (interaction) => {
       total += roll;
     }
 
-    const rollText = `${playerName} rolled ${diceArg}: [${rolls.join(", ")}] = **${total}**`;
+    // Build roll display with optional DC
+    let rollText = `${playerName} rolled ${diceArg}: [${rolls.join(", ")}] = **${total}**`;
+    if (dcArg !== null) {
+      const difficulty = DND_DIFFICULTY_CLASSES[dcArg] || "Unknown";
+      const result = total >= dcArg ? "✅ SUCCESS" : "❌ FAILURE";
+      rollText += ` vs DC ${dcArg} (${difficulty}) — ${result}`;
+    }
+
     await interaction.reply(`🎲 ${rollText}`);
 
     if (session.active && connections[guildId]) {
+      // Store roll result for context
+      session.lastRollResult = {
+        playerName,
+        dice: diceArg,
+        total,
+        dc: dcArg,
+      };
+
+      // Check if there's a pending action from roll prompt, or use DC flag if provided
+      let dmPrompt = `I rolled ${diceArg} and got a ${total}.`;
+      let expectedDC = null;
+
+      if (session.pendingAction) {
+        const pending = session.pendingAction;
+        expectedDC = pending.expectedDC;
+        const success = total >= pending.expectedDC;
+        dmPrompt = `${pending.action}\n[ROLL RESULT: ${playerName} rolled ${total} vs DC ${pending.expectedDC} - ${success ? "SUCCESS" : "FAILURE"}]`;
+        session.pendingAction = null;
+      } else if (dcArg !== null) {
+        // Use DC provided as flag
+        expectedDC = dcArg;
+        const success = total >= dcArg;
+        dmPrompt = `I rolled ${diceArg} and got a ${total} vs DC ${dcArg}.\n[ROLL RESULT: ${playerName} rolled ${total} vs DC ${dcArg} - ${success ? "SUCCESS" : "FAILURE"}]`;
+      }
+
       const reply = await askDM(
         guildId,
-        `I rolled ${diceArg} and got a ${total}.`,
+        dmPrompt,
         playerName
       );
 
-      await sendDMResponseWithVoice(interaction, connections[guildId], reply, guildId);
+      // Add next turn prompt if multiple players
+      let finalReply = reply;
+      if (session.turnOrder.length > 1) {
+        const nextPlayer = advanceTurn(guildId);
+        if (nextPlayer) {
+          finalReply += `\n\nOkay, **${nextPlayer.characterName}**, what do you do?`;
+        }
+      } else {
+        resetTurnTimeout(guildId);
+      }
+
+      await sendDMResponseWithVoice(interaction, connections[guildId], finalReply, guildId);
     }
+    return;
+  }
+
+  // ----------------------------------------------------------
+  //  /pass — Pass your turn to the next player
+  // ----------------------------------------------------------
+  if (commandName === "pass") {
+    if (!session.active) {
+      return interaction.reply("No game is running!");
+    }
+
+    if (session.turnOrder.length <= 1) {
+      return interaction.reply("You're the only player! No turn to pass to.");
+    }
+
+    const currentPlayer = getCurrentTurnPlayer(guildId);
+    if (!currentPlayer || currentPlayer.userId !== interaction.user.id) {
+      return interaction.reply("It's not your turn! Wait for your turn or use `/action` anyway for single-player mode.");
+    }
+
+    const nextPlayer = advanceTurn(guildId);
+    interaction.reply(`✅ **${currentPlayer.characterName}** passes their turn to **${nextPlayer.characterName}**.`);
+    
+    // Notify the next player in the channel
+    interaction.channel.send(`▶️ **${nextPlayer.characterName}**, it's your turn! What do you do?`);
     return;
   }
 
@@ -1180,11 +1605,17 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (commandName === "status") {
     const msgCount = session.history.length;
     const isActive = session.active ? "Active ⚔️" : "No game running";
-    interaction.reply(
-      `**Game Status:** ${isActive}\n**Story exchanges so far:** ${Math.floor(
-        msgCount / 2
-      )}\nType \`/action [what you do]\` to play.`
-    );
+    
+    let statusMsg = `**Game Status:** ${isActive}\n**Story exchanges so far:** ${Math.floor(
+      msgCount / 2
+    )}\nType \`/action [what you do]\` to play.`;
+    
+    if (session.active && session.turnOrder.length > 1) {
+      const currentPlayer = getCurrentTurnPlayer(guildId);
+      statusMsg += `\n\n**Current Turn:** ${currentPlayer.characterName}`;
+    }
+    
+    interaction.reply(statusMsg);
     return;
   }
 
@@ -1316,12 +1747,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return `${idx + 1}. **${title}** (\`${world}\`)`;
     }).join("\n");
     
-    interaction.reply(`
+     interaction.reply(`
 📖 **Available Worlds:**
 
 ${worldsList}
 
-Use \`/startgame\` to start with a random world, or set \`WORLD_FILE\` in your .env to choose a specific one (e.g., \`ashmore_keep.txt\`).
+Use \`/startgame world:[title or filename]\` to pick a specific world, or just \`/startgame\` for a random one.
+
+Examples: \`/startgame world:aethoria\` or \`/startgame world:Aethoria - Chapter 1\`
     `.trim());
     return;
   }
@@ -1348,7 +1781,7 @@ Then use \`/action [what you do]\` to play!
 🎮 **Game Control**
 \`/join\` — Bot joins your voice channel
 \`/leave\` — Bot leaves voice and ends session
-\`/startgame\` — Start a new adventure
+\`/startgame [world:name]\` — Start a new adventure (optionally pick a world by title or filename)
 \`/endgame\` — End the game gracefully
 \`/resetgame\` — Wipe game state and start fresh
 \`/status\` — Check if a game is running

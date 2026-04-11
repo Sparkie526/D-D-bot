@@ -1,0 +1,178 @@
+# D&D 5e Fighter Template
+# Standard Array: 15, 14, 13, 12, 10, 8
+
+character:
+  name: "Kael Ironmark"
+  class: "Fighter"
+  multiclass: []
+  level: 1
+  experience: 0
+  background: "Soldier"
+  alignment: "Lawful Neutral"
+  player: "username"
+  campaign: "Your Campaign"
+  lastPlayed: null
+
+abilities:
+  strength: 15
+  dexterity: 13
+  constitution: 14
+  intelligence: 10
+  wisdom: 12
+  charisma: 8
+
+combat:
+  ac: 18
+  hp:
+    current: 12
+    max: 12
+  initiative: 1
+  proficiencyBonus: 2
+
+skills:
+  acrobatics:
+    modifier: 1
+    proficient: false
+  animal_handling:
+    modifier: 1
+    proficient: false
+  arcana:
+    modifier: 0
+    proficient: false
+  athletics:
+    modifier: 4
+    proficient: true
+  deception:
+    modifier: -1
+    proficient: false
+  history:
+    modifier: 0
+    proficient: false
+  insight:
+    modifier: 1
+    proficient: false
+  intimidation:
+    modifier: 1
+    proficient: true
+  investigation:
+    modifier: 0
+    proficient: false
+  medicine:
+    modifier: 1
+    proficient: false
+  perception:
+    modifier: 1
+    proficient: false
+  performance:
+    modifier: -1
+    proficient: false
+  persuasion:
+    modifier: -1
+    proficient: false
+  sleight_of_hand:
+    modifier: 1
+    proficient: false
+  stealth:
+    modifier: 1
+    proficient: false
+  survival:
+    modifier: 1
+    proficient: false
+
+saves:
+  strength:
+    modifier: 4
+    proficient: true
+  dexterity:
+    modifier: 1
+    proficient: false
+  constitution:
+    modifier: 4
+    proficient: true
+  intelligence:
+    modifier: 0
+    proficient: false
+  wisdom:
+    modifier: 1
+    proficient: false
+  charisma:
+    modifier: -1
+    proficient: false
+
+resistances:
+  damage: []
+  conditions: []
+
+equipment:
+  armor: "Chain Mail"
+  weapons:
+    - name: "Longsword"
+      type: "Melee"
+      bonus: 4
+      damage: "1d8+2"
+      damageType: "slashing"
+      equipped: true
+    - name: "Shield"
+      type: "Defense"
+      bonus: 2
+      equipped: true
+    - name: "Light Crossbow"
+      type: "Ranged"
+      bonus: 3
+      damage: "1d8+1"
+      damageType: "piercing"
+      equipped: false
+  inventory:
+    - name: "Backpack"
+      quantity: 1
+    - name: "Bedroll"
+      quantity: 1
+    - name: "Rations (1 day)"
+      quantity: 5
+    - name: "Rope (50ft)"
+      quantity: 1
+    - name: "Torch"
+      quantity: 5
+    - name: "Waterskin"
+      quantity: 1
+    - name: "Gold Pieces"
+      quantity: 15
+
+features:
+  - name: "Fighting Style: Defense"
+    description: "+1 AC while wearing armor"
+    uses:
+      current: 0
+      max: 0
+  - name: "Second Wind"
+    description: "1d10 + 1 HP, 1/short rest"
+    uses:
+      current: 0
+      max: 1
+      resets: "short rest"
+
+spellcasting:
+  ability: null
+  spellSaveDC: null
+  spellAttackBonus: null
+  spells: {}
+
+conditions:
+  unconscious: false
+  poisoned: false
+  stunned: false
+  paralyzed: false
+  petrified: false
+  blinded: false
+  deafened: false
+  frightened: false
+  grappled: false
+  restrained: false
+  exhaustion: 0
+
+notes:
+  biography: "A disciplined frontline soldier who values structure and efficiency. Kael fights with precision and shields his allies from harm."
+  bonds: "Loyal to his former unit and seeks to restore their honor."
+  ideals: "Discipline and duty above all."
+  flaws: "Struggles to adapt when plans fall apart."
+  treasures: "A worn insignia from his old regiment."

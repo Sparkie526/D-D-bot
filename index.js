@@ -1962,102 +1962,133 @@ Use the world's title or filename in the \`world\` parameter.
   //  /character — Manage D&D character sheets
   // ----------------------------------------------------------
   if (commandName === "character") {
-    const subcommand = interaction.options.getSubcommand();
-    const userId = interaction.user.id;
+    try {
+      const subcommand = interaction.options.getSubcommand();
+      const userId = interaction.user.id;
 
-    if (subcommand === "create") {
-      const className = interaction.options.getString("class");
-      const characterName = interaction.options.getString("name");
+      if (subcommand === "create") {
+        const className = interaction.options.getString("class");
+        const characterName = interaction.options.getString("name");
 
-      if (characterName.length > 50) {
-        return interaction.reply("❌ Character name too long! Max 50 characters.");
-      }
-
-      const template = loadCharacterTemplate(className);
-      if (!template) {
-        return interaction.reply(`❌ Unknown class: ${className}`);
-      }
-
-      // Create character from template
-      const character = JSON.parse(JSON.stringify(template)); // Deep copy
-      character.character.name = characterName;
-      character.character.player = interaction.user.username;
-      character.character.lastPlayed = new Date().toISOString();
-
-      // Save character
-      if (!saveCharacter(guildId, userId, character)) {
-        return interaction.reply("❌ Failed to save character. Please try again.");
-      }
-
-      // Load into current session
-      session.characterSheets[userId] = character;
-      session.currentCharacters[userId] = characterName;
-
-      const embed = buildCharacterEmbed(character, interaction.user.username);
-      interaction.reply({
-        content: `✅ **${characterName}** the **${className}** has been created!`,
-        embeds: [embed],
-      });
-      return;
-    }
-
-    if (subcommand === "select") {
-      const characterName = interaction.options.getString("character");
-      const character = loadCharacter(guildId, userId, characterName);
-
-      if (!character) {
-        const available = listPlayerCharacters(guildId, userId);
-        return interaction.reply(
-          `❌ Character not found.\n\nYour characters: ${available.length > 0 ? available.join(", ") : "None yet"}`
-        );
-      }
-
-      // Save old character if one is loaded
-      if (session.currentCharacters[userId]) {
-        const oldChar = session.characterSheets[userId];
-        if (oldChar) {
-          saveCharacter(guildId, userId, oldChar);
+        if (!characterName || characterName.length > 50) {
+          return interaction.reply("❌ Character name is required and must be 50 chars or less!");
         }
+
+        const template = loadCharacterTemplate(className);
+        if (!template) {
+          return interaction.reply(`❌ Unknown class: ${className}`);
+        }
+
+        // Create character from template
+        const character = JSON.parse(JSON.stringify(template)); // Deep copy
+        character.character.name = characterName;
+        character.character.player = interaction.user.username;
+        character.character.lastPlayed = new Date().toISOString();
+
+        // Save character
+        if (!saveCharacter(guildId, userId, character)) {
+          return interaction.reply("❌ Failed to save character. Please try again.");
+        }
+
+        // Load into current session
+        session.characterSheets[userId] = character;
+        session.currentCharacters[userId] = characterName;
+
+        try {
+          const embed = buildCharacterEmbed(character, interaction.user.username);
+          interaction.reply({
+            content: `✅ **${characterName}** the **${className}** has been created!`,
+            embeds: [embed],
+          });
+        } catch (embedErr) {
+          console.error("Embed error:", embedErr);
+          interaction.reply(`✅ **${characterName}** the **${className}** has been created!`);
+        }
+        return;
       }
 
-      // Load new character
-      character.character.lastPlayed = new Date().toISOString();
-      session.characterSheets[userId] = character;
-      session.currentCharacters[userId] = characterName;
+      if (subcommand === "select") {
+        const characterName = interaction.options.getString("character");
+        if (!characterName) {
+          return interaction.reply("❌ Character name is required!");
+        }
 
-      const embed = buildCharacterEmbed(character, interaction.user.username);
-      interaction.reply({
-        content: `✅ **${characterName}** loaded!`,
-        embeds: [embed],
-      });
-      return;
-    }
+        const character = loadCharacter(guildId, userId, characterName);
 
-    if (subcommand === "view") {
-      const characterName = session.currentCharacters[userId];
-      if (!characterName) {
-        return interaction.reply("❌ No character loaded. Use `/character select` or `/character create` first.");
+        if (!character) {
+          const available = listPlayerCharacters(guildId, userId);
+          return interaction.reply(
+            `❌ Character not found.\n\nYour characters: ${available.length > 0 ? available.join(", ") : "None yet"}`
+          );
+        }
+
+        // Save old character if one is loaded
+        if (session.currentCharacters[userId]) {
+          const oldChar = session.characterSheets[userId];
+          if (oldChar) {
+            saveCharacter(guildId, userId, oldChar);
+          }
+        }
+
+        // Load new character
+        character.character.lastPlayed = new Date().toISOString();
+        session.characterSheets[userId] = character;
+        session.currentCharacters[userId] = characterName;
+
+        try {
+          const embed = buildCharacterEmbed(character, interaction.user.username);
+          interaction.reply({
+            content: `✅ **${characterName}** loaded!`,
+            embeds: [embed],
+          });
+        } catch (embedErr) {
+          console.error("Embed error:", embedErr);
+          interaction.reply(`✅ **${characterName}** loaded!`);
+        }
+        return;
       }
 
-      const character = session.characterSheets[userId];
-      if (!character) {
-        return interaction.reply("❌ Character data not found. Please reload with `/character select`.");
+      if (subcommand === "view") {
+        const userId = interaction.user.id;
+        const characterName = session.currentCharacters[userId];
+        if (!characterName) {
+          return interaction.reply("❌ No character loaded. Use `/character select` or `/character create` first.");
+        }
+
+        const character = session.characterSheets[userId];
+        if (!character) {
+          return interaction.reply("❌ Character data not found. Please reload with `/character select`.");
+        }
+
+        try {
+          const embed = buildCharacterEmbed(character, interaction.user.username);
+          interaction.reply({ embeds: [embed] });
+        } catch (embedErr) {
+          console.error("Embed error:", embedErr);
+          interaction.reply(`**${characterName}** the **${character.character.class}**\nLevel ${character.character.level}\nHP: ${character.combat.hp.current}/${character.combat.hp.max}`);
+        }
+        return;
       }
 
-      const embed = buildCharacterEmbed(character, interaction.user.username);
-      interaction.reply({ embeds: [embed] });
-      return;
-    }
+      if (subcommand === "list") {
+        const userId = interaction.user.id;
+        try {
+          const characters = listPlayerCharacters(guildId, userId);
+          if (characters.length === 0) {
+            return interaction.reply("❌ You have no characters yet. Use `/character create` to make one!");
+          }
 
-    if (subcommand === "list") {
-      const characters = listPlayerCharacters(guildId, userId);
-      if (characters.length === 0) {
-        return interaction.reply("❌ You have no characters yet. Use `/character create` to make one!");
+          const list = characters.map((c, i) => `${i + 1}. **${c}**`).join("\n");
+          interaction.reply(`📜 **Your Characters:**\n\n${list}`);
+        } catch (listErr) {
+          console.error("List characters error:", listErr);
+          return interaction.reply("❌ Error listing characters. Please try again.");
+        }
+        return;
       }
-
-      const list = characters.map((c, i) => `${i + 1}. **${c}**`).join("\n");
-      interaction.reply(`📜 **Your Characters:**\n\n${list}`);
-      return;
+    } catch (err) {
+      console.error("Character command error:", err);
+      return interaction.reply("❌ An error occurred processing your character command. Please try again.");
     }
   }
 
@@ -2065,55 +2096,74 @@ Use the world's title or filename in the \`world\` parameter.
   //  /hp — Track HP and damage
   // ----------------------------------------------------------
   if (commandName === "hp") {
-    const userId = interaction.user.id;
-    const valueStr = interaction.options.getString("value");
+    try {
+      const userId = interaction.user.id;
+      const valueStr = interaction.options.getString("value");
 
-    if (!session.characterSheets[userId]) {
-      return interaction.reply("❌ No character loaded! Use `/character select` or `/character create` first.");
-    }
-
-    const character = session.characterSheets[userId];
-    const hp = character.combat.hp;
-
-    // Handle "max" syntax
-    if (valueStr.toLowerCase().startsWith("max:")) {
-      const newMax = parseInt(valueStr.slice(4).trim());
-      if (isNaN(newMax) || newMax < 1) {
-        return interaction.reply("❌ Invalid max HP value. Use: `/hp max:40`");
+      if (!valueStr) {
+        return interaction.reply("❌ Value is required!");
       }
-      hp.max = newMax;
-      hp.current = Math.min(hp.current, newMax);
-      saveCharacter(guildId, userId, character);
-      return interaction.reply(`✅ Max HP set to **${newMax}**. Current: **${hp.current}/${hp.max}**`);
+
+      if (!session.characterSheets[userId]) {
+        return interaction.reply("❌ No character loaded! Use `/character select` or `/character create` first.");
+      }
+
+      const character = session.characterSheets[userId];
+      if (!character.combat || !character.combat.hp) {
+        return interaction.reply("❌ Character data invalid. Please reload with `/character select`.");
+      }
+
+      const hp = character.combat.hp;
+
+      // Handle "max" syntax
+      if (valueStr.toLowerCase().startsWith("max:")) {
+        const newMax = parseInt(valueStr.slice(4).trim());
+        if (isNaN(newMax) || newMax < 1) {
+          return interaction.reply("❌ Invalid max HP value. Use: `/hp max:40`");
+        }
+        hp.max = newMax;
+        hp.current = Math.min(hp.current, newMax);
+        if (saveCharacter(guildId, userId, character)) {
+          return interaction.reply(`✅ Max HP set to **${newMax}**. Current: **${hp.current}/${hp.max}**`);
+        } else {
+          return interaction.reply("❌ Failed to save character.");
+        }
+      }
+
+      // Handle damage/heal
+      const value = parseInt(valueStr);
+      if (isNaN(value)) {
+        return interaction.reply("❌ Invalid value. Use: `/hp 5` to heal, `/hp -10` to damage, or `/hp max:40` to set max HP.");
+      }
+
+      const oldHp = hp.current;
+      hp.current = Math.max(0, Math.min(hp.max, hp.current + value));
+
+      const healthBar = "█".repeat(Math.ceil((hp.current / hp.max) * 20)) + 
+                        "░".repeat(20 - Math.ceil((hp.current / hp.max) * 20));
+
+      let message = `**${character.character.name}** `;
+      if (value > 0) {
+        message += `heals **+${value}** HP`;
+      } else {
+        message += `takes **${Math.abs(value)}** damage`;
+      }
+      message += `\n\n[${healthBar}] **${hp.current}/${hp.max}**`;
+
+      if (hp.current === 0) {
+        message += "\n\n☠️ **CHARACTER UNCONSCIOUS!**";
+      }
+
+      if (saveCharacter(guildId, userId, character)) {
+        interaction.reply(message);
+      } else {
+        interaction.reply("❌ Failed to save character HP change.");
+      }
+      return;
+    } catch (err) {
+      console.error("HP command error:", err);
+      return interaction.reply("❌ An error occurred. Please try again.");
     }
-
-    // Handle damage/heal
-    const value = parseInt(valueStr);
-    if (isNaN(value)) {
-      return interaction.reply("❌ Invalid value. Use: `/hp 5` to heal, `/hp -10` to damage, or `/hp max:40` to set max HP.");
-    }
-
-    const oldHp = hp.current;
-    hp.current = Math.max(0, Math.min(hp.max, hp.current + value));
-
-    const healthBar = "█".repeat(Math.ceil((hp.current / hp.max) * 20)) + 
-                      "░".repeat(20 - Math.ceil((hp.current / hp.max) * 20));
-
-    let message = `**${character.character.name}** `;
-    if (value > 0) {
-      message += `heals **+${value}** HP`;
-    } else {
-      message += `takes **${Math.abs(value)}** damage`;
-    }
-    message += `\n\n[${healthBar}] **${hp.current}/${hp.max}**`;
-
-    if (hp.current === 0) {
-      message += "\n\n☠️ **CHARACTER UNCONSCIOUS!**";
-    }
-
-    saveCharacter(guildId, userId, character);
-    interaction.reply(message);
-    return;
   }
 
   // ----------------------------------------------------------

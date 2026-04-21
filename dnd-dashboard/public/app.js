@@ -761,7 +761,6 @@ function buildPlayerCard(player) {
       <div class="player-char-name">
         <span class="player-char-name-text">${esc(player.characterName)}</span>
         ${isMe ? '<span class="player-me-tag">YOU</span>' : ''}
-        <span class="arsenal-btn" data-arsenal-id="${esc(player.discordId)}" onclick="openArsenalModal('${esc(player.discordId)}')" title="View Arsenal">🎒</span>
       </div>
       <div class="player-class-level">${esc(player.class)} · Level ${player.level}</div>
       <div class="hp-row">
@@ -775,6 +774,7 @@ function buildPlayerCard(player) {
       ${condHtml}
     </div>
     <button class="card-remove-btn" onclick="deleteCharacter('${esc(player.discordId)}', '${esc(player.characterName)}')" title="Remove from game">✕</button>
+    <span class="arsenal-btn" data-arsenal-id="${esc(player.discordId)}" onclick="openArsenalModal('${esc(player.discordId)}')" title="View Arsenal">🎒</span>
   `;
   return div;
 }

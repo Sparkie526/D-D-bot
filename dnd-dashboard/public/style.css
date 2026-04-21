@@ -2196,16 +2196,17 @@ code {
 
 /* Bag icon on player card */
 .arsenal-btn {
-  display: inline-block;
-  margin-left: 6px;
-  font-size: 0.85em;
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  font-size: 1rem;
   cursor: pointer;
-  opacity: 0.6;
+  opacity: 0.5;
   transition: opacity 0.2s, transform 0.2s;
-  vertical-align: middle;
   line-height: 1;
+  z-index: 2;
 }
-.arsenal-btn:hover { opacity: 1; transform: scale(1.15); }
+.arsenal-btn:hover { opacity: 1; transform: scale(1.2); }
 
 /* Wiggle animation when item is added */
 @keyframes bagWiggle {

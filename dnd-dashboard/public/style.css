@@ -2452,27 +2452,23 @@ code {
   flex-shrink: 0;
 }
 
-/* ── Turn countdown timer (header) ──────────────────────────── */
-.header-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
+/* ── Turn countdown timer (story panel header) ───────────────── */
 .turn-timer-wrap {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
+  margin: 0 auto;
   font-size: 0.72rem;
   color: var(--text-dim);
 }
 .turn-timer-name {
   font-family: 'Cinzel', serif;
+  font-size: 0.72rem;
   color: var(--text-mid);
   white-space: nowrap;
 }
 .turn-timer-bar-wrap {
-  width: 80px;
+  width: 70px;
   height: 4px;
   background: rgba(255,255,255,0.08);
   border-radius: 2px;
@@ -2485,15 +2481,14 @@ code {
   width: 100%;
   border-radius: 2px;
   background: var(--gold);
-  transform-origin: left;
   transition: background 0.5s ease;
 }
 .turn-timer-countdown {
   font-family: 'Cinzel', serif;
-  font-size: 0.78rem;
-  min-width: 28px;
+  font-size: 0.75rem;
+  min-width: 26px;
   text-align: right;
   color: var(--gold);
 }
-.turn-timer-wrap.urgent .turn-timer-bar      { background: var(--red-bright); }
+.turn-timer-wrap.urgent .turn-timer-bar       { background: var(--red-bright); }
 .turn-timer-wrap.urgent .turn-timer-countdown { color: var(--red-bright); }

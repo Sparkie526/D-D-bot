@@ -39,16 +39,7 @@
         <h1 class="header-title">Chronicle</h1>
         <span class="connection-dot" id="connectionDot" title="Disconnected"></span>
       </div>
-      <div class="header-center">
-        <div id="headerLocation">— Unknown Lands —</div>
-        <div class="turn-timer-wrap" id="turnTimerWrap">
-          <span class="turn-timer-name" id="turnTimerName"></span>
-          <span class="turn-timer-bar-wrap">
-            <span class="turn-timer-bar" id="turnTimerBar" style="width:100%"></span>
-          </span>
-          <span class="turn-timer-countdown" id="turnTimerCountdown">90s</span>
-        </div>
-      </div>
+      <div class="header-center" id="headerLocation">— Unknown Lands —</div>
       <div class="header-right">
 <button class="logout-btn" id="logoutBtn" onclick="logout()" title="Switch character">⏏ Leave</button>
         <button class="my-char-btn" id="myCharBtn">
@@ -66,6 +57,13 @@
         <div class="panel-header">
           <span class="panel-icon">✦</span>
           <h2>Story Chronicle</h2>
+          <div class="turn-timer-wrap" id="turnTimerWrap">
+            <span class="turn-timer-name" id="turnTimerName"></span>
+            <span class="turn-timer-bar-wrap">
+              <span class="turn-timer-bar" id="turnTimerBar" style="width:100%"></span>
+            </span>
+            <span class="turn-timer-countdown" id="turnTimerCountdown">90s</span>
+          </div>
           <button class="clear-story-btn" onclick="clearStoryFeed()" title="Clear all story entries">✕ Clear</button>
         </div>
         <div class="story-feed" id="storyFeed">

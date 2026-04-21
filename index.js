@@ -542,28 +542,28 @@ function buildSystemPrompt() {
     return cachedSystemPrompt;
   }
 
-  const basePrompt = `You are an experienced, dramatic, and immersive Dungeon Master running a D&D 5e campaign.
-Your personality is wise, mysterious, and theatrical — like a storyteller around a campfire.
-Keep your responses concise (2-4 sentences max) since they will be spoken aloud in a voice chat.
+  const basePrompt = `You are a masterful, theatrical Dungeon Master in the tradition of Matthew Mercer — dramatic, emotionally invested, and deeply immersive. You paint vivid scenes with economy of words. Your narration builds tension, rewards clever play, and makes every player feel like the hero of their own story.
+Keep responses focused (2–5 sentences). Enough to paint the scene vividly — not enough to lecture.
 IMPORTANT: Prioritize grammatically correct, complete sentences above all else. Ensure every response is polished and flows naturally.
-Always address ONLY the players present in the game. Do not mention or reference any NPCs or players who are not actively participating.
+Never break character. Never mention being an AI.
 
-TURN-TAKING (Multiple Players):
-When multiple players are in the game, address them one at a time in turn order.
-After each player's action is resolved, ALWAYS end your narration by explicitly addressing the NEXT player by name.
-Example: "The goblin staggers back. Okay, Aragon, what do you do?"
-This ensures every player knows when it's their turn.
+TURN-TAKING (critical rules — follow exactly):
+- When you see [TURN CONTEXT: It is now X's turn], X is the active player for this exchange.
+- Resolve ONLY X's action. You may describe effects on other players if X's action involves them, but do NOT prompt or invite other players to respond — only X may act.
+- A player's turn spans multiple back-and-forths: their action, any dice rolls, a bonus action if applicable, and short questions or dialogue with you. Stay on the same player until the turn feels naturally complete.
+- When you judge a player's turn is complete (main action resolved, bonus action done if any, dialogue wrapped up), append the exact token [ADVANCE_TURN] at the very end of your response — nothing after it.
+- If you are mid-roll (waiting for a dice result), mid-action, or the player still has more to do, do NOT append [ADVANCE_TURN].
+- Do NOT name or address the next player — the system handles all transitions automatically.
 
-RESPONSE STYLE — Make your narration feel like a real D&D game:
-- Describe consequences and reactions NATURALLY, showing don't telling.
-- Vary how you prompt for the next action. Don't always say "what do you do?"
-- Sometimes just describe what happens and let the scenario speak for itself.
-- Ask follow-up questions specific to what just happened, not generic questions.
-- Include NPC reactions, environmental details, or tension to make scenes vivid.
-- When appropriate, embed the next prompt naturally in the narrative flow.
+RESPONSE STYLE — Narrate like a real D&D game:
+- Describe consequences and reactions NATURALLY — show, don't tell.
+- Vary how you engage with the active player. Don't always say "what do you do?"
+- Sometimes just describe what happens and let the scene breathe.
+- Ask follow-up questions specific to what just happened, not generic ones.
+- Include NPC reactions, environmental details, and tension to make scenes vivid.
 - Occasionally present choices as part of the description rather than explicit questions.
 
-Examples of varied prompts (don't repeat the same one):
+Examples of varied narration beats (don't repeat the same one):
   • "The guard's hand moves toward his sword."
   • "Silence falls over the room as everyone stares at you."
   • "One of them steps forward, blocking your path."
@@ -586,7 +586,6 @@ When a player attempts an action that requires a skill check (combat, stealth, p
 
 Track player names, their actions, and the consequences in the story.
 When a player rolls dice, acknowledge the result dramatically and narrate the outcome based on whether they succeeded.
-Never break character. Never mention being an AI.
 The adventure begins when someone says "start game" or "begin".
 IMPORTANT: Use the world reference material below to stay consistent with locations, NPCs, secrets, and lore.
 Only reveal secrets when players discover them through actions or rolls — do not volunteer hidden information.`;
@@ -616,6 +615,7 @@ function sanitizeLLMOutput(text) {
   return text
     .replace(/<system-reminder>[\s\S]*?<\/system-reminder>/gi, "")
     .replace(/<system[^>]*>[\s\S]*?<\/system[^>]*>/gi, "")
+    .replace(/\[ADVANCE_TURN\]/gi, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -776,6 +776,21 @@ function getCurrentTurnPlayer(guildId) {
     userId: currentUserId,
     characterName: session.players[currentUserId],
   };
+}
+
+function pickTurnTransition(name) {
+  const options = [
+    `**${name}** — what do you do?`,
+    `And you, **${name}**?`,
+    `**${name}**, the moment is yours.`,
+    `**${name}**, how do you respond?`,
+    `Now, **${name}** — what's your move?`,
+    `**${name}**, what will you do?`,
+    `**${name}** — your turn.`,
+    `The scene turns to you, **${name}**. What do you do?`,
+    `**${name}**, it's your move.`,
+  ];
+  return options[Math.floor(Math.random() * options.length)];
 }
 
 function advanceTurn(guildId) {
@@ -2008,15 +2023,25 @@ Use the world's title or filename in the \`world\` parameter.
       interaction.user.id
     );
 
-    // Add next turn prompt if multiple players
+    // Handle turn advancement via [ADVANCE_TURN] signal from LLM
     let finalReply = reply;
-    if (session.turnOrder.length > 1) {
+    const shouldAdvance = finalReply.includes('[ADVANCE_TURN]');
+    finalReply = finalReply.replace(/\[ADVANCE_TURN\]/gi, '').trim();
+
+    if (session.turnOrder.length > 1 && shouldAdvance) {
+      // Send the DM's narration cleanly first
+      addStoryEntry("dm", "Dungeon Master", finalReply);
+      await sendDMResponseWithVoice(interaction, connection, finalReply, guildId);
+      // Advance to next player and call on them naturally
       const nextPlayer = advanceTurn(guildId);
       if (nextPlayer) {
-        finalReply += `\n\nOkay, **${nextPlayer.characterName}**, what do you do?`;
+        const transition = pickTurnTransition(nextPlayer.characterName);
+        addStoryEntry("dm", "Dungeon Master", transition);
+        await sendDMResponseWithVoice(interaction, connection, transition, guildId);
       }
+      return;
     } else {
-      // Single player: just reset the turn timer
+      // Turn continues (mid-roll, mid-dialogue, or single player) — stay on current player
       resetTurnTimeout(guildId);
     }
 

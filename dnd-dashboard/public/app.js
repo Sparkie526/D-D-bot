@@ -844,11 +844,34 @@ function renderArsenalModal() {
         </div>`).join('')
     : '<span class="arsenal-none">None</span>';
 
-  // Inventory
+  // Inventory + carry weight
   const inventory = p.inventory || [];
-  document.getElementById('arsenalInventory').innerHTML = inventory.length
-    ? inventory.map(item => `<li class="arsenal-item">${esc(item)}</li>`).join('')
-    : '<span class="arsenal-none">Nothing yet</span>';
+  const { current, max, enc1, enc2 } = carryWeightInfo(p);
+  const cwPct   = max ? Math.min(current / max * 100, 100) : 0;
+  const cwColor = current > enc2 ? '#c0392b' : current > enc1 ? '#c9a84c' : '#4a9e6b';
+  const cwNote  = current > max  ? '⛔ Over capacity'
+                : current > enc2 ? '🔴 Heavily Encumbered'
+                : current > enc1 ? '🟡 Encumbered'
+                : '✅ Within limits';
+  const carryHtml = max ? `
+    <div class="carry-weight-block arsenal-carry">
+      <div class="carry-weight-header">
+        <span class="carry-weight-label">⚖ Carry Weight</span>
+        <span class="carry-weight-value">${current} / ${max} lbs</span>
+      </div>
+      <div class="carry-weight-track">
+        <div class="carry-weight-fill" style="width:${cwPct}%;background:${cwColor}"></div>
+        <div class="carry-weight-thresh" style="left:${enc1/max*100}%"></div>
+        <div class="carry-weight-thresh" style="left:${enc2/max*100}%"></div>
+      </div>
+      <div class="carry-weight-note">${cwNote}</div>
+    </div>` : '';
+  document.getElementById('arsenalInventory').innerHTML = carryHtml + (inventory.length
+    ? inventory.map(item => {
+        const wt = invWeight(item);
+        return `<li class="arsenal-item">${esc(invName(item))}${wt ? `<span class="arsenal-item-weight">${wt} lb</span>` : ''}</li>`;
+      }).join('')
+    : '<span class="arsenal-none">Nothing yet</span>');
 }
 
 function checkInventoryChanges(prev, next) {
@@ -1132,11 +1155,16 @@ function sWeapons(player) {
 function sInventory(player) {
   const items = player.inventory || [];
   const listHtml = items.length
-    ? items.map((item, i) => `
+    ? items.map((item, i) => {
+        const name = invName(item);
+        const wt   = invWeight(item);
+        return `
         <li>
-          <span>${esc(item)}</span>
+          <span>${esc(name)}</span>
+          ${wt ? `<span class="item-weight">${wt} lb</span>` : ''}
           <button class="item-remove-btn" onclick="removeItem(${i})" title="Remove">✕</button>
-        </li>`).join('')
+        </li>`;
+      }).join('')
     : '<li><span class="empty-list-msg">No items yet</span></li>';
 
   return `
@@ -1145,6 +1173,7 @@ function sInventory(player) {
         Inventory <span class="list-count">${items.length} items</span> <span class="coll-arrow">▾</span>
       </div>
       <div class="sheet-section-body">
+        ${carryWeightBarHtml(player)}
         <ul class="item-list" id="sInventory">${listHtml}</ul>
         <div class="add-row">
           <input id="sNewItem" type="text" placeholder="Add item...">
@@ -1326,7 +1355,7 @@ async function addItem() {
   const input = document.getElementById('sNewItem');
   if (!input?.value.trim()) return;
   const player    = gameState.players[myDiscordId];
-  const inventory = [...(player.inventory || []), input.value.trim()];
+  const inventory = [...(player.inventory || []), { name: input.value.trim(), weight: 0 }];
   await patchPlayer({ inventory });
   input.value = '';
 }
@@ -1335,6 +1364,46 @@ async function removeItem(index) {
   const player    = gameState.players[myDiscordId];
   const inventory = (player.inventory || []).filter((_, i) => i !== index);
   await patchPlayer({ inventory });
+}
+
+// ── Carry weight helpers ─────────────────────────────────────
+
+function invName(item)   { return typeof item === 'string' ? item : (item.name || ''); }
+function invWeight(item) { return typeof item === 'string' ? 0    : (item.weight || 0); }
+
+function carryWeightInfo(player) {
+  const str = player.abilities?.strength ?? 10;
+  const max  = str * 15;
+  const enc1 = str * 5;
+  const enc2 = str * 10;
+  const weaponW = (player.weapons || []).reduce((s, w) => s + (w.weight || 0), 0);
+  const invW    = (player.inventory || []).reduce((s, item) => s + invWeight(item), 0);
+  const current = Math.round((weaponW + invW) * 10) / 10;
+  return { current, max, enc1, enc2 };
+}
+
+function carryWeightBarHtml(player) {
+  const { current, max, enc1, enc2 } = carryWeightInfo(player);
+  if (!max) return '';
+  const pct   = Math.min(current / max * 100, 100);
+  const color = current > enc2 ? '#c0392b' : current > enc1 ? '#c9a84c' : '#4a9e6b';
+  const note  = current > max  ? '⛔ Over capacity'
+              : current > enc2 ? '🔴 Heavily Encumbered'
+              : current > enc1 ? '🟡 Encumbered'
+              : '✅ Within limits';
+  return `
+    <div class="carry-weight-block">
+      <div class="carry-weight-header">
+        <span class="carry-weight-label">⚖ Carry Weight</span>
+        <span class="carry-weight-value">${current} / ${max} lbs</span>
+      </div>
+      <div class="carry-weight-track">
+        <div class="carry-weight-fill" style="width:${pct}%;background:${color}"></div>
+        <div class="carry-weight-thresh" style="left:${enc1/max*100}%"></div>
+        <div class="carry-weight-thresh" style="left:${enc2/max*100}%"></div>
+      </div>
+      <div class="carry-weight-note">${note}</div>
+    </div>`;
 }
 
 async function addSpell() {
@@ -1397,10 +1466,11 @@ async function applyYamlCharacter(yaml) {
   const conds   = yaml.conditions  || {};
   const notes   = yaml.notes       || {};
 
-  // Convert inventory items to strings
-  const inventory = (equip.inventory || []).map(item =>
-    (item.quantity ?? 1) > 1 ? `${item.name} (×${item.quantity})` : item.name
-  );
+  // Convert inventory items to objects with weight
+  const inventory = (equip.inventory || []).map(item => ({
+    name:   (item.quantity ?? 1) > 1 ? `${item.name} (×${item.quantity})` : item.name,
+    weight: (item.weight || 0) * (item.quantity ?? 1),
+  }));
 
   // Map class features (keep full objects for use tracking)
   const features = feats.map(f => ({
@@ -1437,6 +1507,7 @@ async function applyYamlCharacter(yaml) {
       bonus:      w.bonus      ?? 0,
       damage:     w.damage     || '',
       damageType: w.damageType || '',
+      weight:     w.weight     ?? 0,
     })),
     inventory,
     features,

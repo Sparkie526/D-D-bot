@@ -2383,3 +2383,71 @@ code {
   color: var(--gold-dim);
   flex-shrink: 0;
 }
+
+/* ── Carry weight bar (sidebar + arsenal modal) ─────────────── */
+.carry-weight-block {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--border-dark);
+  border-radius: 4px;
+}
+.carry-weight-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 5px;
+}
+.carry-weight-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+.carry-weight-value {
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  color: var(--gold);
+}
+.carry-weight-track {
+  position: relative;
+  height: 6px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 3px;
+  overflow: visible;
+}
+.carry-weight-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease, background 0.4s ease;
+}
+.carry-weight-thresh {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: 10px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 1px;
+}
+.carry-weight-note {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+.arsenal-carry { margin-bottom: 8px; }
+
+/* Item weight badge in sidebar */
+.item-weight {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  margin-right: auto;
+  margin-left: 6px;
+}
+
+/* Item weight badge in arsenal modal */
+.arsenal-item-weight {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}

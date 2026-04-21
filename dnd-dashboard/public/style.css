@@ -385,6 +385,26 @@ code {
   text-transform: uppercase;
   font-weight: 400;
 }
+.clear-story-btn {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid #5a2a2a;
+  border-radius: 3px;
+  color: #7a4040;
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  transition: all 0.15s;
+}
+.clear-story-btn:hover {
+  background: rgba(139,26,26,0.35);
+  border-color: #9b2226;
+  color: #e8b4b4;
+}
+
 .panel-icon {
   color: var(--red-dark);
   font-size: 0.7rem;

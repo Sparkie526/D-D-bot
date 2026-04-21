@@ -625,6 +625,11 @@ async function handleMapFile(input) {
 
 // ── Story feed ───────────────────────────────────────────────
 
+async function clearStoryFeed() {
+  if (!confirm('Clear the entire Story Chronicle? This cannot be undone.')) return;
+  await fetch('/api/story', { method: 'DELETE' });
+}
+
 function renderStoryFeed() {
   if (!gameState) return;
   const feed = document.getElementById('storyFeed');

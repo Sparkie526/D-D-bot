@@ -213,6 +213,13 @@ expressApp.delete("/api/tokens/:id", (req, res) => {
   res.json({ ok: true });
 });
 
+expressApp.delete("/api/story", (req, res) => {
+  dashState.storyFeed = [];
+  saveDashboardState();
+  io.emit("state_update", dashState);
+  res.json({ ok: true });
+});
+
 expressApp.delete("/api/player/:discordId", (req, res) => {
   const { discordId } = req.params;
   if (!dashState.players[discordId]) return res.status(404).json({ error: "Player not found" });

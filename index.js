@@ -28,6 +28,10 @@ const crypto = require("crypto");
 const { pipeline } = require("stream/promises");
 const { createWriteStream } = require("fs");
 const yaml = require("js-yaml");
+const express = require("express");
+const http = require("http");
+const { Server: SocketServer } = require("socket.io");
+const multer = require("multer");
 
 // ============================================================
 //  CONFIG
@@ -73,6 +77,236 @@ const ENDGAME_REMARKS = [
 
 function getRandomEndgameRemark() {
   return ENDGAME_REMARKS[Math.floor(Math.random() * ENDGAME_REMARKS.length)];
+}
+
+// ============================================================
+//  DASHBOARD — State, Server, Socket.IO
+// ============================================================
+
+const GAME_STATE_PATH = path.join(__dirname, "dnd-dashboard", "game_state.json");
+const UPLOADS_DIR = path.join(__dirname, "dnd-dashboard", "public", "uploads");
+
+function loadDashboardState() {
+  try {
+    if (fs.existsSync(GAME_STATE_PATH)) {
+      const s = JSON.parse(fs.readFileSync(GAME_STATE_PATH, "utf-8"));
+      if (!s.tokens) s.tokens = [];
+      return s;
+    }
+  } catch (e) {
+    console.error("Dashboard state load error:", e.message);
+  }
+  return {
+    location: { name: "The Adventure Begins", description: "", mapImage: null },
+    players: {},
+    storyFeed: [],
+    diceLog: [],
+    tokens: [],
+  };
+}
+
+function saveDashboardState() {
+  try {
+    fs.writeFileSync(GAME_STATE_PATH, JSON.stringify(dashState, null, 2));
+  } catch (e) {
+    console.error("Dashboard state save error:", e.message);
+  }
+}
+
+let dashState = loadDashboardState();
+
+// Express + Socket.IO setup
+const expressApp = express();
+const httpServer = http.createServer(expressApp);
+const io = new SocketServer(httpServer, { cors: { origin: "*" } });
+
+expressApp.use(express.json());
+expressApp.use(express.static(path.join(__dirname, "dnd-dashboard", "public")));
+
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+expressApp.use("/uploads", express.static(UPLOADS_DIR));
+
+const mapUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, UPLOADS_DIR),
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname) || ".png";
+      cb(null, `map_${Date.now()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Only image files allowed"), false);
+  },
+});
+
+// REST endpoints
+expressApp.get("/api/state", (req, res) => res.json(dashState));
+
+expressApp.post("/api/player/new", (req, res) => {
+  const { discordId, discordName, characterName } = req.body;
+  if (!discordId || !characterName) return res.status(400).json({ error: "discordId and characterName required" });
+  if (!dashState.players[discordId]) {
+    dashState.players[discordId] = {
+      discordId, discordName: discordName || characterName, characterName,
+      hp: 10, maxHp: 10, ac: 10, class: "Adventurer", level: 1,
+      image: null, inventory: [], spells: [], features: [], conditions: {},
+    };
+  } else {
+    dashState.players[discordId].characterName = characterName;
+    dashState.players[discordId].discordName = discordName || characterName;
+  }
+  saveDashboardState();
+  io.emit("state_update", dashState);
+  res.json({ ok: true, player: dashState.players[discordId] });
+});
+
+expressApp.post("/api/player/:discordId", (req, res) => {
+  const { discordId } = req.params;
+  if (!dashState.players[discordId]) return res.status(404).json({ error: "Player not found" });
+  Object.assign(dashState.players[discordId], req.body);
+  saveDashboardState();
+  io.emit("state_update", dashState);
+  res.json({ ok: true });
+});
+
+expressApp.post("/api/location", (req, res) => {
+  Object.assign(dashState.location, req.body);
+  saveDashboardState();
+  io.emit("state_update", dashState);
+  res.json({ ok: true });
+});
+
+expressApp.post("/api/upload/map", mapUpload.single("map"), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No file received" });
+  dashState.location.mapImage = `/uploads/${req.file.filename}`;
+  saveDashboardState();
+  io.emit("state_update", dashState);
+  res.json({ ok: true, url: dashState.location.mapImage });
+});
+
+expressApp.post("/api/tokens", (req, res) => {
+  const { id, label, type, shape, color, image, x, y, owner } = req.body;
+  if (!id) return res.status(400).json({ error: "id required" });
+  dashState.tokens = dashState.tokens.filter(t => t.id !== id);
+  dashState.tokens.push({ id, label: label || "", type: type || "shape", shape: shape || "circle", color: color || "#8b1a1a", image: image || null, x: x ?? 0.5, y: y ?? 0.5, owner: owner || null });
+  saveDashboardState();
+  io.emit("state_update", dashState);
+  res.json({ ok: true });
+});
+
+expressApp.post("/api/tokens/:id/move", (req, res) => {
+  const token = dashState.tokens.find(t => t.id === req.params.id);
+  if (!token) return res.status(404).json({ error: "Token not found" });
+  token.x = req.body.x ?? token.x;
+  token.y = req.body.y ?? token.y;
+  saveDashboardState();
+  io.emit("token_move", { id: token.id, x: token.x, y: token.y });
+  res.json({ ok: true });
+});
+
+expressApp.delete("/api/tokens/:id", (req, res) => {
+  dashState.tokens = dashState.tokens.filter(t => t.id !== req.params.id);
+  saveDashboardState();
+  io.emit("state_update", dashState);
+  res.json({ ok: true });
+});
+
+expressApp.delete("/api/player/:discordId", (req, res) => {
+  const { discordId } = req.params;
+  if (!dashState.players[discordId]) return res.status(404).json({ error: "Player not found" });
+  delete dashState.players[discordId];
+  dashState.tokens = dashState.tokens.filter(t => t.owner !== discordId);
+  saveDashboardState();
+  io.emit("state_update", dashState);
+  res.json({ ok: true });
+});
+
+// Socket.IO connection
+const activeSessions = new Map();
+
+function broadcastActivePlayers() {
+  io.emit("active_players", [...new Set(activeSessions.values())]);
+}
+
+io.on("connection", (socket) => {
+  socket.emit("state_update", dashState);
+  socket.emit("active_players", [...new Set(activeSessions.values())]);
+
+  socket.on("player_active", (discordId) => {
+    if (discordId) { activeSessions.set(socket.id, discordId); broadcastActivePlayers(); }
+  });
+  socket.on("player_inactive", () => { activeSessions.delete(socket.id); broadcastActivePlayers(); });
+  socket.on("disconnect", () => { activeSessions.delete(socket.id); broadcastActivePlayers(); });
+});
+
+httpServer.listen(3000, () => {
+  console.log("🗺️  Dashboard running at http://localhost:3000");
+  startCloudflareTunnel();
+});
+
+let dashboardPublicUrl = null;
+
+// Cloudflare Tunnel — exposes dashboard to the internet
+function startCloudflareTunnel() {
+  const { spawn } = require("child_process");
+  const CLOUDFLARED = "C:\\Program Files (x86)\\cloudflared\\cloudflared.exe";
+
+  const tunnel = spawn(CLOUDFLARED, ["tunnel", "--url", "http://127.0.0.1:3000"], {
+    windowsHide: true,
+  });
+
+  tunnel.stderr.on("data", (data) => {
+    const text = data.toString();
+    const match = text.match(/https:\/\/[a-z0-9\-]+\.trycloudflare\.com/);
+    if (match) {
+      dashboardPublicUrl = match[0];
+      console.log(`🌐 Dashboard public URL: ${dashboardPublicUrl}`);
+    }
+  });
+
+  tunnel.on("error", (err) => console.error("Cloudflare tunnel error:", err.message));
+  tunnel.on("exit", (code) => {
+    if (code !== 0) console.warn(`⚠️  Cloudflare tunnel exited (code ${code}). Dashboard is local-only.`);
+  });
+
+  process.on("exit", () => tunnel.kill());
+  process.on("SIGINT", () => { tunnel.kill(); process.exit(); });
+}
+
+// Dashboard helper functions
+function addStoryEntry(type, name, text) {
+  const entry = { type, name, text, timestamp: new Date().toISOString() };
+  dashState.storyFeed.push(entry);
+  if (dashState.storyFeed.length > 150) dashState.storyFeed = dashState.storyFeed.slice(-150);
+  saveDashboardState();
+  io.emit("story_entry", entry);
+}
+
+function addDiceEntry(name, dice, rolls, total) {
+  const entry = { name, dice, rolls, total, timestamp: new Date().toISOString() };
+  dashState.diceLog.unshift(entry);
+  if (dashState.diceLog.length > 20) dashState.diceLog = dashState.diceLog.slice(0, 20);
+  saveDashboardState();
+  io.emit("dice_entry", entry);
+}
+
+function syncPlayerToDash(userId, discordName, character) {
+  if (!character) return;
+  const existing = dashState.players[userId] || {};
+  dashState.players[userId] = Object.assign(existing, {
+    discordId: userId,
+    discordName: discordName || existing.discordName || userId,
+    characterName: character.character?.name || existing.characterName,
+    hp: character.combat?.hp?.current ?? existing.hp ?? 10,
+    maxHp: character.combat?.hp?.max ?? existing.maxHp ?? 10,
+    ac: character.combat?.ac ?? existing.ac ?? 10,
+    class: character.character?.class || existing.class || "Adventurer",
+    level: character.character?.level || existing.level || 1,
+  });
+  saveDashboardState();
+  io.emit("state_update", dashState);
 }
 
 // ============================================================
@@ -739,11 +973,9 @@ async function sendDMResponseWithVoice(interaction, connection, dmText, guildId)
       await speakInVoice(connection, audioFile);
     } catch (err) {
       console.error("Voice playback error:", err.message);
-      interaction.channel.send("⚠️ *Voice playback failed, but the narration continues...*");
     }
   } else {
-    // Voice synthesis failed
-    interaction.channel.send("⚠️ *Voice synthesis failed (service unavailable), but the narration continues...*");
+    console.warn("Voice synthesis unavailable — text-only narration.");
   }
 }
 
@@ -1655,8 +1887,26 @@ Use the world's title or filename in the \`world\` parameter.
     session.history = [];
     session.nameCollectionActive = true;
 
+    // Register players in dashboard
+    for (const player of session.activePlayers) {
+      if (!dashState.players[player.userId]) {
+        dashState.players[player.userId] = {
+          discordId: player.userId,
+          discordName: player.displayName,
+          characterName: player.displayName,
+          hp: 10, maxHp: 10, ac: 10, class: "Adventurer", level: 1,
+          image: null, inventory: [], spells: [], features: [], conditions: {},
+        };
+      }
+    }
+    saveDashboardState();
+    io.emit("state_update", dashState);
+
+    const dashboardLine = dashboardPublicUrl
+      ? `\n🗺️ **Campaign Dashboard:** ${dashboardPublicUrl}`
+      : "";
     await interaction.reply(
-      "⚔️ **The adventure begins...** Listen closely, adventurers."
+      `⚔️ **The adventure begins...** Listen closely, adventurers.${dashboardLine}`
     );
 
     // DM intro asking for character names
@@ -1665,6 +1915,8 @@ Use the world's title or filename in the \`world\` parameter.
       `Begin the adventure. Ask the players to introduce themselves with their character names. The players here are: ${session.activePlayers.map(p => p.displayName).join(", ")}. Ask them to declare their names.`,
       "Game Master"
     );
+
+    addStoryEntry("dm", "Dungeon Master", reply);
 
     // Send response with voice
     await sendDMResponseWithVoice(interaction, connection, reply, guildId);
@@ -1707,6 +1959,7 @@ Use the world's title or filename in the \`world\` parameter.
     }
 
     await interaction.reply(`⚔️ *${playerName}: "${action}"*`);
+    addStoryEntry("player", playerName, action);
 
     // ===== ROLL PROMPT CHECK =====
     // Check if action requires a roll (unless force override is set)
@@ -1760,6 +2013,7 @@ Use the world's title or filename in the \`world\` parameter.
       resetTurnTimeout(guildId);
     }
 
+    addStoryEntry("dm", "Dungeon Master", finalReply);
     await sendDMResponseWithVoice(interaction, connection, finalReply, guildId);
     return;
   }
@@ -1795,6 +2049,7 @@ Use the world's title or filename in the \`world\` parameter.
     }
 
     await interaction.reply(`🎲 ${rollText}`);
+    addDiceEntry(playerName, diceArg, rolls, total);
 
     if (session.active && connections[guildId]) {
       // Store roll result for context
@@ -1839,6 +2094,7 @@ Use the world's title or filename in the \`world\` parameter.
         resetTurnTimeout(guildId);
       }
 
+      addStoryEntry("dm", "Dungeon Master", finalReply);
       await sendDMResponseWithVoice(interaction, connections[guildId], finalReply, guildId);
     }
     return;
@@ -1993,6 +2249,7 @@ Use the world's title or filename in the \`world\` parameter.
         // Load into current session
         session.characterSheets[userId] = character;
         session.currentCharacters[userId] = characterName;
+        syncPlayerToDash(userId, interaction.user.username, character);
 
         try {
           const embed = buildCharacterEmbed(character, interaction.user.username);
@@ -2034,6 +2291,7 @@ Use the world's title or filename in the \`world\` parameter.
         character.character.lastPlayed = new Date().toISOString();
         session.characterSheets[userId] = character;
         session.currentCharacters[userId] = characterName;
+        syncPlayerToDash(userId, interaction.user.username, character);
 
         try {
           const embed = buildCharacterEmbed(character, interaction.user.username);
@@ -2124,6 +2382,7 @@ Use the world's title or filename in the \`world\` parameter.
         hp.max = newMax;
         hp.current = Math.min(hp.current, newMax);
         if (saveCharacter(guildId, userId, character)) {
+          syncPlayerToDash(userId, interaction.user.username, character);
           return interaction.reply(`✅ Max HP set to **${newMax}**. Current: **${hp.current}/${hp.max}**`);
         } else {
           return interaction.reply("❌ Failed to save character.");
@@ -2155,6 +2414,7 @@ Use the world's title or filename in the \`world\` parameter.
       }
 
       if (saveCharacter(guildId, userId, character)) {
+        syncPlayerToDash(userId, interaction.user.username, character);
         interaction.reply(message);
       } else {
         interaction.reply("❌ Failed to save character HP change.");

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D&D Campaign Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════
+       IDENTITY OVERLAY — shown until player selects themselves
+       ═══════════════════════════════════════════════════════ -->
+  <div id="identityOverlay" class="identity-overlay">
+    <div class="identity-box">
+      <div class="identity-crest">⚔</div>
+      <h2>Who Enters the Hall?</h2>
+      <p>Select your character to begin</p>
+      <div id="identityList" class="identity-list">
+        <p class="waiting-text">Waiting for the session to begin...<br>Ask the DM to type <code>!register</code> in Discord.</p>
+      </div>
+      <button class="observer-btn" onclick="selectObserver()">Watch as Observer</button>
+      <a href="/character-creator.html" class="create-char-btn">⚔ Create New Character</a>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       MAIN APP
+       ═══════════════════════════════════════════════════════ -->
+  <div id="app" class="app hidden">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <span class="header-emblem">☩</span>
+        <h1 class="header-title">Chronicle</h1>
+        <span class="connection-dot" id="connectionDot" title="Disconnected"></span>
+      </div>
+      <div class="header-center" id="headerLocation">— Unknown Lands —</div>
+      <div class="header-right">
+        <a class="logout-btn" href="/character-creator.html" target="_blank" title="Open Character Creator" style="text-decoration:none">⚔ Character Creator</a>
+        <button class="logout-btn" id="logoutBtn" onclick="logout()" title="Switch character">⏏ Leave</button>
+        <button class="my-char-btn" id="myCharBtn">
+          <span id="myCharName">My Character</span>
+          <span class="btn-arrow">▶</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Three-Column Grid -->
+    <main class="main-grid">
+
+      <!-- ── LEFT: Story Chronicle ───────────────────────── -->
+      <section class="panel story-panel">
+        <div class="panel-header">
+          <span class="panel-icon">✦</span>
+          <h2>Story Chronicle</h2>
+        </div>
+        <div class="story-feed" id="storyFeed">
+          <div class="story-entry system">
+            <div class="entry-name">Chronicle</div>
+            <p class="entry-text">The chronicle awaits the first word of the adventure...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── MIDDLE: Location & Map ─────────────────────── -->
+      <section class="panel location-panel">
+        <div class="location-header">
+          <div class="location-name" id="locationName">The Adventure Begins</div>
+          <div class="location-desc" id="locationDesc">Your journey starts here...</div>
+        </div>
+
+        <!-- Map toolbar -->
+        <div class="map-toolbar">
+          <button class="map-tool-btn" onclick="openAddTokenModal()" title="Place your character on the map">
+            ⚔ Add Token
+          </button>
+          <div class="map-tool-divider"></div>
+          <span class="map-tool-label">Zoom</span>
+          <button class="map-tool-icon-btn" onclick="zoomOut()" title="Zoom out">−</button>
+          <span class="map-zoom-label" id="mapZoomLabel" onclick="resetZoom()" title="Click to reset">1.0×</span>
+          <button class="map-tool-icon-btn" onclick="zoomIn()" title="Zoom in">+</button>
+          <div class="map-tool-divider"></div>
+          <span class="map-tool-label">Tokens</span>
+          <button class="map-tool-icon-btn" onclick="tokenSizeDown()" title="Smaller tokens">⬡−</button>
+          <button class="map-tool-icon-btn" onclick="tokenSizeUp()"   title="Larger tokens">⬡+</button>
+          <div class="map-tool-divider"></div>
+          <button class="map-tool-btn map-tool-secondary" onclick="triggerMapUpload()" id="mapUploadBtn" title="Upload a map image">
+            🗺 Upload Map
+          </button>
+          <input type="file" id="mapFileInput" accept="image/*" style="display:none" onchange="handleMapFile(this)">
+          <button class="map-tool-btn map-tool-danger" onclick="clearMap()" title="Remove the current map">
+            ✕ Clear Map
+          </button>
+        </div>
+
+        <div class="map-container" id="mapContainer">
+          <!-- Zoom wrapper — everything inside scales together -->
+          <div class="map-zoom-wrapper" id="mapZoomWrapper">
+            <div class="map-placeholder" id="mapPlaceholder">
+              <div class="compass-rose">
+                <span class="compass-n">N</span>
+                <span class="compass-symbol">✦</span>
+                <span class="compass-s">S</span>
+              </div>
+              <span class="map-placeholder-text">No Map Revealed</span>
+              <span class="map-placeholder-hint">DM: use !setmap [image url] or Upload Map above</span>
+            </div>
+            <img id="mapImage" class="map-image hidden" src="" alt="Campaign Map">
+            <!-- Token overlay — inside zoom wrapper so tokens move with the map -->
+            <div class="tokens-overlay" id="tokensOverlay"></div>
+          </div>
+        </div>
+
+        <!-- Add Token Modal -->
+        <div class="token-modal hidden" id="tokenModal">
+          <div class="token-modal-box">
+            <div class="token-modal-header">
+              <span>Place Token on Map</span>
+              <button class="close-btn" onclick="closeAddTokenModal()">✕</button>
+            </div>
+            <div class="token-modal-body">
+              <label class="token-field-label">Label</label>
+              <input class="token-text-input" id="tkLabel" type="text" placeholder="Character or object name" maxlength="20">
+
+              <label class="token-field-label" style="margin-top:12px">Represent as</label>
+              <div class="token-type-row">
+                <button class="token-type-btn active" id="tkTypeShape" onclick="setTokenType('shape')">Shape</button>
+                <button class="token-type-btn"        id="tkTypeImage" onclick="setTokenType('image')">Image / URL</button>
+              </div>
+
+              <!-- Shape picker -->
+              <div id="tkShapeSection">
+                <div class="token-shape-row">
+                  <button class="token-shape-btn active" id="tkCircle"   onclick="setTokenShape('circle')"  title="Circle">●</button>
+                  <button class="token-shape-btn"        id="tkSquare"   onclick="setTokenShape('square')"  title="Square">■</button>
+                  <button class="token-shape-btn"        id="tkDiamond"  onclick="setTokenShape('diamond')" title="Diamond">◆</button>
+                </div>
+                <label class="token-field-label" style="margin-top:10px">Color</label>
+                <div class="token-color-row" id="tkColorSwatches">
+                  <button class="color-swatch active" style="background:#c0392b" data-color="#c0392b" onclick="setTokenColor(this)"></button>
+                  <button class="color-swatch" style="background:#2980b9" data-color="#2980b9" onclick="setTokenColor(this)"></button>
+                  <button class="color-swatch" style="background:#27ae60" data-color="#27ae60" onclick="setTokenColor(this)"></button>
+                  <button class="color-swatch" style="background:#f39c12" data-color="#f39c12" onclick="setTokenColor(this)"></button>
+                  <button class="color-swatch" style="background:#8e44ad" data-color="#8e44ad" onclick="setTokenColor(this)"></button>
+                  <button class="color-swatch" style="background:#e67e22" data-color="#e67e22" onclick="setTokenColor(this)"></button>
+                  <button class="color-swatch" style="background:#1abc9c" data-color="#1abc9c" onclick="setTokenColor(this)"></button>
+                  <button class="color-swatch" style="background:#ecf0f1" data-color="#ecf0f1" onclick="setTokenColor(this)"></button>
+                  <input class="color-custom" id="tkColorCustom" type="color" value="#c0392b" oninput="setTokenColorHex(this.value)" title="Custom color">
+                </div>
+              </div>
+
+              <!-- Image / URL picker -->
+              <div id="tkImageSection" class="hidden">
+                <label class="token-field-label">Image URL</label>
+                <input class="token-text-input" id="tkImageUrl" type="text" placeholder="https://... or leave blank for initials">
+                <div class="token-or-divider">— or —</div>
+                <label class="token-upload-label">
+                  Upload Image
+                  <input type="file" id="tkImageFile" accept="image/*" onchange="handleTokenImageFile(this)" style="display:none">
+                </label>
+              </div>
+
+              <!-- Preview -->
+              <label class="token-field-label" style="margin-top:14px">Preview</label>
+              <div class="token-preview-area">
+                <div class="token-preview-wrap" id="tkPreview"></div>
+              </div>
+
+              <button class="token-place-btn" onclick="placeToken()">Drop on Map</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="dice-section">
+          <div class="dice-section-header">
+            <span class="panel-icon">⚄</span>
+            <span class="dice-section-title">Recent Rolls</span>
+          </div>
+          <div class="dice-log" id="diceLog">
+            <div class="no-rolls">No dice rolled yet...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── RIGHT: Adventurers ─────────────────────────── -->
+      <section class="panel players-panel">
+        <div class="panel-header">
+          <span class="panel-icon">✦</span>
+          <h2>Adventurers</h2>
+        </div>
+        <div class="player-cards" id="playerCards">
+          <div class="no-players" id="noPlayers">
+            <div class="no-players-icon">⚔</div>
+            <p>No adventurers registered</p>
+            <p class="hint">Type <code>!register [name]</code> in Discord</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       MY CHARACTER SIDEBAR
+       ═══════════════════════════════════════════════════════ -->
+  <div class="char-sidebar" id="charSidebar">
+    <div class="char-sidebar-header">
+      <h2>My Character</h2>
+      <button class="close-btn" id="closeSidebar" title="Close">✕</button>
+    </div>
+    <div class="char-sidebar-content" id="charContent">
+      <!-- Rendered by app.js -->
+    </div>
+  </div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

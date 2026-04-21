@@ -1,0 +1,303 @@
+{
+  "location": {
+    "name": "The Adventure Begins",
+    "description": "Your journey starts here...",
+    "mapImage": "/uploads/map_1776717156948.webp"
+  },
+  "players": {
+    "541385113074794516": {
+      "discordId": "541385113074794516",
+      "discordName": "C_Scarp",
+      "characterName": "Noctis Oakensoul",
+      "hp": 9,
+      "maxHp": 9,
+      "ac": 11,
+      "class": "Druid",
+      "level": 1,
+      "image": null,
+      "inventory": [
+        "Arcane Focus",
+        "Backpack",
+        "Bedroll",
+        "Torch (×5)",
+        "Rations (×5)",
+        "Gold Pieces (×15)"
+      ],
+      "spells": [],
+      "background": "Outlander",
+      "alignment": "Lawful Evil",
+      "initiative": 0,
+      "proficiencyBonus": 2,
+      "abilities": {
+        "strength": 13,
+        "dexterity": 11,
+        "constitution": 13,
+        "intelligence": 12,
+        "wisdom": 13,
+        "charisma": 13
+      },
+      "skills": {
+        "acrobatics": {
+          "modifier": 2,
+          "proficient": true
+        },
+        "animal_handling": {
+          "modifier": 1,
+          "proficient": false
+        },
+        "arcana": {
+          "modifier": 3,
+          "proficient": true
+        },
+        "athletics": {
+          "modifier": 3,
+          "proficient": true
+        },
+        "deception": {
+          "modifier": 3,
+          "proficient": true
+        },
+        "history": {
+          "modifier": 3,
+          "proficient": true
+        },
+        "insight": {
+          "modifier": 3,
+          "proficient": true
+        },
+        "intimidation": {
+          "modifier": 1,
+          "proficient": false
+        },
+        "investigation": {
+          "modifier": 1,
+          "proficient": false
+        },
+        "medicine": {
+          "modifier": 3,
+          "proficient": true
+        },
+        "nature": {
+          "modifier": 1,
+          "proficient": false
+        },
+        "perception": {
+          "modifier": 1,
+          "proficient": false
+        },
+        "performance": {
+          "modifier": 3,
+          "proficient": true
+        },
+        "persuasion": {
+          "modifier": 3,
+          "proficient": true
+        },
+        "religion": {
+          "modifier": 3,
+          "proficient": true
+        },
+        "sleight_of_hand": {
+          "modifier": 2,
+          "proficient": true
+        },
+        "stealth": {
+          "modifier": 0,
+          "proficient": false
+        },
+        "survival": {
+          "modifier": 3,
+          "proficient": true
+        }
+      },
+      "saves": {
+        "strength": {
+          "modifier": 1,
+          "proficient": false
+        },
+        "dexterity": {
+          "modifier": 0,
+          "proficient": false
+        },
+        "constitution": {
+          "modifier": 1,
+          "proficient": false
+        },
+        "intelligence": {
+          "modifier": 3,
+          "proficient": true
+        },
+        "wisdom": {
+          "modifier": 3,
+          "proficient": true
+        },
+        "charisma": {
+          "modifier": 1,
+          "proficient": false
+        }
+      },
+      "armor": "Leather Armor",
+      "weapons": [
+        {
+          "name": "Dagger",
+          "type": "Melee",
+          "bonus": 3,
+          "damage": "1d4+1",
+          "damageType": "piercing"
+        },
+        {
+          "name": "Spear",
+          "type": "Thrown",
+          "bonus": 3,
+          "damage": "1d6+1",
+          "damageType": "piercing"
+        },
+        {
+          "name": "Sling",
+          "type": "Ranged",
+          "bonus": 2,
+          "damage": "1d4+0",
+          "damageType": "bludgeoning"
+        }
+      ],
+      "features": [
+        {
+          "name": "Druidic",
+          "description": "Secret druidic language. You can leave messages only other druids can read.",
+          "uses": null
+        },
+        {
+          "name": "Spellcasting",
+          "description": "Use Wisdom for spell attacks. Spell save DC = 8 + Prof + WIS mod.",
+          "uses": null
+        }
+      ],
+      "conditions": {
+        "blinded": false,
+        "charmed": false,
+        "deafened": false,
+        "frightened": false,
+        "grappled": false,
+        "incapacitated": false,
+        "invisible": false,
+        "paralyzed": false,
+        "petrified": false,
+        "poisoned": false,
+        "prone": false,
+        "restrained": false,
+        "stunned": false,
+        "unconscious": false,
+        "exhaustion": 0
+      },
+      "notes": {
+        "biography": "I am Noctis Oakensoul, an Outlander Druid who lives off the earth. Now more then a century and a half old,  I once was a console to the nobility to assist with seasonal harvests and helped with the heard of animals. After the great plague ravages my homelands and killed many innocents including the son and heir apparent of the kingdom, I was exiled deep into the forest to live on my own, with hopes that my skills and powers don't hurt anyone I love. It is a mystery whether it was indeed my powers that brought the great plague. No one truly knows. ",
+        "bonds": "In his youth and training, Noctis learned the value of friendship with others similar to him in his Druidic training and his connection with animals. Other long lost Druids truly have his respect and sees them as brothers. Animals all around him he sees as his growing family. ",
+        "ideals": "Noctis believes the connection between the living and the planet is essential for all to survive. It is a delicate balance that few can see. He is willing to use his powers and skills to help those he deems important and are willing to help keep this balance, and is not afraid to turn against someone he notices is going off course or becoming selfish for themselves. ",
+        "flaws": "It is hard for Noctis to trust others he newly meets. His personal devotion to the earth and animals comes first before any truly lasting bond. Even after his trust is made with another, he would be willing to betray or hurt others who seem to be deviating from the path he believes is right. This ultimately  makes it difficult from him to work with others. ",
+        "treasures": "Noctis carries and ancient Druid book with him which has the entire history of the Druids, their spells and powers of the planet, and maps to ancient relics which initially formed the earth. Only problem is with what Noctis currently know, he can only read about 1% of the book as it was written over several centuries using different languages and dialects, some which still do not even exist to this day. His hope is one day to gain the full knowledge of the book by questing through the land to one day be able to decipher the entire book to become a Druidic Lord and have full control of all earthly powers. But will he use them for good, or for evil? "
+      }
+    },
+    "local_1776715210514_r84sk": {
+      "discordId": "local_1776715210514_r84sk",
+      "discordName": "C Scarp",
+      "characterName": "Throatzilla",
+      "hp": 10,
+      "maxHp": 10,
+      "ac": 10,
+      "class": "Adventurer",
+      "level": 1,
+      "image": null,
+      "inventory": [],
+      "spells": [],
+      "features": [],
+      "conditions": {}
+    },
+    "local_1776730442250_1zamn": {
+      "discordId": "local_1776730442250_1zamn",
+      "discordName": "Dexsword",
+      "characterName": "Dexy",
+      "hp": 10,
+      "maxHp": 10,
+      "ac": 10,
+      "class": "Adventurer",
+      "level": 1,
+      "image": null,
+      "inventory": [],
+      "spells": [],
+      "features": [],
+      "conditions": {}
+    }
+  },
+  "storyFeed": [
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "(The scene is set in a dimly lit tavern, with patrons huddled around a roaring fire. The air is thick with smoke and the smell of ale. In the corner, a lone figure sits, cloaked in shadows. Suddenly, the door bursts open and a tall, imposing figure strides in.)\n\nFigure: (booming voice) \"Attention, travelers! Gather 'round and listen well! For tonight, under the watchful eyes of the celestial bodies, I shall introduce you to... Aethoria!\"\n\n(The patrons stare, awed by the sudden interruption. The fire crackles, and the shadows on the walls seem to shift and writhe like living things.)\n\nFigure: (eyes gleaming with an otherworldly intensity) \"A world of wonders, terrors, and mystery! A realm where ancient civilizations once thrived, only to crumble beneath the weight of their own hubris. Where darkness reigns supreme, and the whispers of forgotten lore echo through the desolate lands.\"\n\n(The figure steps closer, its eyes burning with an inner fire.)\n\nFigure: \"And you, brave adventurers? Who are you, that would dare to tread this forsaken land? What drives you, beyond the boundaries of mortal men?\"\n\n(The patrons lean in, eager for answers. The shadows seem to grow longer and more sinister, as if waiting for your response...)\n\nWhat do you say?",
+      "timestamp": "2026-04-21T00:21:23.283Z"
+    }
+  ],
+  "diceLog": [
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        14
+      ],
+      "total": 14,
+      "timestamp": "2026-04-20T01:47:47.675Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        12
+      ],
+      "total": 12,
+      "timestamp": "2026-04-20T01:33:27.156Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        4
+      ],
+      "total": 4,
+      "timestamp": "2026-04-20T01:33:13.368Z"
+    }
+  ],
+  "tokens": [
+    {
+      "id": "541385113074794516_1776714859054",
+      "label": "Noctis Oakensoul",
+      "type": "shape",
+      "shape": "circle",
+      "color": "#c0392b",
+      "image": null,
+      "x": 0.594799680330585,
+      "y": 0.5175239755884917,
+      "owner": "541385113074794516"
+    },
+    {
+      "id": "local_1776715210514_r84sk_1776715495670",
+      "label": "Throatzilla",
+      "type": "shape",
+      "shape": "circle",
+      "color": "#c0392b",
+      "image": null,
+      "x": 0.3266508728179551,
+      "y": 0.3705103668261563,
+      "owner": "local_1776715210514_r84sk"
+    },
+    {
+      "id": "local_1776730442250_1zamn_1776730519277",
+      "label": "Dexy",
+      "type": "shape",
+      "shape": "circle",
+      "color": "#27ae60",
+      "image": null,
+      "x": 0.5569561157796452,
+      "y": 0.276495278069255,
+      "owner": "local_1776730442250_1zamn"
+    }
+  ]
+}

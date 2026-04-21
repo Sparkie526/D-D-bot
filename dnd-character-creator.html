@@ -1,0 +1,3169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D&D 5e Character Creator</title>
+<style>
+  :root {
+    --bg: #13100a;
+    --bg-card: #1e1710;
+    --bg-input: #12100c;
+    --gold: #c9a84c;
+    --gold-light: #e8c96e;
+    --gold-dim: #7a6330;
+    --red: #9b2226;
+    --red-light: #c0392b;
+    --text: #f0e6d0;
+    --text-muted: #9a8870;
+    --border: #3a2c1a;
+    --border-bright: #5a4428;
+    --section-bg: #1a150d;
+    --prof-color: #4a9e6b;
+    --shadow: 0 4px 24px rgba(0,0,0,0.7);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* ── Header ─────────────────────────────────────── */
+  header {
+    background: linear-gradient(180deg, #0a0806 0%, #1a1208 100%);
+    border-bottom: 2px solid var(--gold-dim);
+    padding: 24px 32px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.8);
+  }
+  header h1 {
+    font-size: 2rem;
+    color: var(--gold-light);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-shadow: 0 0 20px rgba(201,168,76,0.4);
+  }
+  header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 4px; }
+
+  /* ── Layout ─────────────────────────────────────── */
+  .page { max-width: 960px; margin: 0 auto; padding: 32px 16px; }
+
+  /* ── Section ────────────────────────────────────── */
+  .section {
+    background: var(--section-bg);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--gold-dim);
+    border-radius: 6px;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .section-header {
+    background: linear-gradient(90deg, #221a0e, #1a150d);
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-header h2 {
+    font-size: 1.1rem;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .section-header .section-icon { font-size: 1.2rem; }
+  .section-hint {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-left: auto;
+    font-style: italic;
+  }
+  .section-body { padding: 24px; }
+
+  /* ── Form Grid ───────────────────────────────────── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .col-span-2 { grid-column: span 2; }
+
+  /* ── Form Fields ─────────────────────────────────── */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gold-dim);
+    font-weight: bold;
+  }
+  .field label .tip {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: normal;
+    display: block;
+    margin-top: 2px;
+  }
+  input[type="text"], input[type="number"], select, textarea {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: 'Georgia', serif;
+    font-size: 0.9rem;
+    padding: 8px 10px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    width: 100%;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--gold-dim);
+    box-shadow: 0 0 0 2px rgba(201,168,76,0.15);
+  }
+  select option { background: #1e1710; }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* ── Ability Scores ──────────────────────────────── */
+  .method-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    background: var(--bg);
+    padding: 4px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    width: fit-content;
+  }
+  .method-tab {
+    padding: 6px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    transition: all 0.15s;
+    border: none;
+    background: transparent;
+    font-family: 'Georgia', serif;
+    letter-spacing: 0.5px;
+  }
+  .method-tab.active {
+    background: var(--gold-dim);
+    color: var(--text);
+  }
+  .method-tab:hover:not(.active) { color: var(--text); }
+
+  .method-panel { display: none; }
+  .method-panel.active { display: block; }
+
+  .abilities-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+  }
+  .ability-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 8px;
+    text-align: center;
+    transition: border-color 0.15s;
+  }
+  .ability-card:focus-within { border-color: var(--gold-dim); }
+  .ability-card .ability-name {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gold-dim);
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+  .ability-card input[type="number"],
+  .ability-card select {
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 6px 4px;
+    color: var(--gold-light);
+    background: var(--bg-input);
+    border-color: var(--border);
+  }
+  .ability-card .modifier {
+    margin-top: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px;
+  }
+  .ability-card .ability-label {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* Standard Array chips */
+  .sa-pool {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    align-items: center;
+  }
+  .sa-pool-label { font-size: 0.75rem; color: var(--text-muted); margin-right: 4px; }
+  .sa-chip {
+    background: var(--gold-dim);
+    color: var(--text);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    opacity: 1;
+    transition: opacity 0.15s;
+  }
+  .sa-chip.used { opacity: 0.25; text-decoration: line-through; }
+
+  /* Point Buy */
+  .pb-points-display {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pb-points-display span {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--gold-light);
+  }
+  .pb-points-display.warn span { color: var(--red-light); }
+
+  .ability-card .pb-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .pb-btn {
+    background: var(--border);
+    border: none;
+    color: var(--text);
+    width: 22px;
+    height: 22px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s;
+    flex-shrink: 0;
+  }
+  .pb-btn:hover { background: var(--gold-dim); }
+  .pb-score-display {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--gold-light);
+    width: 30px;
+    text-align: center;
+  }
+
+  /* ── Skills & Saves ──────────────────────────────── */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .skill-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    transition: border-color 0.1s;
+  }
+  .skill-row:hover { border-color: var(--border-bright); }
+  .skill-row.locked { cursor: default; }
+  .skill-row.locked:hover { border-color: var(--border); }
+  .prof-dot {
+    width: 18px;
+    min-width: 18px;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    user-select: none;
+  }
+  .skill-row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--prof-color);
+    flex-shrink: 0;
+  }
+  .skill-ability-tag {
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    background: var(--bg);
+    border-radius: 3px;
+    padding: 1px 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+    width: 36px;
+    text-align: center;
+  }
+  .skill-name { font-size: 0.85rem; flex: 1; }
+  .skill-mod {
+    font-size: 0.9rem;
+    font-weight: bold;
+    min-width: 30px;
+    text-align: right;
+    color: var(--gold-light);
+  }
+  .skill-row.proficient    .skill-name { color: var(--prof-color); }
+  .skill-row.class-granted .skill-name { color: var(--gold-light); }
+  .skill-row.class-granted .prof-dot  { color: var(--gold-light); }
+  .skill-row.bg-granted    .skill-name { color: #5ab0ff; }
+  .skill-row.bg-granted    .prof-dot  { color: #5ab0ff; }
+  .skill-row.both-granted  .skill-name { color: var(--gold-light); }
+  .skill-row.both-granted  .prof-dot  { color: var(--gold-light); }
+  .skill-row input[type="checkbox"]:disabled { opacity: 0.3; cursor: not-allowed; }
+  #freeSkillCounter {
+    font-size: 0.78rem;
+    font-style: italic;
+    margin-top: 8px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    display: inline-block;
+  }
+
+  .saves-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 20px;
+  }
+  .saves-label {
+    grid-column: 1 / -1;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gold-dim);
+    margin-bottom: 4px;
+    font-weight: bold;
+  }
+
+  /* ── Combat Stats ────────────────────────────────── */
+  .stat-block {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-card .stat-label {
+    font-size: 0.63rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gold-dim);
+    margin-bottom: 6px;
+    font-weight: bold;
+  }
+  .stat-card input[type="number"] {
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--gold-light);
+    padding: 4px;
+    border-color: var(--border);
+  }
+  .stat-card .stat-auto-note {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  /* ── Equipment ───────────────────────────────────── */
+  .weapon-picker {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .weapon-picker select {
+    flex: 1;
+    min-width: 200px;
+    font-size: 0.88rem;
+    padding: 8px 10px;
+  }
+  .btn-add-weapon {
+    background: linear-gradient(135deg, #1e2e1e, #253825);
+    border: 1px solid var(--prof-color);
+    color: var(--prof-color);
+    padding: 8px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Georgia', serif;
+    font-size: 0.88rem;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .btn-add-weapon:hover { background: #2d4d2d; color: #7ed4a0; }
+  .weapon-preview {
+    background: #0e1a0e;
+    border: 1px solid #1e3a1e;
+    border-left: 3px solid var(--prof-color);
+    border-radius: 4px;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    color: #8ad4a0;
+    margin-bottom: 12px;
+    display: none;
+    line-height: 1.6;
+  }
+  .weapon-preview strong { color: #b0e8c0; font-size: 0.9rem; }
+  .weapon-preview .wp-tags { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .weapon-preview .wp-tag {
+    background: #1a2e1a;
+    border: 1px solid #2d4d2d;
+    border-radius: 3px;
+    padding: 1px 7px;
+    font-size: 0.72rem;
+    color: #6abf80;
+  }
+  .weapon-preview .wp-tag.warn { background: #2a1e0e; border-color: #4d3a1a; color: #c8a060; }
+  .weapon-row, .item-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 0.7fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+  .item-row { grid-template-columns: 3fr 1fr 0.7fr auto; }
+  .row-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 0.7fr auto;
+    gap: 8px;
+    padding: 4px 8px;
+    margin-bottom: 2px;
+  }
+  .item-row-header { grid-template-columns: 3fr 1fr 0.7fr auto !important; }
+  .row-header span {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+  }
+
+  /* ── Carry Weight Tracker ─────────────────────────────────── */
+  .carry-tracker {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .carry-tracker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    margin-bottom: 6px;
+  }
+  .carry-tracker-header .carry-label { color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-size: 0.68rem; }
+  .carry-tracker-header .carry-value { color: var(--gold-light); font-weight: bold; }
+  .carry-bar-outer {
+    position: relative;
+    height: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    overflow: visible;
+    margin-bottom: 4px;
+  }
+  .carry-bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.25s, background-color 0.25s;
+    background: var(--prof-color);
+    max-width: 100%;
+  }
+  .carry-threshold {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 2px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 1px;
+    pointer-events: none;
+  }
+  .carry-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+  .carry-note {
+    font-size: 0.74rem;
+    font-style: italic;
+    margin-top: 5px;
+    min-height: 1.2em;
+    color: #c9a84c;
+  }
+  .carry-note.danger { color: var(--red-light); }
+
+  /* ── Spellcasting ────────────────────────────────── */
+  .spell-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .spell-level-header {
+    font-size: 0.8rem;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 16px 0 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .spell-slots {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .spell-slots input {
+    width: 50px;
+    text-align: center;
+    padding: 4px;
+    font-size: 0.82rem;
+  }
+  .spell-row {
+    display: grid;
+    grid-template-columns: 2fr 3fr 1fr 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+  .cantrip-row {
+    display: grid;
+    grid-template-columns: 2fr 4fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+  .prepared-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .prepared-check input { accent-color: var(--gold); width: 14px; height: 14px; }
+
+  /* ── Features ────────────────────────────────────── */
+  .feature-row {
+    display: grid;
+    grid-template-columns: 2fr 4fr auto;
+    gap: 8px;
+    align-items: start;
+    padding: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+
+  /* ── Conditions ──────────────────────────────────── */
+  .conditions-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .condition-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: border-color 0.1s;
+  }
+  .condition-check:hover { border-color: var(--border-bright); }
+  .condition-check.active { border-color: var(--red-light); color: var(--red-light); }
+  .condition-check input { accent-color: var(--red-light); cursor: pointer; }
+
+  /* immune = class grants full immunity at current level */
+  .condition-check.immune {
+    cursor: not-allowed;
+    background: rgba(74,158,107,0.08);
+    border: 1px dashed var(--prof-color);
+    color: var(--prof-color);
+    opacity: 0.75;
+    justify-content: space-between;
+  }
+  .condition-check.immune input { display: none; }
+  .condition-check.immune .imm-badge {
+    font-size: 0.62rem;
+    background: rgba(74,158,107,0.18);
+    color: var(--prof-color);
+    border-radius: 3px;
+    padding: 1px 5px;
+    white-space: nowrap;
+    font-style: italic;
+    letter-spacing: 0.4px;
+  }
+
+  /* sub-immune = immunity only with a specific subclass */
+  .condition-check.sub-immune {
+    cursor: not-allowed;
+    background: rgba(74,158,107,0.04);
+    border: 1px dashed #5a7a40;
+    color: #7aaa60;
+    opacity: 0.7;
+    justify-content: space-between;
+  }
+  .condition-check.sub-immune input { display: none; }
+  .condition-check.sub-immune .imm-badge {
+    font-size: 0.6rem;
+    background: rgba(90,122,64,0.18);
+    color: #7aaa60;
+    border-radius: 3px;
+    padding: 1px 5px;
+    white-space: nowrap;
+    font-style: italic;
+    letter-spacing: 0.3px;
+  }
+
+  #condImmunityNote {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: rgba(74,158,107,0.08);
+    border-left: 3px solid var(--prof-color);
+    border-radius: 0 4px 4px 0;
+    font-size: 0.75rem;
+    color: #8aca90;
+    font-style: italic;
+    line-height: 1.7;
+  }
+
+  /* ── Spell Pickers ───────────────────────────────── */
+  .spell-picker-bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .spell-picker-bar select {
+    flex: 1;
+    min-width: 220px;
+    font-size: 0.88rem;
+    padding: 8px 10px;
+  }
+  .spell-picker-preview {
+    background: #0e0e1f;
+    border: 1px solid #252550;
+    border-left: 3px solid #6060c0;
+    border-radius: 4px;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    color: #a0a0e0;
+    margin-bottom: 10px;
+    display: none;
+    line-height: 1.6;
+  }
+  .spell-picker-preview strong { color: #c0c0f8; font-size: 0.9rem; }
+  .spell-picker-preview .sp-tags { display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
+  .spell-picker-preview .sp-tag {
+    background: #151530;
+    border: 1px solid #303060;
+    border-radius: 3px;
+    padding: 1px 7px;
+    font-size: 0.72rem;
+    color: #8080c8;
+  }
+  .spell-picker-preview .sp-tag.highlight { border-color: #6060c0; color: #b0b0f0; }
+
+  /* ── Buttons ─────────────────────────────────────── */
+  .btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Georgia', serif;
+    font-size: 0.85rem;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-add {
+    background: #1e2e1e;
+    border: 1px solid #2d4d2d;
+    color: var(--prof-color);
+  }
+  .btn-add:hover { background: #253825; border-color: var(--prof-color); }
+  .btn-remove {
+    background: #2e1a1a;
+    border: 1px solid #4d2a2a;
+    color: #c06060;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+  }
+  .btn-remove:hover { background: #3d2020; border-color: var(--red-light); color: var(--red-light); }
+
+  /* ── Export Bar ──────────────────────────────────── */
+  .export-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(90deg, #0a0806, #13100a, #0a0806);
+    border-top: 2px solid var(--gold-dim);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 200;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.8);
+  }
+  .export-bar .status-msg {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+  .btn-export {
+    background: linear-gradient(135deg, #8b6820, #c9a84c);
+    color: #0a0806;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    padding: 12px 32px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Georgia', serif;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    box-shadow: 0 2px 12px rgba(201,168,76,0.3);
+  }
+  .btn-export:hover {
+    background: linear-gradient(135deg, #9b7830, #e8c96e);
+    box-shadow: 0 4px 20px rgba(201,168,76,0.5);
+    transform: translateY(-1px);
+  }
+  .btn-import {
+    background: linear-gradient(135deg, #1a2a3a, #2a4a6a);
+    color: #7ab8e8;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    padding: 12px 32px;
+    border-radius: 4px;
+    border: 2px solid #3a6a9a;
+    cursor: pointer;
+    font-family: 'Georgia', serif;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    box-shadow: 0 2px 12px rgba(58,106,154,0.3);
+  }
+  .btn-import:hover {
+    background: linear-gradient(135deg, #223a50, #3a6a9a);
+    border-color: #7ab8e8;
+    box-shadow: 0 4px 20px rgba(122,184,232,0.4);
+    transform: translateY(-1px);
+  }
+  .export-bar-buttons { display: flex; gap: 12px; align-items: center; }
+
+  /* ── Info Callout ────────────────────────────────── */
+  .info-box {
+    background: #0e1a24;
+    border: 1px solid #1e3a50;
+    border-left: 3px solid #3d8fc4;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    color: #8ab8d4;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .class-desc {
+    background: #1a1408;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold-dim);
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    font-style: italic;
+    line-height: 1.5;
+    display: none;
+  }
+
+  /* ── Misc ────────────────────────────────────────── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 20px 0;
+  }
+  .inline-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-right: 4px;
+  }
+  .tag {
+    display: inline-block;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+  .tag.highlight { border-color: var(--gold-dim); color: var(--gold); }
+
+  @media (max-width: 700px) {
+    .abilities-grid { grid-template-columns: repeat(3, 1fr); }
+    .stat-block { grid-template-columns: repeat(3, 1fr); }
+    .skills-grid { grid-template-columns: 1fr; }
+    .saves-grid { grid-template-columns: 1fr 1fr; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .col-span-2 { grid-column: span 1; }
+    .weapon-row { grid-template-columns: 1fr 1fr; }
+    .item-row   { grid-template-columns: 2fr 1fr 1fr auto; }
+    .spell-row { grid-template-columns: 1fr 1fr; }
+    .conditions-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚔ D&D 5e Character Creator</h1>
+  <p>Fill in each section, then click Export to generate your character file</p>
+</header>
+
+<div class="page">
+
+  <!-- ══ SECTION 1: Character Identity ═════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">🧙</span>
+      <h2>Who Are You?</h2>
+      <span class="section-hint">Basic character info</span>
+    </div>
+    <div class="section-body">
+      <div class="grid-3">
+        <div class="field">
+          <label>Character Name</label>
+          <input type="text" id="charName" placeholder="e.g. Varek Ashborne" oninput="updateStatus()">
+        </div>
+        <div class="field">
+          <label>Player Name</label>
+          <input type="text" id="playerName" placeholder="Your real name">
+        </div>
+        <div class="field">
+          <label>Campaign Name</label>
+          <input type="text" id="campaignName" placeholder="e.g. Lost Mines of Phandelver">
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="grid-3">
+        <div class="field">
+          <label>Class
+            <span class="tip">Your character's role & abilities</span>
+          </label>
+          <select id="charClass" onchange="onClassChange()">
+            <option value="">— Choose a Class —</option>
+            <option value="Barbarian">Barbarian — Rage-fueled warrior</option>
+            <option value="Bard">Bard — Musical magic performer</option>
+            <option value="Cleric">Cleric — Divine holy priest</option>
+            <option value="Druid">Druid — Nature's shapeshifter</option>
+            <option value="Fighter">Fighter — Master of weapons</option>
+            <option value="Monk">Monk — Ki-powered martial artist</option>
+            <option value="Paladin">Paladin — Holy oath-bound knight</option>
+            <option value="Ranger">Ranger — Wilderness hunter</option>
+            <option value="Rogue">Rogue — Sneaky expert</option>
+            <option value="Sorcerer">Sorcerer — Innate magic bloodline</option>
+            <option value="Warlock">Warlock — Pact-bound magic dealer</option>
+            <option value="Wizard">Wizard — Scholar of arcane arts</option>
+          </select>
+          <div class="class-desc" id="classDesc"></div>
+        </div>
+
+        <div class="field">
+          <label>Background
+            <span class="tip">Your life before adventuring</span>
+          </label>
+          <select id="charBackground" onchange="onBackgroundChange()">
+            <option value="">— Choose Background —</option>
+            <option value="Acolyte">Acolyte — Temple servant</option>
+            <option value="Charlatan">Charlatan — Con artist</option>
+            <option value="Criminal">Criminal — Law-breaker</option>
+            <option value="Entertainer">Entertainer — Stage performer</option>
+            <option value="Folk Hero">Folk Hero — Common champion</option>
+            <option value="Guild Artisan">Guild Artisan — Skilled craftsperson</option>
+            <option value="Hermit">Hermit — Secluded wanderer</option>
+            <option value="Noble">Noble — Aristocratic heritage</option>
+            <option value="Outlander">Outlander — Wilderness survivor</option>
+            <option value="Sage">Sage — Scholar & researcher</option>
+            <option value="Sailor">Sailor — Sea-faring veteran</option>
+            <option value="Soldier">Soldier — Military trained</option>
+            <option value="Urchin">Urchin — Street survivor</option>
+          </select>
+          <div class="class-desc" id="bgDesc"></div>
+        </div>
+
+        <div class="field">
+          <label>Alignment
+            <span class="tip">Your moral compass</span>
+          </label>
+          <select id="charAlignment">
+            <option value="Lawful Good">Lawful Good — Noble & rule-following hero</option>
+            <option value="Neutral Good">Neutral Good — Does good without bias</option>
+            <option value="Chaotic Good">Chaotic Good — Free-spirited do-gooder</option>
+            <option value="Lawful Neutral">Lawful Neutral — Order above all else</option>
+            <option value="True Neutral">True Neutral — Balance in all things</option>
+            <option value="Chaotic Neutral">Chaotic Neutral — Freedom above all</option>
+            <option value="Lawful Evil">Lawful Evil — Evil through strict rules</option>
+            <option value="Neutral Evil">Neutral Evil — Self-serving & cruel</option>
+            <option value="Chaotic Evil">Chaotic Evil — Destructive & unpredictable</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-top:16px">
+        <div class="field">
+          <label>Level
+            <span class="tip">Most campaigns start at level 1</span>
+          </label>
+          <select id="charLevel" onchange="updateAllCalculations(); refreshConditionsGrid();">
+            <option value="1">1 — Fresh Adventurer</option>
+            <option value="2">2</option><option value="3">3</option><option value="4">4</option>
+            <option value="5">5 — Major power spike</option>
+            <option value="6">6</option><option value="7">7</option><option value="8">8</option>
+            <option value="9">9</option><option value="10">10</option>
+            <option value="11">11 — Another big upgrade</option>
+            <option value="12">12</option><option value="13">13</option><option value="14">14</option>
+            <option value="15">15</option><option value="16">16</option><option value="17">17</option>
+            <option value="18">18</option><option value="19">19</option>
+            <option value="20">20 — Maximum level!</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Experience Points</label>
+          <input type="number" id="charXP" value="0" min="0">
+        </div>
+        <div class="field">
+          <label>Multiclass (optional)
+            <span class="tip">Leave blank if single-class</span>
+          </label>
+          <input type="text" id="charMulticlass" placeholder="e.g. Fighter 2">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 2: Ability Scores ══════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">🎲</span>
+      <h2>Ability Scores</h2>
+      <span class="section-hint">The 6 stats that define your character</span>
+    </div>
+    <div class="section-body">
+      <div class="info-box">
+        <strong>What are ability scores?</strong> Six numbers (usually 8–18) that define your strengths and weaknesses.
+        The <strong>modifier</strong> shown below each score is what actually gets added to dice rolls.
+        Higher is always better! Modifiers: 8=−1, 10=+0, 12=+1, 14=+2, 15=+2, 16=+3, 18=+4.
+      </div>
+
+      <div class="method-tabs">
+        <button class="method-tab active" onclick="setMethod('standard')">Standard Array</button>
+        <button class="method-tab" onclick="setMethod('pointbuy')">Point Buy</button>
+        <button class="method-tab" onclick="setMethod('manual')">Manual Entry</button>
+      </div>
+
+      <!-- Standard Array -->
+      <div class="method-panel active" id="method-standard">
+        <div class="sa-pool" id="saPool">
+          <span class="sa-pool-label">Available values:</span>
+          <span class="sa-chip" data-val="15">15</span>
+          <span class="sa-chip" data-val="14">14</span>
+          <span class="sa-chip" data-val="13">13</span>
+          <span class="sa-chip" data-val="12">12</span>
+          <span class="sa-chip" data-val="10">10</span>
+          <span class="sa-chip" data-val="8">8</span>
+          <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted)">Assign each value to one stat. Each value can only be used once.</span>
+        </div>
+        <div class="abilities-grid" id="abilitiesGridSA"></div>
+      </div>
+
+      <!-- Point Buy -->
+      <div class="method-panel" id="method-pointbuy">
+        <div class="pb-points-display" id="pbDisplay">
+          Points remaining: <span id="pbRemaining">27</span> / 27
+          &nbsp;&nbsp;<small style="font-size:0.72rem">Scores 8–15 only. Cost: 8=0, 9=1, 10=2, 11=3, 12=4, 13=5, 14=7, 15=9</small>
+        </div>
+        <div class="abilities-grid" id="abilitiesGridPB"></div>
+      </div>
+
+      <!-- Manual -->
+      <div class="method-panel" id="method-manual">
+        <div class="info-box">Type in your ability scores directly. Modifiers will update automatically.</div>
+        <div class="abilities-grid" id="abilitiesGridManual"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 3: Combat Stats ════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">⚔</span>
+      <h2>Combat Stats</h2>
+      <span class="section-hint">Auto-calculated — adjust manually if needed</span>
+    </div>
+    <div class="section-body">
+      <div class="stat-block">
+        <div class="stat-card">
+          <div class="stat-label">Max HP</div>
+          <input type="number" id="combatHPMax" value="8" min="1" onchange="updateCurrentHP()">
+          <div class="stat-auto-note" id="hpNote">Hit Die + CON mod</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Current HP</div>
+          <input type="number" id="combatHPCurrent" value="8" min="0">
+          <div class="stat-auto-note">Starts = Max HP</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Armor Class</div>
+          <input type="number" id="combatAC" value="11" min="1">
+          <div class="stat-auto-note" id="acNote">10 + DEX mod</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Initiative</div>
+          <input type="number" id="combatInit" value="0">
+          <div class="stat-auto-note">DEX modifier</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Prof. Bonus</div>
+          <input type="number" id="combatProf" value="2" min="1">
+          <div class="stat-auto-note">+2 at levels 1–4</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Armor Worn
+            <span class="tip">Affects your AC automatically</span>
+          </label>
+          <select id="armorSelect" onchange="updateAC()">
+            <optgroup label="No Armor">
+              <option value="none|10+dex">No Armor (10 + DEX mod)</option>
+              <option value="none|10+dex+shield">No Armor + Shield (12 + DEX mod)</option>
+            </optgroup>
+            <optgroup label="Light Armor">
+              <option value="Padded|11+dex">Padded (11 + DEX mod)</option>
+              <option value="Leather Armor|11+dex" selected>Leather Armor (11 + DEX mod)</option>
+              <option value="Studded Leather|12+dex">Studded Leather (12 + DEX mod)</option>
+              <option value="Leather Armor|11+dex+shield">Leather + Shield (13 + DEX mod)</option>
+            </optgroup>
+            <optgroup label="Medium Armor">
+              <option value="Hide Armor|12+dex2">Hide Armor (12 + DEX max +2)</option>
+              <option value="Chain Shirt|13+dex2">Chain Shirt (13 + DEX max +2)</option>
+              <option value="Scale Mail|14+dex2">Scale Mail (14 + DEX max +2)</option>
+              <option value="Breastplate|14+dex2">Breastplate (14 + DEX max +2)</option>
+              <option value="Half Plate|15+dex2">Half Plate (15 + DEX max +2)</option>
+            </optgroup>
+            <optgroup label="Heavy Armor">
+              <option value="Ring Mail|14">Ring Mail (14)</option>
+              <option value="Chain Mail|16">Chain Mail (16)</option>
+              <option value="Splint Armor|17">Splint Armor (17)</option>
+              <option value="Plate Armor|18">Plate Armor (18)</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="field">
+          <label>Walking Speed
+            <span class="tip">Most races: 30 ft. Dwarves: 25 ft.</span>
+          </label>
+          <select id="charSpeed">
+            <option value="25">25 ft. (Dwarf)</option>
+            <option value="30" selected>30 ft. (Standard)</option>
+            <option value="35">35 ft. (Wood Elf / Monk)</option>
+            <option value="40">40 ft.</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 4: Skills & Saving Throws ══════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">📋</span>
+      <h2>Skills &amp; Saving Throws</h2>
+      <span class="section-hint">Check boxes to mark proficiency</span>
+    </div>
+    <div class="section-body">
+      <div class="info-box">
+        <strong>Proficiency</strong> means you add your Proficiency Bonus (+<span id="profBonusHint">2</span>) to that roll.
+        <span style="color:var(--gold-light)">⚔ Gold</span> = auto-granted by your <strong>Class</strong> &nbsp;|&nbsp;
+        <span style="color:#5ab0ff">◆ Blue</span> = auto-granted by your <strong>Background</strong> &nbsp;|&nbsp;
+        <span style="color:var(--prof-color)">✓ Green</span> = your free choice.
+        These 4 locked skills cannot be changed. You may freely pick up to <strong>2 more</strong> from the list below.
+        <span id="classSkillHint" style="display:none"></span>
+      </div>
+      <div class="skills-grid" id="skillsGrid"></div>
+      <div id="freeSkillCounter" style="color:var(--text-muted)">0 / 2 bonus skills chosen</div>
+      <div class="saves-grid" id="savesGrid"></div>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 5: Equipment ═══════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">🎒</span>
+      <h2>Equipment</h2>
+      <span class="section-hint">Weapons & inventory</span>
+    </div>
+    <div class="section-body">
+      <div style="margin-bottom:16px">
+        <div style="font-size:0.8rem;color:var(--gold-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Weapons</div>
+
+        <div class="weapon-picker">
+          <select id="weaponPickerSelect" onchange="previewWeaponPick()">
+            <option value="">— Pick a weapon to add —</option>
+            <optgroup label="⚔ Simple Melee (Good for beginners — easy to use)">
+              <option value="Club">Club | Swing at enemies in melee range. 1d4 = roll a 4-sided die to see how much damage you deal</option>
+              <option value="Dagger">Dagger | Stab in melee OR throw up to 60 ft. 1d4 = damage die. Light means you can hold one in each hand</option>
+              <option value="Greatclub">Greatclub | Heavy two-handed swing. Needs both hands. 1d8 = roll an 8-sided die for damage (hits harder than a club)</option>
+              <option value="Handaxe">Handaxe | Chop in melee OR throw up to 60 ft. 1d6 = roll a 6-sided die for damage. Light — dual wieldable</option>
+              <option value="Javelin">Javelin | Throw at enemies up to 120 ft away, or stab in melee. 1d6 = damage die. Great if you want a ranged option without a bow</option>
+              <option value="Light Hammer">Light Hammer | Smash in melee OR throw up to 60 ft. 1d4 = damage die. Light means both hands can hold one</option>
+              <option value="Mace">Mace | One-handed bludgeon — swing at enemies in reach. 1d6 = damage die. No special rules; perfect starter weapon</option>
+              <option value="Quarterstaff">Quarterstaff | Strike with a long staff. One-handed = 1d6 damage, two-handed = 1d8. Versatile means you choose each attack</option>
+              <option value="Sickle">Sickle | Slash in melee with a curved blade. 1d4 = damage die. Light means you can pair it with another light weapon</option>
+              <option value="Spear">Spear | Stab in melee OR throw up to 60 ft. 1d6 one-handed, 1d8 two-handed. One of the most flexible simple weapons</option>
+            </optgroup>
+            <optgroup label="🏹 Simple Ranged (Attack from a distance — no melee)">
+              <option value="Light Crossbow">Light Crossbow | Pull a trigger to fire a bolt at enemies up to 80 ft (320 ft with penalty). 1d8 = damage die. Reload after every shot</option>
+              <option value="Shortbow">Shortbow | Draw and release an arrow — fire up to 80 ft (320 ft with penalty). 1d6 = damage die. Faster feel than a crossbow</option>
+              <option value="Hand Crossbow">Hand Crossbow | One-handed crossbow, fire up to 30 ft (120 ft with penalty). 1d6 = damage die. Free hand for a shield or off-hand weapon</option>
+              <option value="Dart">Dart | Flick a small dart — throw up to 20 ft (60 ft with penalty). 1d4 = damage die. Finesse: use your DEX score instead of STR</option>
+              <option value="Sling">Sling | Spin and hurl a stone up to 30 ft (120 ft with penalty). 1d4 = damage die. Ammo is free — just pick up rocks</option>
+            </optgroup>
+            <optgroup label="⚔ Martial Melee (More powerful — need class proficiency to use well)">
+              <option value="Battleaxe">Battleaxe | Slash with a broad axe in melee. 1d8 one-handed, 1d10 two-handed (versatile). 1d8/1d10 = damage die roll</option>
+              <option value="Flail">Flail | Swing a spiked ball on a chain in melee. 1d8 = damage die. Bypasses the shield bonus enemies might have</option>
+              <option value="Glaive">Glaive | Swing a blade-on-a-pole — reach lets you hit enemies 10 ft away, not just 5 ft. 1d10 = damage die. Two-handed</option>
+              <option value="Greataxe">Greataxe | Massive two-handed axe swing. 1d12 = roll a 12-sided die for damage — the single biggest damage die in melee</option>
+              <option value="Greatsword">Greatsword | Two-handed sword swing. 2d6 = roll TWO 6-sided dice and add them. Most consistent heavy damage in the game</option>
+              <option value="Longsword">Longsword | Classic sword swing in melee. 1d8 one-handed, 1d10 two-handed. 1d8/1d10 = how many sides your damage die has</option>
+              <option value="Maul">Maul | Massive two-handed warhammer. 2d6 = roll two 6-sided dice for damage. Same as greatsword but bludgeoning type</option>
+              <option value="Morningstar">Morningstar | Spiked war club swing in melee. 1d8 = damage die. Piercing type can matter against certain creatures</option>
+              <option value="Rapier">Rapier | Precise thrusting blade in melee. 1d8 = damage die. Finesse: use your DEX modifier for attack and damage rolls instead of STR</option>
+              <option value="Scimitar">Scimitar | Fast curved slash in melee. 1d6 = damage die. Light + finesse = pair with another light weapon and use DEX</option>
+              <option value="Shortsword">Shortsword | Quick thrust in melee. 1d6 = damage die. Light + finesse = great for Rogues who want DEX-based attacks</option>
+              <option value="Trident">Trident | Stab in melee OR throw up to 60 ft. 1d6 one-handed, 1d8 two-handed. 1d6/1d8 = how hard you hit</option>
+              <option value="War Pick">War Pick | Drive a pick-shaped head into enemies in melee. 1d8 = damage die. Piercing can be useful vs armored foes</option>
+              <option value="Warhammer">Warhammer | Smash with a heavy hammer in melee. 1d8 one-handed, 1d10 two-handed. Versatile: choose each swing</option>
+              <option value="Whip">Whip | Crack a whip — reach lets you hit enemies 10 ft away. 1d4 = damage die. Finesse: use your DEX for attack and damage</option>
+            </optgroup>
+            <optgroup label="🏹 Martial Ranged (Advanced ranged weapons — need proficiency)">
+              <option value="Longbow">Longbow | Draw and loose an arrow up to 150 ft (600 ft with penalty). 1d8 = damage die. Highest ranged damage, needs two hands</option>
+              <option value="Heavy Crossbow">Heavy Crossbow | Fire a bolt up to 100 ft (400 ft with penalty). 1d10 = damage die — best crossbow damage. Reload after every shot</option>
+              <option value="Blowgun">Blowgun | Puff a needle up to 25 ft (100 ft with penalty). Deals 1 damage. Silent — useful for stealth or delivering poisons</option>
+              <option value="Net">Net | Throw a weighted net at a creature up to 15 ft away. No damage — instead it restrains the target (speed 0, attack disadvantage)</option>
+            </optgroup>
+            <optgroup label="✨ Arcane / Special">
+              <option value="Arcane Focus Staff">Arcane Focus Staff | Strike in melee (1d6 or 1d8 two-handed) AND use it to cast spells — no free hand needed for your focus</option>
+              <option value="Wand">Wand | Hold it to channel spells — no attack roll, no damage on its own. Its job is to satisfy the spellcasting focus requirement</option>
+              <option value="Eldritch Blade">Eldritch Blade (Pact of the Blade) | A magical weapon you summon via Warlock pact. 1d8 = damage die. Uses CHA for attack and damage rolls</option>
+            </optgroup>
+          </select>
+          <button class="btn-add-weapon" onclick="addWeaponFromPicker()">+ Add to Loadout</button>
+        </div>
+
+        <div class="weapon-preview" id="weaponPreview"></div>
+
+        <div class="row-header">
+          <span>Name</span><span>Type</span><span>Hit Bonus</span><span>Damage</span><span>Dmg Type</span><span>lbs</span><span></span>
+        </div>
+        <div id="weaponsList"></div>
+        <button class="btn btn-add" onclick="addWeapon()" style="margin-top:4px;font-size:0.8rem">+ Add Custom Weapon</button>
+      </div>
+
+      <hr class="divider">
+
+      <div>
+        <div style="font-size:0.8rem;color:var(--gold-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Inventory Items</div>
+        <div class="row-header item-row-header">
+          <span>Item</span><span>Qty</span><span>lb/ea</span><span></span>
+        </div>
+        <div id="inventoryList"></div>
+        <button class="btn btn-add" onclick="addInventoryItem()">+ Add Item</button>
+      </div>
+
+      <!-- Carry Weight Tracker -->
+      <div class="carry-tracker">
+        <div class="carry-tracker-header">
+          <span class="carry-label">⚖ Carry Weight</span>
+          <span class="carry-value" id="carryWeightValue">0 / 150 lbs</span>
+        </div>
+        <div class="carry-bar-outer">
+          <div class="carry-bar-fill" id="carryBarFill" style="width:0%"></div>
+          <div class="carry-threshold" id="carryThresh1" style="left:33.3%"></div>
+          <div class="carry-threshold" id="carryThresh2" style="left:66.6%"></div>
+        </div>
+        <div class="carry-ticks">
+          <span>0</span>
+          <span id="carryTickEnc">Enc (50 lb)</span>
+          <span id="carryTickHeavy">Heavy (100 lb)</span>
+          <span id="carryTickMax">Max (150 lb)</span>
+        </div>
+        <div class="carry-note" id="carryNote"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 6: Spellcasting ════════════════════════════════ -->
+  <div class="section" id="spellSection">
+    <div class="section-header">
+      <span class="section-icon">✨</span>
+      <h2>Spellcasting</h2>
+      <span class="section-hint">Spells & magic</span>
+    </div>
+    <div class="section-body">
+
+      <div class="info-box" style="margin-bottom:20px">
+        <strong>How spellcasting works:</strong> Spellcasters use magic by expending <strong>spell slots</strong> — think of them as a limited battery of magical energy that recharges after a long rest (Warlocks recharge on a short rest). Each spell has a level; to cast it you spend a slot of that level or higher.<br><br>
+        Your <strong>Spell Save DC</strong> is the number enemies must roll to resist your spells. Your <strong>Spell Attack Bonus</strong> is added to your attack roll when a spell requires one (e.g. Fire Bolt). Both are auto-calculated from your casting ability score below.
+      </div>
+
+      <div class="spell-stats">
+        <div class="stat-card">
+          <div class="stat-label">Casting Ability</div>
+          <select id="spellAbility" onchange="updateSpellStats()" style="text-align:center;font-size:1rem;font-weight:bold;color:var(--gold-light)">
+            <option value="charisma">Charisma</option>
+            <option value="intelligence">Intelligence</option>
+            <option value="wisdom">Wisdom</option>
+          </select>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Spell Save DC</div>
+          <input type="number" id="spellSaveDC" value="12" readonly style="cursor:default;color:var(--gold-light);font-size:1.3rem;font-weight:bold;text-align:center">
+          <div class="stat-auto-note">8 + Prof + Ability mod</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Spell Attack Bonus</div>
+          <input type="number" id="spellAtkBonus" value="4" readonly style="cursor:default;color:var(--gold-light);font-size:1.3rem;font-weight:bold;text-align:center">
+          <div class="stat-auto-note">Prof + Ability mod</div>
+        </div>
+      </div>
+
+      <div class="spell-level-header" style="margin-top:8px">
+        Cantrips
+        <span style="font-size:0.72rem;color:var(--text-muted);font-weight:normal;margin-left:6px">(No spell slots needed — unlimited uses)</span>
+      </div>
+      <div class="info-box" style="margin-bottom:12px">
+        <strong>What is a cantrip?</strong> Cantrips are simple, beginner-level spells you can cast as many times as you want — they never use up spell slots. Think of them as your "at-will" magic. Most casters pick 2–3 cantrips at level 1 and use them as their go-to options in combat or exploration. Pick ones that match your play style: <em>Eldritch Blast</em> for Warlocks is the equivalent of a Fighter's basic attack.
+      </div>
+
+      <div class="spell-picker-bar" id="cantripPickerBar">
+        <select id="cantripPickerSelect" onchange="previewSpellPick('cantrip')">
+          <option value="">— Choose a cantrip to add —</option>
+        </select>
+        <button class="btn-add-weapon" onclick="addSpellFromPicker('cantrip')">+ Add Cantrip</button>
+      </div>
+      <div class="spell-picker-preview" id="cantripPreview"></div>
+      <div id="cantripsList"></div>
+      <button class="btn btn-add" style="font-size:0.8rem" onclick="addSpell('cantrip')">+ Add Custom Cantrip</button>
+
+      <div id="spellLevels"></div>
+      <div class="spell-level-header" style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+        Leveled Spells
+        <span style="font-size:0.72rem;color:var(--text-muted);font-weight:normal;margin-left:6px">(Cost spell slots to cast)</span>
+      </div>
+      <div class="info-box" style="margin-bottom:12px">
+        <strong>Leveled spells</strong> are more powerful — but each one costs a spell slot when you cast it. At level 1, most casters only have 1–2 slots (Warlocks get 1). Choose spells that will have the biggest impact in your group. Click <em>"+ Add Spell Level"</em> to open a level, then use the dropdown to pick from real spells available to your class.
+      </div>
+      <div id="spellLevelPickers"></div>
+      <button class="btn btn-add" style="margin-top:4px" onclick="addSpellLevel()">+ Add Spell Level</button>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 7: Features & Traits ═══════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">⭐</span>
+      <h2>Features &amp; Traits</h2>
+      <span class="section-hint">Class abilities & special powers</span>
+    </div>
+    <div class="section-body">
+      <div class="info-box">Features are automatically filled based on your class. Edit or remove as needed, and add custom ones.</div>
+      <div id="featuresList"></div>
+      <button class="btn btn-add" onclick="addFeature()">+ Add Feature</button>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 8: Conditions ══════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">🩹</span>
+      <h2>Conditions</h2>
+      <span class="section-hint">Active status effects (uncheck all at start)</span>
+    </div>
+    <div class="section-body">
+      <div class="info-box" style="margin-bottom:16px">
+        <strong>What are conditions?</strong> Conditions are temporary status effects that can be placed on your character during the game — by enemy spells, traps, abilities, or the environment. They are <strong>not permanent</strong> and almost always end after a short time or when a specific trigger occurs.<br><br>
+        <strong>Leave all boxes unchecked when creating your character</strong> — you start with no conditions. During play, your Dungeon Master or the AI bot will tell you when to check one of these. Here's a quick reference:<br><br>
+        <span style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:4px;font-size:0.78rem;line-height:1.7">
+          <span><strong style="color:#e0c080">Unconscious</strong> — You're knocked out. Can't act, auto-fail STR/DEX saves.</span>
+          <span><strong style="color:#e0c080">Poisoned</strong> — Disadvantage on attack rolls and ability checks.</span>
+          <span><strong style="color:#e0c080">Stunned</strong> — Incapacitated, can't move, auto-fail STR/DEX saves.</span>
+          <span><strong style="color:#e0c080">Paralyzed</strong> — Can't move or act; melee hits within 5 ft are critical hits.</span>
+          <span><strong style="color:#e0c080">Petrified</strong> — Turned to stone. Can't move, act, or speak.</span>
+          <span><strong style="color:#e0c080">Blinded</strong> — Can't see. Attack rolls against you have advantage.</span>
+          <span><strong style="color:#e0c080">Deafened</strong> — Can't hear. Fails checks relying on sound.</span>
+          <span><strong style="color:#e0c080">Frightened</strong> — Disadvantage on rolls while you can see the source of fear.</span>
+          <span><strong style="color:#e0c080">Grappled</strong> — Your speed drops to 0. You're being grabbed.</span>
+          <span><strong style="color:#e0c080">Restrained</strong> — Speed 0, disadvantage on attacks &amp; DEX saves.</span>
+        </span>
+      </div>
+      <div class="conditions-grid" id="conditionsGrid"></div>
+      <div style="margin-top:12px;display:flex;align-items:center;gap:12px">
+        <label style="font-size:0.8rem;color:var(--text-muted)">Exhaustion Level:</label>
+        <select id="exhaustionLevel" style="width:120px">
+          <option value="0">0 — None</option>
+          <option value="1">1 — Disadvantage on checks</option>
+          <option value="2">2 — Speed halved</option>
+          <option value="3">3 — Disadvantage on attacks/saves</option>
+          <option value="4">4 — Max HP halved</option>
+          <option value="5">5 — Speed reduced to 0</option>
+          <option value="6">6 — Death</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 9: Notes & Backstory ═══════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">📖</span>
+      <h2>Notes &amp; Backstory</h2>
+      <span class="section-hint">Your character's story</span>
+    </div>
+    <div class="section-body">
+      <div class="grid-2">
+        <div class="field">
+          <label>Biography
+            <span class="tip">Who are you? Where do you come from?</span>
+          </label>
+          <textarea id="noteBiography" placeholder="Describe your character's history, appearance, and personality..."></textarea>
+        </div>
+        <div class="field">
+          <label>Ideals
+            <span class="tip">What principles guide your character?</span>
+          </label>
+          <textarea id="noteIdeals" placeholder="e.g. Knowledge is power. I seek to uncover all arcane secrets."></textarea>
+        </div>
+        <div class="field">
+          <label>Bonds
+            <span class="tip">Who or what do you care about most?</span>
+          </label>
+          <textarea id="noteBonds" placeholder="e.g. I must protect my hometown from the cult that destroyed my family."></textarea>
+        </div>
+        <div class="field">
+          <label>Flaws
+            <span class="tip">What weaknesses or vices do you have?</span>
+          </label>
+          <textarea id="noteFlaws" placeholder="e.g. I am suspicious of strangers and expect the worst of them."></textarea>
+        </div>
+        <div class="field col-span-2">
+          <label>Treasures &amp; Additional Notes</label>
+          <textarea id="noteTreasures" placeholder="Special items, quest notes, reminders..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- ══ Export Bar ════════════════════════════════════════════════ -->
+<div class="export-bar">
+  <div class="status-msg" id="statusMsg">Fill out your character, then export when ready.</div>
+  <div class="export-bar-buttons">
+    <input type="file" id="importFileInput" accept=".yaml,.yml" style="display:none" onchange="handleImportFile(event)">
+    <button class="btn-import" onclick="document.getElementById('importFileInput').click()">⬆ Import YAML</button>
+    <button class="btn-export" onclick="exportYaml()">⬇ Export Character YAML</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════════════════════════════
+const CLASSES = {
+  Barbarian:   { hitDie:12, saves:['strength','constitution'],   skills:2, choices:['animal_handling','athletics','intimidation','nature','perception','survival'], spellAbility:null, desc:'A fierce warrior driven by primal rage. Charges into battle, resists damage, and grows stronger when angry.' },
+  Bard:        { hitDie:8,  saves:['dexterity','charisma'],      skills:3, choices:['all'], spellAbility:'charisma', desc:'A magical entertainer who inspires allies, casts spells, and can learn almost any skill. Very flexible.' },
+  Cleric:      { hitDie:8,  saves:['wisdom','charisma'],         skills:2, choices:['history','insight','medicine','persuasion','religion'], spellAbility:'wisdom', desc:'A divine priest powered by their god. Great healer and support caster with decent combat options.' },
+  Druid:       { hitDie:8,  saves:['intelligence','wisdom'],     skills:2, choices:['arcana','animal_handling','insight','medicine','nature','perception','religion','survival'], spellAbility:'wisdom', desc:'A nature-magic wielder who can transform into animals and command plants, storms, and beasts.' },
+  Fighter:     { hitDie:10, saves:['strength','constitution'],   skills:2, choices:['acrobatics','animal_handling','athletics','history','insight','intimidation','perception','survival'], spellAbility:null, desc:'A versatile combat expert skilled with any weapon and armor. Great for beginners — very durable.' },
+  Monk:        { hitDie:8,  saves:['strength','dexterity'],      skills:2, choices:['acrobatics','athletics','history','insight','religion','stealth'], spellAbility:null, desc:'A disciplined martial artist channeling inner ki energy. Fast, hits multiple times, and very mobile.' },
+  Paladin:     { hitDie:10, saves:['wisdom','charisma'],         skills:2, choices:['athletics','insight','intimidation','medicine','persuasion','religion'], spellAbility:'charisma', desc:'A holy warrior bound by a sacred oath. Combines heavy armor, weapons, healing, and divine smite attacks.' },
+  Ranger:      { hitDie:10, saves:['strength','dexterity'],      skills:3, choices:['animal_handling','athletics','insight','investigation','nature','perception','stealth','survival'], spellAbility:'wisdom', desc:'A hunter and tracker who excels in the wilderness. Great at ranged combat and exploring.' },
+  Rogue:       { hitDie:8,  saves:['dexterity','intelligence'],  skills:4, choices:['acrobatics','athletics','deception','insight','intimidation','investigation','perception','performance','persuasion','sleight_of_hand','stealth'], spellAbility:null, desc:'A sneaky expert who deals massive Sneak Attack damage and can pick locks, pick pockets, and hide easily.' },
+  Sorcerer:    { hitDie:6,  saves:['constitution','charisma'],   skills:2, choices:['arcana','deception','insight','intimidation','persuasion','religion'], spellAbility:'charisma', desc:'A spellcaster whose magic comes from their blood. Fewer spells than wizard but can Metamagic to alter them.' },
+  Warlock:     { hitDie:8,  saves:['wisdom','charisma'],         skills:2, choices:['arcana','deception','history','intimidation','investigation','nature','religion'], spellAbility:'charisma', desc:'A magic user who made a deal with a powerful otherworldly being. Limited spell slots but recharges on short rests.' },
+  Wizard:      { hitDie:6,  saves:['intelligence','wisdom'],     skills:2, choices:['arcana','history','insight','investigation','medicine','religion'], spellAbility:'intelligence', desc:'A scholarly spellcaster with the widest spell list in the game. Powerful but requires careful study and positioning.' },
+};
+
+const BACKGROUNDS = {
+  Acolyte:       { skills:['insight','religion'],         desc:'You served in a temple. Comfortable around the clergy and religious rites.' },
+  Charlatan:     { skills:['deception','sleight_of_hand'],desc:'A professional liar and trickster. You know how to read people and exploit their weaknesses.' },
+  Criminal:      { skills:['deception','stealth'],        desc:'You have a criminal past — whether smuggling, thieving, or worse.' },
+  Entertainer:   { skills:['acrobatics','performance'],   desc:'You lived for the stage — as an actor, dancer, musician, or storyteller.' },
+  'Folk Hero':   { skills:['animal_handling','survival'], desc:'A local hero who stood up for common folk against oppressive forces.' },
+  'Guild Artisan':{ skills:['insight','persuasion'],      desc:'A skilled craftsperson and merchant, member of a respected trade guild.' },
+  Hermit:        { skills:['medicine','religion'],        desc:'You spent years in solitary seclusion, deep in contemplation.' },
+  Noble:         { skills:['history','persuasion'],       desc:'Born into wealth and privilege. You know how high society works.' },
+  Outlander:     { skills:['athletics','survival'],       desc:'Raised in the wilds, you are self-sufficient and at home in nature.' },
+  Sage:          { skills:['arcana','history'],           desc:'A researcher and scholar who spent years studying ancient lore.' },
+  Sailor:        { skills:['athletics','perception'],     desc:'You spent years aboard a ship. Tough, practical, and good in a crisis.' },
+  Soldier:       { skills:['athletics','intimidation'],   desc:'A military veteran trained in tactics, weapons, and following (or giving) orders.' },
+  Urchin:        { skills:['sleight_of_hand','stealth'],  desc:'You grew up on the streets, surviving by your wits and quick hands.' },
+};
+
+// Exactly 2 skill proficiencies auto-granted by each class (PHB 5e iconic picks).
+const CLASS_SKILL_GRANTS = {
+  Barbarian: ['athletics',   'intimidation'],
+  Bard:      ['persuasion',  'performance'],
+  Cleric:    ['insight',     'religion'],
+  Druid:     ['nature',      'perception'],
+  Fighter:   ['athletics',   'perception'],
+  Monk:      ['acrobatics',  'stealth'],
+  Paladin:   ['persuasion',  'religion'],
+  Ranger:    ['perception',  'survival'],
+  Rogue:     ['stealth',     'deception'],
+  Sorcerer:  ['arcana',      'persuasion'],
+  Warlock:   ['arcana',      'deception'],
+  Wizard:    ['arcana',      'history'],
+};
+const FREE_SKILL_LIMIT = 2;
+
+const SKILL_MAP = {
+  acrobatics:'dexterity', animal_handling:'wisdom', arcana:'intelligence',
+  athletics:'strength', deception:'charisma', history:'intelligence',
+  insight:'wisdom', intimidation:'charisma', investigation:'intelligence',
+  medicine:'wisdom', nature:'intelligence', perception:'wisdom',
+  performance:'charisma', persuasion:'charisma', religion:'intelligence',
+  sleight_of_hand:'dexterity', stealth:'dexterity', survival:'wisdom'
+};
+
+const SKILL_DISPLAY = {
+  acrobatics:'Acrobatics', animal_handling:'Animal Handling', arcana:'Arcana',
+  athletics:'Athletics', deception:'Deception', history:'History',
+  insight:'Insight', intimidation:'Intimidation', investigation:'Investigation',
+  medicine:'Medicine', nature:'Nature', perception:'Perception',
+  performance:'Performance', persuasion:'Persuasion', religion:'Religion',
+  sleight_of_hand:'Sleight of Hand', stealth:'Stealth', survival:'Survival'
+};
+
+const ABILITIES = ['strength','dexterity','constitution','intelligence','wisdom','charisma'];
+const ABILITY_ABBR = { strength:'STR', dexterity:'DEX', constitution:'CON', intelligence:'INT', wisdom:'WIS', charisma:'CHA' };
+const ABILITY_DESC = {
+  strength:'Melee attacks, carrying capacity, athletics',
+  dexterity:'Ranged attacks, AC (some armor), stealth',
+  constitution:'HP total, concentration spells',
+  intelligence:'Arcane knowledge, investigation, wizard spells',
+  wisdom:'Perception, insight, cleric/druid spells',
+  charisma:'Social skills, warlock/bard/sorcerer spells'
+};
+
+const CLASS_FEATURES = {
+  Barbarian:  [{name:'Rage', desc:'2× per long rest. +2 damage, resist bludgeoning/slashing/piercing, advantage on STR checks.'},{name:'Unarmored Defense', desc:'When not wearing armor: AC = 10 + DEX mod + CON mod.'}],
+  Bard:       [{name:'Spellcasting', desc:'Use Charisma for spell attacks. Spell save DC = 8 + Prof + CHA mod.'},{name:'Bardic Inspiration', desc:'Bonus action: give an ally a d6 inspiration die to add to one roll.'}],
+  Cleric:     [{name:'Spellcasting', desc:'Use Wisdom for spell attacks. Spell save DC = 8 + Prof + WIS mod.'},{name:'Divine Domain', desc:'Choose a domain (Life, War, Knowledge, etc.) that grants bonus spells and features.'}],
+  Druid:      [{name:'Druidic', desc:'Secret druidic language. You can leave messages only other druids can read.'},{name:'Spellcasting', desc:'Use Wisdom for spell attacks. Spell save DC = 8 + Prof + WIS mod.'}],
+  Fighter:    [{name:'Fighting Style', desc:'Choose one: Archery (+2 ranged attacks), Defense (+1 AC), Dueling (+2 damage one-handed), Great Weapon (reroll 1s/2s), Protection (impose disadvantage on adjacent ally).'},{name:'Second Wind', desc:'Bonus action: regain 1d10 + Fighter level HP. Recharges on short rest.'}],
+  Monk:       [{name:'Unarmored Defense', desc:'Without armor: AC = 10 + DEX mod + WIS mod.'},{name:'Martial Arts', desc:'Unarmed strikes deal 1d4. Use DEX or STR. Bonus action unarmed strike after attack.'}],
+  Paladin:    [{name:'Divine Sense', desc:'Bonus action: detect celestials, fiends, and undead within 60 ft. (1 + CHA mod uses per day).'},{name:'Lay on Hands', desc:'Touch to heal up to 5 × Paladin level HP (pool per long rest). Or 5 HP to cure disease/poison.'}],
+  Ranger:     [{name:'Favored Enemy', desc:'Choose a creature type: advantage on Survival to track them, advantage on Intelligence to recall facts.'},{name:'Natural Explorer', desc:'Choose a terrain. In that terrain: doubled proficiency on INT/WIS checks, never get lost, better foraging.'}],
+  Rogue:      [{name:'Expertise', desc:'Double proficiency bonus on 2 chosen skills.'},{name:"Sneak Attack", desc:'1d6 extra damage when you have advantage or an ally is adjacent to target.'},{name:"Thieves' Cant", desc:'Secret language of criminals. Can pass hidden messages.'}],
+  Sorcerer:   [{name:'Spellcasting', desc:'Use Charisma for spell attacks. Spell save DC = 8 + Prof + CHA mod.'},{name:'Sorcerous Origin', desc:'Choose a magical bloodline (Draconic, Wild Magic, etc.) for extra features.'}],
+  Warlock:    [{name:'Otherworldly Patron', desc:'You have made a pact with a powerful being (Archfey, Fiend, Great Old One, etc.) who grants you power.'},{name:'Pact Magic', desc:'Spell slots recharge on SHORT rest (not just long rest). At level 1: 1 slot, spell level 1.'},{name:'Spellcasting', desc:'Use Charisma for spell attacks. Spell save DC = 8 + Prof + CHA mod.'}],
+  Wizard:     [{name:'Spellcasting', desc:'Use Intelligence for spell attacks. Spell save DC = 8 + Prof + INT mod.'},{name:'Arcane Recovery', desc:'Once per day during short rest: recover spell slots totaling up to half Wizard level (rounded up).'}],
+};
+
+const HIT_DICE = { Barbarian:12, Bard:8, Cleric:8, Druid:8, Fighter:10, Monk:8, Paladin:10, Ranger:10, Rogue:8, Sorcerer:6, Warlock:8, Wizard:6 };
+
+const SA_VALUES = [15,14,13,12,10,8];
+const PB_COSTS = {8:0,9:1,10:2,11:3,12:4,13:5,14:7,15:9};
+
+// ════════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════════
+let currentMethod = 'standard';
+let saAssignments = { strength:'', dexterity:'', constitution:'', intelligence:'', wisdom:'', charisma:'' };
+let pbScores = { strength:10, dexterity:10, constitution:10, intelligence:10, wisdom:10, charisma:10 };
+let manualScores = { strength:10, dexterity:10, constitution:10, intelligence:10, wisdom:10, charisma:10 };
+let skillProf   = new Set();
+let bgSkills    = new Set();
+let classSkills = new Set();
+let freeSkills  = new Set();
+let weaponId = 0;
+let itemId = 0;
+let cantripId = 0;
+let spellId = {};
+let featureId = 0;
+let spellLevelIds = [];
+
+// ════════════════════════════════════════════════════════════════
+//  UTILITY
+// ════════════════════════════════════════════════════════════════
+function getMod(score){ return Math.floor((score-10)/2); }
+function fmtMod(m){ return m>=0?`+${m}`:`${m}`; }
+function getProfBonus(level){ return Math.ceil(parseInt(level)/4)+1; }
+function getLevel(){ return parseInt(document.getElementById('charLevel').value)||1; }
+function getProf(){ return getProfBonus(getLevel()); }
+
+function getAbilityScore(ab){
+  if(currentMethod==='standard'){ const v=saAssignments[ab]; return v===''?10:parseInt(v); }
+  if(currentMethod==='pointbuy'){ return pbScores[ab]||10; }
+  return manualScores[ab]||10;
+}
+
+function getAllScores(){
+  const o={};
+  ABILITIES.forEach(a=>o[a]=getAbilityScore(a));
+  return o;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ABILITY SCORE GRIDS
+// ════════════════════════════════════════════════════════════════
+function buildAbilityGrids(){
+  buildSAGrid();
+  buildPBGrid();
+  buildManualGrid();
+}
+
+function buildSAGrid(){
+  const el=document.getElementById('abilitiesGridSA');
+  el.innerHTML='';
+  ABILITIES.forEach(ab=>{
+    const card=document.createElement('div');
+    card.className='ability-card';
+    card.id=`sa-card-${ab}`;
+    const usedVals=Object.values(saAssignments).filter(v=>v!==''&&v!==saAssignments[ab]);
+    const opts=SA_VALUES.map(v=>{
+      const disabled=usedVals.includes(String(v))?'disabled':'';
+      const sel=saAssignments[ab]===String(v)?'selected':'';
+      return `<option value="${v}" ${disabled} ${sel}>${v}</option>`;
+    }).join('');
+    card.innerHTML=`
+      <div class="ability-name">${ABILITY_ABBR[ab]}</div>
+      <select onchange="onSAChange('${ab}',this.value)">
+        <option value="">—</option>${opts}
+      </select>
+      <div class="modifier" id="samod-${ab}">${saAssignments[ab]!==''?fmtMod(getMod(parseInt(saAssignments[ab]))):'—'}</div>
+      <div class="ability-label">${ABILITY_DESC[ab]}</div>`;
+    el.appendChild(card);
+  });
+}
+
+function onSAChange(ab,val){
+  saAssignments[ab]=val;
+  buildSAGrid();
+  updateSAChips();
+  updateAllCalculations();
+}
+
+function updateSAChips(){
+  const used=Object.values(saAssignments).filter(v=>v!=='');
+  document.querySelectorAll('#saPool .sa-chip').forEach(chip=>{
+    chip.classList.toggle('used',used.includes(chip.dataset.val));
+  });
+}
+
+function buildPBGrid(){
+  const el=document.getElementById('abilitiesGridPB');
+  el.innerHTML='';
+  ABILITIES.forEach(ab=>{
+    const card=document.createElement('div');
+    card.className='ability-card';
+    const score=pbScores[ab];
+    const mod=getMod(score);
+    card.innerHTML=`
+      <div class="ability-name">${ABILITY_ABBR[ab]}</div>
+      <div class="pb-controls">
+        <button class="pb-btn" onclick="pbAdjust('${ab}',-1)">−</button>
+        <span class="pb-score-display" id="pbscore-${ab}">${score}</span>
+        <button class="pb-btn" onclick="pbAdjust('${ab}',1)">+</button>
+      </div>
+      <div class="modifier" id="pbmod-${ab}">${fmtMod(mod)}</div>
+      <div class="ability-label">${ABILITY_DESC[ab]}</div>`;
+    el.appendChild(card);
+  });
+  updatePBDisplay();
+}
+
+function pbAdjust(ab,delta){
+  const newVal=pbScores[ab]+delta;
+  if(newVal<8||newVal>15) return;
+  const newCost=pbPointsUsed()+PB_COSTS[newVal]-(PB_COSTS[pbScores[ab]]||0);
+  if(newCost>27) return;
+  pbScores[ab]=newVal;
+  document.getElementById(`pbscore-${ab}`).textContent=newVal;
+  document.getElementById(`pbmod-${ab}`).textContent=fmtMod(getMod(newVal));
+  updatePBDisplay();
+  updateAllCalculations();
+}
+
+function pbPointsUsed(){
+  return ABILITIES.reduce((s,a)=>s+(PB_COSTS[pbScores[a]]||0),0);
+}
+
+function updatePBDisplay(){
+  const used=pbPointsUsed();
+  const rem=27-used;
+  const el=document.getElementById('pbDisplay');
+  el.querySelector('#pbRemaining').textContent=rem;
+  el.classList.toggle('warn',rem<0);
+}
+
+function buildManualGrid(){
+  const el=document.getElementById('abilitiesGridManual');
+  el.innerHTML='';
+  ABILITIES.forEach(ab=>{
+    const card=document.createElement('div');
+    card.className='ability-card';
+    card.innerHTML=`
+      <div class="ability-name">${ABILITY_ABBR[ab]}</div>
+      <input type="number" id="manual-${ab}" value="${manualScores[ab]}" min="1" max="30"
+        oninput="onManualChange('${ab}',this.value)">
+      <div class="modifier" id="manmod-${ab}">${fmtMod(getMod(manualScores[ab]))}</div>
+      <div class="ability-label">${ABILITY_DESC[ab]}</div>`;
+    el.appendChild(card);
+  });
+}
+
+function onManualChange(ab,val){
+  manualScores[ab]=parseInt(val)||10;
+  document.getElementById(`manmod-${ab}`).textContent=fmtMod(getMod(manualScores[ab]));
+  updateAllCalculations();
+}
+
+function setMethod(method){
+  currentMethod=method;
+  document.querySelectorAll('.method-tab').forEach((t,i)=>{
+    t.classList.toggle('active',['standard','pointbuy','manual'][i]===method);
+  });
+  document.querySelectorAll('.method-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`method-${method==='pointbuy'?'pointbuy':method}`).classList.add('active');
+  updateAllCalculations();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  SKILLS & SAVES
+// ════════════════════════════════════════════════════════════════
+function buildSkillsGrid(){
+  const grid=document.getElementById('skillsGrid');
+  grid.innerHTML='';
+  Object.keys(SKILL_MAP).forEach(sk=>{
+    const row=document.createElement('div');
+    row.id=`skill-row-${sk}`;
+    const ab=SKILL_MAP[sk];
+    const mod=getMod(getAbilityScore(ab))+(skillProf.has(sk)?getProf():0);
+    const isCls=classSkills.has(sk), isBg=bgSkills.has(sk), both=isCls&&isBg;
+    const locked=isCls||isBg;
+
+    if(locked){
+      row.className='skill-row locked '+(both?'both-granted':isCls?'class-granted':'bg-granted');
+      const icon=isCls?'⚔':'◆';
+      const tip=both?'Class + Background':isCls?'Class proficiency':'Background proficiency';
+      row.innerHTML=`
+        <span class="prof-dot" title="${tip}">${icon}</span>
+        <span class="skill-ability-tag">${ABILITY_ABBR[ab]}</span>
+        <span class="skill-name">${SKILL_DISPLAY[sk]}</span>
+        <span class="skill-mod" id="skillmod-${sk}">${fmtMod(mod)}</span>`;
+    } else {
+      const isFree=freeSkills.has(sk);
+      const atLimit=freeSkills.size>=FREE_SKILL_LIMIT;
+      row.className='skill-row'+(isFree?' proficient':'');
+      row.innerHTML=`
+        <input type="checkbox" id="skill-${sk}" ${isFree?'checked':''} ${(!isFree&&atLimit)?'disabled':''} onchange="toggleFreeSkill('${sk}')">
+        <span class="skill-ability-tag">${ABILITY_ABBR[ab]}</span>
+        <span class="skill-name">${SKILL_DISPLAY[sk]}</span>
+        <span class="skill-mod" id="skillmod-${sk}">${fmtMod(mod)}</span>`;
+    }
+    grid.appendChild(row);
+  });
+  updateFreeSkillCounter();
+}
+
+function toggleFreeSkill(sk){
+  const cb=document.getElementById(`skill-${sk}`);
+  if(!cb) return;
+  if(cb.checked){
+    if(freeSkills.size>=FREE_SKILL_LIMIT){ cb.checked=false; return; }
+    freeSkills.add(sk); skillProf.add(sk);
+  } else {
+    freeSkills.delete(sk);
+    if(!classSkills.has(sk)&&!bgSkills.has(sk)) skillProf.delete(sk);
+  }
+  // Refresh disabled state of all free checkboxes & modifiers
+  const atLimit=freeSkills.size>=FREE_SKILL_LIMIT;
+  Object.keys(SKILL_MAP).forEach(s=>{
+    if(classSkills.has(s)||bgSkills.has(s)) return;
+    const c=document.getElementById(`skill-${s}`);
+    const r=document.getElementById(`skill-row-${s}`);
+    if(c) c.disabled=(!freeSkills.has(s)&&atLimit);
+    if(r) r.classList.toggle('proficient', freeSkills.has(s));
+  });
+  updateSkillModifiers();
+  updateFreeSkillCounter();
+}
+
+function updateFreeSkillCounter(){
+  const el=document.getElementById('freeSkillCounter');
+  if(!el) return;
+  const n=freeSkills.size;
+  el.textContent=`${n} / ${FREE_SKILL_LIMIT} bonus skills chosen`;
+  el.style.color=n>=FREE_SKILL_LIMIT?'var(--gold-light)':'var(--text-muted)';
+}
+
+// Legacy stub — kept so any remaining callers don't error
+function refreshSkillStyles(){ buildSkillsGrid(); }
+
+function updateSkillModifiers(){
+  const prof=getProf();
+  Object.keys(SKILL_MAP).forEach(sk=>{
+    const el=document.getElementById(`skillmod-${sk}`);
+    if(!el) return;
+    const mod=getMod(getAbilityScore(SKILL_MAP[sk]))+(skillProf.has(sk)?prof:0);
+    el.textContent=fmtMod(mod);
+  });
+}
+
+function getClassSaves(){
+  return new Set((CLASSES[document.getElementById('charClass').value]||{saves:[]}).saves);
+}
+
+function buildSavesGrid(){
+  const grid=document.getElementById('savesGrid');
+  grid.innerHTML='';
+  const lbl=document.createElement('div');
+  lbl.className='saves-label';
+  lbl.textContent='Saving Throws';
+  grid.appendChild(lbl);
+  const classSaves=getClassSaves();
+  ABILITIES.forEach(ab=>{
+    const prof=classSaves.has(ab);
+    const mod=getMod(getAbilityScore(ab))+(prof?getProf():0);
+    const row=document.createElement('div');
+    row.className='skill-row'+(prof?' class-granted':'');
+    row.id=`save-row-${ab}`;
+    row.innerHTML=`
+      <span class="prof-dot">${prof?'⚔':'·'}</span>
+      <span class="skill-ability-tag">${ABILITY_ABBR[ab]}</span>
+      <span class="skill-name">${ab.charAt(0).toUpperCase()+ab.slice(1)}</span>
+      <span class="skill-mod" id="savemod-${ab}">${fmtMod(mod)}</span>`;
+    grid.appendChild(row);
+  });
+}
+
+function updateSaveModifiers(){
+  const prof=getProf();
+  const classSaves=getClassSaves();
+  ABILITIES.forEach(ab=>{
+    const el=document.getElementById(`savemod-${ab}`);
+    if(!el) return;
+    const isProficient=classSaves.has(ab);
+    const mod=getMod(getAbilityScore(ab))+(isProficient?prof:0);
+    el.textContent=fmtMod(mod);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  COMBAT STATS
+// ════════════════════════════════════════════════════════════════
+function updateCombatStats(){
+  const level=getLevel();
+  const prof=getProfBonus(level);
+  document.getElementById('combatProf').value=prof;
+  document.getElementById('profBonusHint').textContent=prof;
+
+  const cls=document.getElementById('charClass').value;
+  const hd=HIT_DICE[cls]||8;
+  const conMod=getMod(getAbilityScore('constitution'));
+  const hp=hd+conMod;
+  document.getElementById('combatHPMax').value=Math.max(1,hp);
+  document.getElementById('combatHPCurrent').value=Math.max(1,hp);
+  document.getElementById('hpNote').textContent=`d${hd} hit die + CON mod (${fmtMod(conMod)})`;
+
+  const dexMod=getMod(getAbilityScore('dexterity'));
+  document.getElementById('combatInit').value=dexMod;
+
+  updateAC();
+}
+
+function updateAC(){
+  const armorVal=document.getElementById('armorSelect').value;
+  const dexMod=getMod(getAbilityScore('dexterity'));
+  const parts=armorVal.split('|');
+  const formula=parts[1]||'10+dex';
+  let ac=10;
+  if(formula==='10+dex') ac=10+dexMod;
+  else if(formula==='10+dex+shield') ac=12+dexMod;
+  else if(formula==='11+dex') ac=11+dexMod;
+  else if(formula==='12+dex') ac=12+dexMod;
+  else if(formula==='11+dex+shield') ac=13+dexMod;
+  else if(formula==='12+dex2') ac=12+Math.min(dexMod,2);
+  else if(formula==='13+dex2') ac=13+Math.min(dexMod,2);
+  else if(formula==='14+dex2') ac=14+Math.min(dexMod,2);
+  else if(formula==='15+dex2') ac=15+Math.min(dexMod,2);
+  else ac=parseInt(formula)||10;
+  document.getElementById('combatAC').value=ac;
+  document.getElementById('acNote').textContent=`${document.getElementById('armorSelect').options[document.getElementById('armorSelect').selectedIndex].text.split('(')[0].trim()}`;
+}
+
+function updateCurrentHP(){
+  document.getElementById('combatHPCurrent').value=document.getElementById('combatHPMax').value;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  SPELLCASTING
+// ════════════════════════════════════════════════════════════════
+function updateSpellStats(){
+  const ab=document.getElementById('spellAbility').value;
+  const mod=getMod(getAbilityScore(ab));
+  const prof=getProf();
+  document.getElementById('spellSaveDC').value=8+prof+mod;
+  document.getElementById('spellAtkBonus').value=prof+mod;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CARRY WEIGHT
+// ════════════════════════════════════════════════════════════════
+function updateCarryWeight(){
+  let total=0;
+  document.querySelectorAll('[id^="weapon-"]').forEach(row=>{
+    const id=row.id.replace('weapon-','');
+    total+=parseFloat(document.getElementById(`wweight-${id}`)?.value)||0;
+  });
+  document.querySelectorAll('[id^="item-"]').forEach(row=>{
+    const id=row.id.replace('item-','');
+    const qty=parseFloat(document.getElementById(`iqty-${id}`)?.value)||0;
+    const wt=parseFloat(document.getElementById(`iweight-${id}`)?.value)||0;
+    total+=qty*wt;
+  });
+  const str=getAbilityScore('strength');
+  const maxCap=str*15, enc1=str*5, enc2=str*10;
+  const pct=maxCap>0?Math.min(total/maxCap*100,100):0;
+
+  // Update bar
+  const fill=document.getElementById('carryBarFill');
+  if(fill){
+    fill.style.width=pct+'%';
+    if(total>enc2)      fill.style.background='#c0392b';
+    else if(total>enc1) fill.style.background='#c9a84c';
+    else                fill.style.background='#4a9e6b';
+  }
+
+  // Update threshold markers
+  const t1=document.getElementById('carryThresh1');
+  const t2=document.getElementById('carryThresh2');
+  if(t1) t1.style.left=(enc1/maxCap*100)+'%';
+  if(t2) t2.style.left=(enc2/maxCap*100)+'%';
+
+  // Update ticks
+  const te=document.getElementById('carryTickEnc');
+  const th=document.getElementById('carryTickHeavy');
+  const tm=document.getElementById('carryTickMax');
+  if(te) te.textContent=`Enc (${enc1} lb)`;
+  if(th) th.textContent=`Heavy (${enc2} lb)`;
+  if(tm) tm.textContent=`Max (${maxCap} lb)`;
+
+  // Update label
+  const label=document.getElementById('carryWeightValue');
+  if(label) label.textContent=`${total.toFixed(1)} / ${maxCap} lbs`;
+
+  // Update note
+  const note=document.getElementById('carryNote');
+  if(note){
+    if(total>maxCap)      note.textContent='⛔ Over capacity — movement severely restricted.';
+    else if(total>enc2)   note.textContent='🔴 Heavily Encumbered — speed −20 ft, disadvantage on STR/DEX/CON checks and saves.';
+    else if(total>enc1)   note.textContent='🟡 Encumbered — speed −10 ft.';
+    else                  note.textContent='✅ Carrying within normal limits.';
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ALL CALCULATIONS (triggered on most changes)
+// ════════════════════════════════════════════════════════════════
+function updateAllCalculations(){
+  updateSkillModifiers();
+  updateSaveModifiers();
+  updateCombatStats();
+  updateSpellStats();
+  updateCarryWeight();
+  updateStatus();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CLASS CHANGE
+// ════════════════════════════════════════════════════════════════
+function applyClassSkills(cls){
+  // Remove old class skills from skillProf (preserve bg-granted and free skills)
+  classSkills.forEach(sk=>{ if(!bgSkills.has(sk)&&!freeSkills.has(sk)) skillProf.delete(sk); });
+  classSkills.clear();
+  // Add new class skills
+  (CLASS_SKILL_GRANTS[cls]||[]).forEach(sk=>{ classSkills.add(sk); skillProf.add(sk); });
+  // Clear free choices when class changes — locked set changed, free picks should be re-evaluated
+  freeSkills.forEach(sk=>{ if(!classSkills.has(sk)&&!bgSkills.has(sk)) skillProf.delete(sk); });
+  freeSkills.clear();
+  buildSkillsGrid();
+  updateSkillModifiers();
+}
+
+function onClassChange(){
+  const cls=document.getElementById('charClass').value;
+  const data=CLASSES[cls];
+  const descEl=document.getElementById('classDesc');
+  if(data){
+    descEl.textContent=data.desc;
+    descEl.style.display='block';
+    if(data.spellAbility){
+      document.getElementById('spellAbility').value=data.spellAbility;
+      document.getElementById('spellSection').style.display='';
+    } else {
+      document.getElementById('spellSection').style.display='none';
+    }
+    // Load default features
+    loadDefaultFeatures(cls);
+    // Refresh spell pickers for new class
+    buildSpellPickerOptions('cantrip');
+    buildSpellPickerOptions('level1');
+  } else {
+    descEl.style.display='none';
+    document.getElementById('spellSection').style.display='';
+  }
+  // Apply class skill proficiencies automatically
+  applyClassSkills(cls);
+  updateAllCalculations();
+  buildSavesGrid();
+  refreshConditionsGrid();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  BACKGROUND CHANGE
+// ════════════════════════════════════════════════════════════════
+function onBackgroundChange(){
+  const bg=document.getElementById('charBackground').value;
+  const data=BACKGROUNDS[bg];
+  const descEl=document.getElementById('bgDesc');
+  if(data){
+    descEl.textContent=`Grants proficiency in: ${data.skills.map(s=>SKILL_DISPLAY[s]).join(' & ')}. ${data.desc}`;
+    descEl.style.display='block';
+    // Remove old bg skills from skillProf (unless also class/free)
+    bgSkills.forEach(sk=>{ if(!classSkills.has(sk)&&!freeSkills.has(sk)) skillProf.delete(sk); });
+    bgSkills.clear();
+    // Grant new bg skills
+    data.skills.forEach(sk=>{ bgSkills.add(sk); skillProf.add(sk); });
+    buildSkillsGrid();
+    updateSkillModifiers();
+  } else {
+    descEl.style.display='none';
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  FEATURES
+// ════════════════════════════════════════════════════════════════
+function loadDefaultFeatures(cls){
+  document.getElementById('featuresList').innerHTML='';
+  featureId=0;
+  const features=CLASS_FEATURES[cls]||[];
+  features.forEach(f=>addFeature(f.name, f.desc));
+}
+
+function addFeature(name='', desc=''){
+  const id=featureId++;
+  const row=document.createElement('div');
+  row.className='feature-row';
+  row.id=`feature-${id}`;
+  row.innerHTML=`
+    <input type="text" placeholder="Feature name" value="${name.replace(/"/g,'&quot;')}" style="font-weight:bold">
+    <textarea placeholder="Description of what this feature does..." rows="2" style="resize:vertical">${desc}</textarea>
+    <button class="btn btn-remove" onclick="document.getElementById('feature-${id}').remove()">✕</button>`;
+  document.getElementById('featuresList').appendChild(row);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  WEAPONS
+// ════════════════════════════════════════════════════════════════
+const WEAPON_PRESETS={
+  // Simple Melee                                                                                               wt = PHB weight in lbs
+  'Club':           {type:'Melee',   damage:'1d4',  dmgType:'bludgeoning', props:['Light'],                    tier:'simple',  weight:2,  desc:'A basic wooden club. Cheap and found everywhere.'},
+  'Dagger':         {type:'Melee',   damage:'1d4',  dmgType:'piercing',    props:['Light','Finesse','Thrown'],  tier:'simple',  weight:1,  desc:'Small and concealable. Can use DEX for attacks. Throwable (20/60 ft).'},
+  'Greatclub':      {type:'Melee',   damage:'1d8',  dmgType:'bludgeoning', props:['Two-Handed'],               tier:'simple',  weight:10, desc:'A massive wooden club. Hits hard but needs both hands.'},
+  'Handaxe':        {type:'Melee',   damage:'1d6',  dmgType:'slashing',    props:['Light','Thrown'],           tier:'simple',  weight:2,  desc:'A small axe you can throw (20/60 ft). Good backup weapon.'},
+  'Javelin':        {type:'Thrown',  damage:'1d6',  dmgType:'piercing',    props:['Thrown'],                   tier:'simple',  weight:2,  desc:'A throwable spear (30/120 ft). Decent ranged option for STR builds.'},
+  'Light Hammer':   {type:'Thrown',  damage:'1d4',  dmgType:'bludgeoning', props:['Light','Thrown'],           tier:'simple',  weight:2,  desc:'Small hammer you can throw (20/60 ft). Cleric favourite.'},
+  'Mace':           {type:'Melee',   damage:'1d6',  dmgType:'bludgeoning', props:[],                           tier:'simple',  weight:4,  desc:'A reliable one-handed weapon. No special rules — great for beginners.'},
+  'Quarterstaff':   {type:'Melee',   damage:'1d6',  dmgType:'bludgeoning', props:['Versatile (1d8)'],          tier:'simple',  weight:4,  desc:'A walking staff. Use one-handed (1d6) or two-handed (1d8).'},
+  'Sickle':         {type:'Melee',   damage:'1d4',  dmgType:'slashing',    props:['Light'],                    tier:'simple',  weight:2,  desc:'A curved blade. Light, so great for two-weapon fighting.'},
+  'Spear':          {type:'Thrown',  damage:'1d6',  dmgType:'piercing',    props:['Thrown','Versatile (1d8)'], tier:'simple',  weight:3,  desc:'Throwable (20/60 ft) and versatile. One of the best simple weapons.'},
+  // Simple Ranged
+  'Light Crossbow': {type:'Ranged',  damage:'1d8',  dmgType:'piercing',    props:['Two-Handed','Ammo'],        tier:'simple',  weight:5,  desc:'Easy to use, decent damage. Needs bolts. Reload after each shot.'},
+  'Shortbow':       {type:'Ranged',  damage:'1d6',  dmgType:'piercing',    props:['Two-Handed','Ammo'],        tier:'simple',  weight:2,  desc:'Quick and light. 80/320 ft range. Great for mobile archers.'},
+  'Hand Crossbow':  {type:'Ranged',  damage:'1d6',  dmgType:'piercing',    props:['Light','Ammo'],             tier:'simple',  weight:3,  desc:'One-handed crossbow (30/120 ft). Can dual-wield with practice.'},
+  'Dart':           {type:'Thrown',  damage:'1d4',  dmgType:'piercing',    props:['Finesse','Thrown'],         tier:'simple',  weight:0.25,desc:'Tiny thrown dart (20/60 ft). Finesse — use DEX. Very cheap.'},
+  'Sling':          {type:'Ranged',  damage:'1d4',  dmgType:'bludgeoning', props:['Ammo'],                    tier:'simple',  weight:0,  desc:'A cloth sling that fires stones. Free ammo found anywhere. 30/120 ft.'},
+  // Martial Melee
+  'Battleaxe':      {type:'Melee',   damage:'1d8',  dmgType:'slashing',    props:['Versatile (1d10)'],         tier:'martial', weight:4,  desc:'Solid one-handed axe. Two-hand it for 1d10. A Fighter staple.'},
+  'Flail':          {type:'Melee',   damage:'1d8',  dmgType:'bludgeoning', props:[],                           tier:'martial', weight:2,  desc:'Spiked ball on a chain. Reliably bypasses shield bonuses.'},
+  'Glaive':         {type:'Melee',   damage:'1d10', dmgType:'slashing',    props:['Reach','Two-Handed','Heavy'],tier:'martial',weight:6,  desc:'Polearm with 10 ft reach — attack enemies before they reach you.'},
+  'Greataxe':       {type:'Melee',   damage:'1d12', dmgType:'slashing',    props:['Two-Handed','Heavy'],        tier:'martial', weight:7,  desc:'Highest single-die melee damage. Barbarians love this.'},
+  'Greatsword':     {type:'Melee',   damage:'2d6',  dmgType:'slashing',    props:['Two-Handed','Heavy'],        tier:'martial', weight:6,  desc:'The most consistent two-handed damage (2d6 averages higher than 1d12).'},
+  'Longsword':      {type:'Melee',   damage:'1d8',  dmgType:'slashing',    props:['Versatile (1d10)'],          tier:'martial', weight:3,  desc:'The classic hero sword. One or two-handed. Extremely versatile.'},
+  'Maul':           {type:'Melee',   damage:'2d6',  dmgType:'bludgeoning', props:['Two-Handed','Heavy'],        tier:'martial', weight:10, desc:'A massive war hammer. Same damage as greatsword but bludgeoning.'},
+  'Morningstar':    {type:'Melee',   damage:'1d8',  dmgType:'piercing',    props:[],                            tier:'martial', weight:4,  desc:'A spiked mace. Piercing damage, no special rules.'},
+  'Rapier':         {type:'Melee',   damage:'1d8',  dmgType:'piercing',    props:['Finesse'],                   tier:'martial', weight:2,  desc:'Best one-handed finesse weapon. Use STR or DEX. Rogues & Bards love it.'},
+  'Scimitar':       {type:'Melee',   damage:'1d6',  dmgType:'slashing',    props:['Light','Finesse'],           tier:'martial', weight:3,  desc:'Light finesse blade. Great for two-weapon fighting with DEX.'},
+  'Shortsword':     {type:'Melee',   damage:'1d6',  dmgType:'piercing',    props:['Light','Finesse'],           tier:'martial', weight:2,  desc:'Light and finesse. A Rogue favourite for Sneak Attack.'},
+  'Trident':        {type:'Thrown',  damage:'1d6',  dmgType:'piercing',    props:['Thrown','Versatile (1d8)'], tier:'martial', weight:4,  desc:'Throwable (20/60 ft) and versatile. Aquatic feel.'},
+  'War Pick':       {type:'Melee',   damage:'1d8',  dmgType:'piercing',    props:[],                            tier:'martial', weight:2,  desc:'A pick-shaped weapon. Piercing damage cuts through heavy armor.'},
+  'Warhammer':      {type:'Melee',   damage:'1d8',  dmgType:'bludgeoning', props:['Versatile (1d10)'],          tier:'martial', weight:2,  desc:'Heavy hammer. Versatile (1d10 two-handed). A Paladin classic.'},
+  'Whip':           {type:'Melee',   damage:'1d4',  dmgType:'slashing',    props:['Reach','Finesse'],           tier:'martial', weight:3,  desc:'10 ft reach finesse weapon. Great for trip/grapple combos.'},
+  // Martial Ranged
+  'Longbow':        {type:'Ranged',  damage:'1d8',  dmgType:'piercing',    props:['Two-Handed','Heavy','Ammo'], tier:'martial', weight:2,  desc:'The best ranged weapon. 150/600 ft range! Ranger and Fighter essential.'},
+  'Heavy Crossbow': {type:'Ranged',  damage:'1d10', dmgType:'piercing',    props:['Two-Handed','Heavy','Ammo'], tier:'martial', weight:18, desc:'Highest crossbow damage (1d10). 100/400 ft range. Reload each shot.'},
+  'Blowgun':        {type:'Ranged',  damage:'1',    dmgType:'piercing',    props:['Ammo'],                      tier:'martial', weight:1,  desc:'Silent dart gun (25/100 ft). Low damage but can deliver poisons.'},
+  'Net':            {type:'Ranged',  damage:'—',    dmgType:'—',           props:['Thrown','Special'],          tier:'martial', weight:3,  desc:'Restrain a Large or smaller creature. No damage, but very useful.'},
+  // Arcane / Special
+  'Arcane Focus Staff': {type:'Melee', damage:'1d6', dmgType:'bludgeoning', props:['Versatile (1d8)','Focus'],  tier:'arcane',  weight:4,  desc:'A magical staff that doubles as a spellcasting focus. Great for casters.'},
+  'Wand':               {type:'Melee', damage:'—',   dmgType:'—',           props:['Focus'],                    tier:'arcane',  weight:1,  desc:'A slender spellcasting focus. No melee damage on its own.'},
+  'Eldritch Blade':     {type:'Melee', damage:'1d8', dmgType:'slashing',    props:['Pact Weapon','CHA-based'],  tier:'arcane',  weight:3,  desc:'Warlock Pact of the Blade weapon. Uses Charisma for attack & damage.'},
+};
+
+function previewWeaponPick(){
+  const sel=document.getElementById('weaponPickerSelect');
+  const name=sel.value;
+  const preview=document.getElementById('weaponPreview');
+  if(!name){ preview.style.display='none'; return; }
+  const w=WEAPON_PRESETS[name];
+  if(!w){ preview.style.display='none'; return; }
+  const tierColor={ simple:'#6abf80', martial:'#c8a060', arcane:'#9080d0' };
+  const tierLabel={ simple:'Simple Weapon', martial:'Martial Weapon', arcane:'Arcane / Special' };
+  const tagHtml=w.props.map(p=>`<span class="wp-tag ${p==='Two-Handed'||p==='Heavy'?'warn':''}">${p}</span>`).join('');
+  preview.style.display='block';
+  preview.innerHTML=`
+    <strong>${name}</strong>
+    <span style="margin-left:8px;font-size:0.72rem;color:${tierColor[w.tier]};background:#0a140a;border:1px solid ${tierColor[w.tier]}40;border-radius:3px;padding:1px 7px">${tierLabel[w.tier]}</span>
+    <br>
+    <span style="color:var(--text-muted)">${w.desc}</span>
+    <div class="wp-tags" style="margin-top:6px">
+      <span class="wp-tag highlight">⚔ ${w.damage} ${w.dmgType}</span>
+      <span class="wp-tag">${w.type}</span>
+      ${tagHtml}
+    </div>`;
+}
+
+function addWeaponFromPicker(){
+  const sel=document.getElementById('weaponPickerSelect');
+  const name=sel.value;
+  if(!name) return;
+  const w=WEAPON_PRESETS[name];
+  if(!w) return;
+  // Calculate a reasonable attack bonus from current stats
+  const scores=getAllScores();
+  const usesDex=w.props.includes('Finesse')||w.type==='Ranged';
+  const statMod=usesDex?getMod(scores.dexterity):getMod(scores.strength);
+  const bonus=getProf()+statMod;
+  const bonusStr=bonus>=0?`+${bonus}`:`${bonus}`;
+  addWeapon({name, type:w.type, bonus:bonusStr, damage:w.damage==='—'?'—':w.damage+(statMod>=0?`+${statMod}`:`${statMod}`), dmgType:w.dmgType==='—'?'piercing':w.dmgType, weight:w.weight||0});
+  // Reset picker
+  sel.value='';
+  document.getElementById('weaponPreview').style.display='none';
+}
+
+function addWeapon(preset=null){
+  const p=preset||{name:'',type:'Melee',bonus:'+0',damage:'1d6',dmgType:'piercing',weight:0};
+  const id=weaponId++;
+  const typeOpts=['Melee','Ranged','Thrown'].map(t=>`<option value="${t}" ${t===p.type?'selected':''}>${t}</option>`).join('');
+  const dmgOpts=['piercing','slashing','bludgeoning','fire','cold','lightning','acid','poison','necrotic','radiant','force','thunder','psychic'].map(d=>`<option value="${d}" ${d===p.dmgType?'selected':''}>${d}</option>`).join('');
+  const row=document.createElement('div');
+  row.className='weapon-row';
+  row.id=`weapon-${id}`;
+  row.innerHTML=`
+    <input type="text" id="wname-${id}" value="${p.name}" placeholder="Weapon name">
+    <select id="wtype-${id}">${typeOpts}</select>
+    <input type="text" id="wbonus-${id}" value="${p.bonus}" placeholder="+3">
+    <input type="text" id="wdamage-${id}" value="${p.damage}" placeholder="1d6+2">
+    <select id="wdmgtype-${id}">${dmgOpts}</select>
+    <input type="number" id="wweight-${id}" value="${p.weight||0}" min="0" step="0.25" title="Weight in lbs" style="text-align:center" oninput="updateCarryWeight()">
+    <button class="btn btn-remove" onclick="document.getElementById('weapon-${id}').remove();updateCarryWeight()">✕</button>`;
+  document.getElementById('weaponsList').appendChild(row);
+  updateCarryWeight();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  INVENTORY
+// ════════════════════════════════════════════════════════════════
+const DEFAULT_INVENTORY=[
+  {name:'Arcane Focus', qty:1,  weight:2   },
+  {name:'Backpack',     qty:1,  weight:5   },
+  {name:'Bedroll',      qty:1,  weight:7   },
+  {name:'Torch',        qty:5,  weight:1   },
+  {name:'Rations',      qty:5,  weight:2   },
+  {name:'Gold Pieces',  qty:15, weight:0.02},
+];
+
+function addInventoryItem(preset=null){
+  const p=preset||{name:'',qty:1,weight:0};
+  const id=itemId++;
+  const row=document.createElement('div');
+  row.className='item-row';
+  row.id=`item-${id}`;
+  row.innerHTML=`
+    <input type="text" id="iname-${id}" value="${p.name}" placeholder="Item name">
+    <input type="number" id="iqty-${id}" value="${p.qty}" min="0" style="text-align:center" oninput="updateCarryWeight()">
+    <input type="number" id="iweight-${id}" value="${p.weight||0}" min="0" step="0.25" title="Weight per item in lbs" style="text-align:center" oninput="updateCarryWeight()">
+    <button class="btn btn-remove" onclick="document.getElementById('item-${id}').remove();updateCarryWeight()">✕</button>`;
+  document.getElementById('inventoryList').appendChild(row);
+  updateCarryWeight();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  SPELL DATABASE
+// ════════════════════════════════════════════════════════════════
+const SPELL_DB = {
+  cantrips: {
+    // name: { classes, school, desc, range, duration, damage }
+    'Acid Splash':        { classes:['Sorcerer','Wizard'], school:'Conjuration', range:'60 ft', duration:'Instant', damage:'1d6 acid', desc:'Hurl a bubble of acid. Hit one creature or two adjacent creatures for 1d6 acid damage (DEX save to avoid).' },
+    'Blade Ward':         { classes:['Bard','Sorcerer','Warlock','Wizard'], school:'Abjuration', range:'Self', duration:'1 round', damage:'—', desc:'Until end of next turn you have resistance to bludgeoning, piercing, and slashing damage from weapon attacks.' },
+    'Booming Blade':      { classes:['Sorcerer','Warlock','Wizard'], school:'Evocation', range:'5 ft', duration:'1 round', damage:'Weapon + 1d8 thunder', desc:'Make a melee attack. On hit, target is sheathed in booming energy — if it moves before your next turn it takes 1d8 thunder damage.' },
+    'Chill Touch':        { classes:['Sorcerer','Warlock','Wizard'], school:'Necromancy', range:'120 ft', duration:'1 round', damage:'1d8 necrotic', desc:'Create a ghostly hand that deals 1d8 necrotic damage and prevents the target from regaining HP until your next turn.' },
+    'Control Flames':     { classes:['Druid','Sorcerer','Wizard'], school:'Transmutation', range:'60 ft', duration:'Instant/1 hr', damage:'—', desc:'Instantly expand, extinguish, move, or shape a nonmagical flame up to a 5-foot cube.' },
+    'Create Bonfire':     { classes:['Druid','Sorcerer','Warlock','Wizard'], school:'Conjuration', range:'60 ft', duration:'1 min', damage:'1d8 fire', desc:'Create a bonfire in a 5 ft space. Creatures entering or starting their turn in it take 1d8 fire damage (DEX save).' },
+    'Dancing Lights':     { classes:['Bard','Sorcerer','Wizard'], school:'Evocation', range:'120 ft', duration:'1 min', damage:'—', desc:'Create up to 4 glowing lights that float and illuminate a 10-ft radius each. Good for scouting dark areas.' },
+    'Eldritch Blast':     { classes:['Warlock'], school:'Evocation', range:'120 ft', duration:'Instant', damage:'1d10 force', desc:'The quintessential Warlock cantrip. Fire a beam of crackling energy for 1d10 force damage — the most reliable cantrip in the game.' },
+    'Fire Bolt':          { classes:['Sorcerer','Wizard'], school:'Evocation', range:'120 ft', duration:'Instant', damage:'1d10 fire', desc:'Hurl a mote of fire at a target. 1d10 fire damage on hit. Can ignite flammable objects. Best damage cantrip for Sorcerers/Wizards.' },
+    'Friends':            { classes:['Bard','Sorcerer','Warlock','Wizard'], school:'Enchantment', range:'Self', duration:'1 min', damage:'—', desc:'Gain advantage on all Charisma checks against one creature. When it ends they realize they were charmed — use carefully!' },
+    'Frostbite':          { classes:['Druid','Sorcerer','Warlock','Wizard'], school:'Evocation', range:'60 ft', duration:'Instant', damage:'1d6 cold', desc:'Blast a creature with numbing frost. On failed CON save: 1d6 cold damage and disadvantage on its next weapon attack.' },
+    'Green-Flame Blade':  { classes:['Sorcerer','Warlock','Wizard'], school:'Evocation', range:'5 ft', duration:'Instant', damage:'Weapon + CHA fire', desc:'Make a melee attack. On hit, green fire leaps to another creature within 5 ft dealing CHA modifier fire damage.' },
+    'Guidance':           { classes:['Cleric','Druid'], school:'Divination', range:'Touch', duration:'1 min', damage:'—', desc:'Touch a willing creature. Once before the spell ends they add 1d4 to one ability check. Best support cantrip in the game.' },
+    'Gust':               { classes:['Druid','Sorcerer','Wizard'], school:'Transmutation', range:'30 ft', duration:'Instant', damage:'—', desc:'Create a burst of wind to push a creature 5 ft (STR save) or move a 5-lb object. Also extinguishes flames.' },
+    'Infestation':        { classes:['Druid','Sorcerer','Warlock','Wizard'], school:'Conjuration', range:'30 ft', duration:'Instant', damage:'1d6 poison', desc:'Cause a cloud of mites to swarm a target. Failed CON save: 1d6 poison damage and the creature moves in a random direction.' },
+    'Light':              { classes:['Bard','Cleric','Sorcerer','Wizard'], school:'Evocation', range:'Touch', duration:'1 hr', damage:'—', desc:'An object you touch sheds bright light in a 20-ft radius and dim light 40 ft beyond. Essential utility — better than a torch.' },
+    'Mage Hand':          { classes:['Bard','Sorcerer','Warlock','Wizard'], school:'Conjuration', range:'30 ft', duration:'1 min', damage:'—', desc:'Create a spectral floating hand that can carry objects, open doors, and manipulate things up to 30 ft away (up to 10 lbs).' },
+    'Mending':            { classes:['Bard','Cleric','Druid','Sorcerer','Wizard'], school:'Transmutation', range:'Touch', duration:'Instant', damage:'—', desc:'Repair a single break or tear in an object. Works on a broken sword, torn map, or smashed lock — very useful out of combat.' },
+    'Message':            { classes:['Bard','Sorcerer','Wizard'], school:'Transmutation', range:'120 ft', duration:'1 round', damage:'—', desc:'Whisper a message to a creature 120 ft away. Only they hear it and can reply. Great for silent communication.' },
+    'Mind Sliver':        { classes:['Sorcerer','Warlock','Wizard'], school:'Enchantment', range:'60 ft', duration:'Instant', damage:'1d6 psychic', desc:'Drive a disorienting spike into one mind. Failed INT save: 1d6 psychic damage and subtract 1d4 from its next saving throw.' },
+    'Minor Illusion':     { classes:['Bard','Sorcerer','Warlock','Wizard'], school:'Illusion', range:'30 ft', duration:'1 min', damage:'—', desc:'Create a sound or image. Use a sound to distract guards or an image to create a fake door or object. Extremely creative.' },
+    'Mold Earth':         { classes:['Druid','Sorcerer','Wizard'], school:'Transmutation', range:'30 ft', duration:'Instant/1 hr', damage:'—', desc:'Excavate 5 cubic feet of loose earth, create difficult terrain, or change earth\'s color and texture. Great for traps or cover.' },
+    'Poison Spray':       { classes:['Druid','Sorcerer','Warlock','Wizard'], school:'Conjuration', range:'10 ft', duration:'Instant', damage:'1d12 poison', desc:'Project a puff of noxious gas. Target makes a CON save or takes 1d12 poison damage — highest cantrip damage die, short range.' },
+    'Prestidigitation':   { classes:['Bard','Sorcerer','Warlock','Wizard'], school:'Transmutation', range:'10 ft', duration:'Up to 1 hr', damage:'—', desc:'A catch-all utility cantrip. Clean/soil objects, create small sensory effects, chill/warm items, light/snuff flames, and more.' },
+    'Produce Flame':      { classes:['Druid'], school:'Conjuration', range:'Self / 30 ft', duration:'10 min', damage:'1d8 fire', desc:'A flame appears in your hand. Use as a light source OR hurl it as a ranged attack for 1d8 fire damage.' },
+    'Ray of Frost':       { classes:['Sorcerer','Wizard'], school:'Evocation', range:'60 ft', duration:'Instant', damage:'1d8 cold', desc:'A blue-white beam hits a creature for 1d8 cold damage AND reduces its speed by 10 ft until your next turn.' },
+    'Resistance':         { classes:['Cleric','Druid'], school:'Abjuration', range:'Touch', duration:'1 min', damage:'—', desc:'Touch a willing creature. Once before the spell ends it adds 1d4 to one saving throw. Concentration required.' },
+    'Sacred Flame':       { classes:['Cleric'], school:'Evocation', range:'60 ft', duration:'Instant', damage:'1d8 radiant', desc:'Flame-like radiance descends on a creature. DEX save (no cover bonus) or 1d8 radiant damage. Best Cleric damage cantrip.' },
+    'Shillelagh':         { classes:['Druid'], school:'Transmutation', range:'Touch', duration:'1 min', damage:'1d8 bludgeoning', desc:'Your club or quarterstaff becomes magical. Attack/damage uses your WIS modifier instead of STR. Great for melee Druids.' },
+    'Shocking Grasp':     { classes:['Sorcerer','Wizard'], school:'Evocation', range:'Touch', duration:'Instant', damage:'1d8 lightning', desc:'Deliver an electric shock. Advantage if target wears metal armor. On hit: 1d8 lightning and target can\'t take reactions until its next turn.' },
+    'Spare the Dying':    { classes:['Cleric'], school:'Necromancy', range:'Touch', duration:'Instant', damage:'—', desc:'Stabilize a dying creature at 0 HP so it stops making death saving throws. Life-saving utility, no slot needed.' },
+    'Thunderclap':        { classes:['Bard','Druid','Sorcerer','Warlock','Wizard'], school:'Evocation', range:'5 ft (self)', duration:'Instant', damage:'1d6 thunder', desc:'Create a crack of thunderous sound. All creatures within 5 ft make a CON save or take 1d6 thunder — hits everyone nearby.' },
+    'Toll the Dead':      { classes:['Cleric','Warlock','Wizard'], school:'Necromancy', range:'60 ft', duration:'Instant', damage:'1d8 / 1d12 necrotic', desc:'A doleful bell. WIS save or 1d8 necrotic — if target is already missing HP it becomes 1d12 instead. Excellent damage cantrip.' },
+    'True Strike':        { classes:['Bard','Sorcerer','Warlock','Wizard'], school:'Divination', range:'30 ft', duration:'1 round', damage:'—', desc:'Point at a target to gain advantage on your next attack roll against it. Generally only useful for one-shot big-damage builds.' },
+    'Vicious Mockery':    { classes:['Bard'], school:'Enchantment', range:'60 ft', duration:'Instant', damage:'1d4 psychic', desc:'Unleash a torrent of magically-infused insults. WIS save or 1d4 psychic AND disadvantage on their next attack roll. Very effective.' },
+    'Word of Radiance':   { classes:['Cleric'], school:'Evocation', range:'5 ft (self)', duration:'Instant', damage:'1d6 radiant', desc:'Utter a divine word that blasts all enemies within 5 ft. CON save or 1d6 radiant. Great when surrounded.' },
+  },
+  level1: {
+    'Animal Friendship':  { classes:['Bard','Druid','Ranger'], school:'Enchantment', range:'30 ft', duration:'24 hrs', slots:'—', desc:'Convince a beast you mean no harm. WIS save (DC = spell save DC) or it is charmed for 24 hrs. Works on beasts only (not monsters).' },
+    'Armor of Agathys':   { classes:['Warlock'], school:'Abjuration', range:'Self', duration:'1 hr', slots:'1', desc:'Gain 5 temporary HP. While these last, any creature hitting you in melee takes 5 cold damage. Extremely strong for Warlocks.' },
+    'Arms of Hadar':      { classes:['Warlock'], school:'Conjuration', range:'10 ft (self)', duration:'Instant', slots:'1', desc:'Tendrils of dark energy burst from you, hitting all nearby creatures. STR save or 2d6 necrotic and no reactions until next turn.' },
+    'Bane':               { classes:['Bard','Cleric'], school:'Enchantment', range:'30 ft', duration:'1 min', slots:'1', desc:'Up to 3 creatures subtract 1d4 from attack rolls and saving throws. Concentration. Powerful debuff against multiple enemies.' },
+    'Bless':              { classes:['Cleric','Paladin'], school:'Enchantment', range:'30 ft', duration:'1 min', slots:'1', desc:'Up to 3 creatures add 1d4 to attack rolls and saving throws. Concentration. One of the best level 1 support spells in the game.' },
+    'Burning Hands':      { classes:['Sorcerer','Wizard'], school:'Evocation', range:'Self (15-ft cone)', duration:'Instant', slots:'1', desc:'A thin sheet of flames shoots from your hands in a 15-ft cone. DEX save or 3d6 fire. Great for clearing groups of weak enemies.' },
+    'Charm Person':       { classes:['Bard','Druid','Sorcerer','Warlock','Wizard'], school:'Enchantment', range:'30 ft', duration:'1 hr', slots:'1', desc:'Charm a humanoid so they regard you as a friendly acquaintance. WIS save. Ends if you or allies attack them. Social powerhouse.' },
+    'Color Spray':        { classes:['Sorcerer','Wizard'], school:'Illusion', range:'Self (15-ft cone)', duration:'1 round', slots:'1', desc:'Blind creatures in a 15-ft cone totaling 6d10 HP worth of creatures (starting with lowest HP). Concentration-free crowd control.' },
+    'Command':            { classes:['Cleric','Paladin'], school:'Enchantment', range:'60 ft', duration:'1 round', slots:'1', desc:'Speak a one-word command (Halt, Flee, Drop, Grovel, Approach). WIS save or target obeys. Incredibly versatile action denial.' },
+    'Compelled Duel':     { classes:['Paladin'], school:'Enchantment', range:'30 ft', duration:'1 min', slots:'1', desc:'Force a creature to focus on fighting only you. WIS save or it has disadvantage to attack others and must stay within 30 ft.' },
+    'Create or Destroy Water':{ classes:['Cleric','Druid'], school:'Transmutation', range:'30 ft', duration:'Instant', slots:'1', desc:'Create 10 gallons of water or destroy it. Can also destroy fog or ice. Useful utility in desert or fire-heavy environments.' },
+    'Cure Wounds':        { classes:['Bard','Cleric','Druid','Paladin','Ranger'], school:'Evocation', range:'Touch', duration:'Instant', slots:'1', desc:'Touch a creature to restore 1d8 + casting mod HP. Cannot heal undead or constructs. The go-to healing spell at level 1.' },
+    'Detect Magic':       { classes:['Bard','Cleric','Druid','Paladin','Ranger','Sorcerer','Wizard'], school:'Divination', range:'Self (30-ft sphere)', duration:'10 min', slots:'1', desc:'Sense the presence of magic within 30 ft and see its aura. Essential for finding magic items, traps, and illusions.' },
+    'Disguise Self':      { classes:['Bard','Sorcerer','Wizard'], school:'Illusion', range:'Self', duration:'1 hr', slots:'1', desc:'Change your appearance: height ±1 ft, weight, features, equipment look. Doesn\'t hold up to touch. Great for infiltration.' },
+    'Dissonant Whispers': { classes:['Bard'], school:'Enchantment', range:'60 ft', duration:'Instant', slots:'1', desc:'Whisper a discordant melody. WIS save or 3d6 psychic AND uses its reaction to flee. Even on save, half damage, no movement.' },
+    'Divine Favor':       { classes:['Paladin'], school:'Evocation', range:'Self', duration:'1 min', slots:'1', desc:'Your weapon attacks deal an extra 1d4 radiant damage while this lasts. Concentration. Excellent damage boost for Paladins.' },
+    'Entangle':           { classes:['Druid'], school:'Conjuration', range:'90 ft', duration:'1 min', slots:'1', desc:'Grasping weeds fill a 20-ft square. STR save or restrained. Area becomes difficult terrain. Fantastic battlefield control.' },
+    'Expeditious Retreat': { classes:['Sorcerer','Warlock','Wizard'], school:'Transmutation', range:'Self', duration:'10 min', slots:'1', desc:'Bonus action Dash every turn. Great for hit-and-run tactics or escaping when things go bad. Concentration.' },
+    'Faerie Fire':        { classes:['Bard','Druid'], school:'Evocation', range:'60 ft', duration:'1 min', slots:'1', desc:'All creatures in a 20-ft cube glow if they fail a DEX save. Attacks against glowing creatures have advantage. Great support.' },
+    'False Life':         { classes:['Sorcerer','Wizard'], school:'Necromancy', range:'Self', duration:'1 hr', slots:'1', desc:'Gain 1d4 + 4 temporary HP. No concentration. A simple, reliable buffer that stacks on top of your regular HP.' },
+    'Feather Fall':       { classes:['Bard','Sorcerer','Wizard'], school:'Transmutation', range:'60 ft', duration:'1 min', slots:'1', desc:'Up to 5 falling creatures slow to 60 ft/round and take no falling damage. Reaction spell — can be cast when someone starts falling.' },
+    'Find Familiar':      { classes:['Wizard'], school:'Conjuration', range:'10 ft', duration:'Instant', slots:'1 (ritual)', desc:'Summon a spirit as your familiar (cat, owl, frog, etc). It can scout, deliver touch spells, give you advantage on attacks, and more.' },
+    'Fog Cloud':          { classes:['Druid','Ranger','Sorcerer','Wizard'], school:'Conjuration', range:'120 ft', duration:'1 hr', slots:'1', desc:'A 20-ft-radius sphere of fog. Heavily obscures everything inside — creatures are effectively blinded. Concentration. Great escape tool.' },
+    'Goodberry':          { classes:['Druid','Ranger'], school:'Transmutation', range:'Touch', duration:'24 hrs', slots:'1', desc:'Create 10 magical berries. Each heals 1 HP and provides food for a day. Incredibly efficient healing over time.' },
+    'Grease':             { classes:['Wizard'], school:'Conjuration', range:'60 ft', duration:'1 min', slots:'1', desc:'Coat a 10-ft square with slippery grease. DEX save or fall prone. Creatures moving through make saves too. Great crowd control.' },
+    'Guiding Bolt':       { classes:['Cleric'], school:'Evocation', range:'120 ft', duration:'1 round', slots:'1', desc:'Launch a flash of light for 4d6 radiant damage. Next attack against target has advantage. Best Cleric level 1 damage spell.' },
+    'Healing Word':       { classes:['Bard','Cleric','Druid'], school:'Evocation', range:'60 ft', duration:'Instant', slots:'1', desc:'Bonus action: restore 1d4 + mod HP from range. Less healing than Cure Wounds but frees your action. Often more valuable.' },
+    'Hellish Rebuke':     { classes:['Warlock'], school:'Evocation', range:'60 ft', duration:'Instant', slots:'1', desc:'Reaction: when you take damage, surround the attacker in hellish flames for 2d10 fire (DEX save for half). Punishes attackers.' },
+    'Heroism':            { classes:['Bard','Paladin'], school:'Enchantment', range:'Touch', duration:'1 min', slots:'1', desc:'Target gains immunity to frightened and gains temp HP equal to your casting mod at the start of each turn. Concentration.' },
+    'Hex':                { classes:['Warlock'], school:'Enchantment', range:'90 ft', duration:'1 hr', slots:'1', desc:'Curse a target: your attacks deal +1d6 necrotic damage and it has disadvantage on one ability type. Move the curse when target dies. Essential Warlock spell.' },
+    'Hunter\'s Mark':    { classes:['Ranger'], school:'Divination', range:'90 ft', duration:'1 hr', slots:'1', desc:'Mark a creature as your quarry: +1d6 damage on hits, advantage on Perception/Survival to find it. Can move mark as bonus action. Core Ranger spell.' },
+    'Ice Knife':          { classes:['Druid','Sorcerer','Wizard'], school:'Conjuration', range:'60 ft', duration:'Instant', slots:'1', desc:'Hurl a shard of ice. On hit: 1d10 piercing. Then it explodes — all in 5 ft make DEX save or take 2d6 cold. Good AoE + single target.' },
+    'Identify':           { classes:['Bard','Wizard'], school:'Divination', range:'Touch', duration:'Instant', slots:'1 (ritual)', desc:'Learn all magical properties of an item or spell affecting a creature. Can be cast as a 10-min ritual without using a slot.' },
+    'Illusory Script':    { classes:['Bard','Warlock','Wizard'], school:'Illusion', range:'Touch', duration:'10 days', slots:'1 (ritual)', desc:'Write on paper that looks like normal writing to others, but chosen creatures see your true message. Long-duration subterfuge.' },
+    'Inflict Wounds':     { classes:['Cleric'], school:'Necromancy', range:'Touch', duration:'Instant', slots:'1', desc:'Make a melee spell attack to deal 3d10 necrotic damage. Incredibly high damage for level 1 — biggest single-target heal/harm option.' },
+    'Jump':               { classes:['Druid','Ranger','Sorcerer','Wizard'], school:'Transmutation', range:'Touch', duration:'1 min', slots:'1', desc:'Triple a creature\'s jump distance. Great for traversal, crossing chasms, or reaching high ledges.' },
+    'Longstrider':        { classes:['Bard','Druid','Ranger','Wizard'], school:'Transmutation', range:'Touch', duration:'1 hr', slots:'1', desc:'Increase a creature\'s speed by 10 ft for 1 hour. No concentration. Easily worth a slot for long dungeon or chase scenes.' },
+    'Mage Armor':         { classes:['Sorcerer','Wizard'], school:'Abjuration', range:'Touch', duration:'8 hrs', slots:'1', desc:'Target\'s AC becomes 13 + DEX modifier if not wearing armor. Essential for unarmored Sorcerers and Wizards. No concentration.' },
+    'Magic Missile':      { classes:['Sorcerer','Wizard'], school:'Evocation', range:'120 ft', duration:'Instant', slots:'1', desc:'Three darts each automatically deal 1d4+1 force damage. No attack roll, no save — guaranteed 3d4+3 damage split as you choose.' },
+    'Protection from Evil and Good': { classes:['Cleric','Druid','Paladin','Warlock','Wizard'], school:'Abjuration', range:'Touch', duration:'10 min', slots:'1', desc:'Protection against aberrations, celestials, elementals, fey, fiends, and undead: they have attack disadvantage and can\'t charm or possess you.' },
+    'Ray of Sickness':    { classes:['Sorcerer','Wizard'], school:'Necromancy', range:'60 ft', duration:'Instant', slots:'1', desc:'Ranged spell attack for 2d8 poison damage. On hit, target makes CON save or becomes poisoned until your next turn (disadvantage on rolls).' },
+    'Sanctuary':          { classes:['Cleric'], school:'Abjuration', range:'30 ft', duration:'1 min', slots:'1', desc:'Protect a creature: attackers must make a WIS save to be able to target it. Broken if protected creature attacks. Shield your healer.' },
+    'Shield':             { classes:['Sorcerer','Wizard'], school:'Abjuration', range:'Self', duration:'1 round', slots:'1', desc:'Reaction: when hit or targeted by Magic Missile, gain +5 AC until your next turn (including against the triggering attack). Very powerful.' },
+    'Shield of Faith':    { classes:['Cleric','Paladin'], school:'Abjuration', range:'60 ft', duration:'10 min', slots:'1', desc:'+2 AC to a creature you can see. Concentration. A sustained AC boost — great on your tank to prevent damage all fight.' },
+    'Silent Image':       { classes:['Bard','Sorcerer','Wizard'], school:'Illusion', range:'60 ft', duration:'10 min', slots:'1', desc:'Create a 15-ft-cube visual illusion. Concentration. Extremely creative — fake a wall, disguise a pit, create a distraction.' },
+    'Sleep':              { classes:['Bard','Sorcerer','Wizard'], school:'Enchantment', range:'90 ft', duration:'1 min', slots:'1', desc:'Magical slumber hits creatures totaling 5d8 HP (weakest first). No save. Amazing crowd control at level 1 — can end fights instantly.' },
+    'Speak with Animals': { classes:['Bard','Druid','Ranger'], school:'Divination', range:'Self', duration:'10 min', slots:'1 (ritual)', desc:'Understand and communicate with beasts. They may know useful things about the area. Can be cast as a 10-min ritual.' },
+    'Tasha\'s Hideous Laughter': { classes:['Bard','Wizard'], school:'Enchantment', range:'30 ft', duration:'1 min', slots:'1', desc:'Target falls into fits of laughter and falls prone, incapacitated. WIS save, repeat each turn. Concentration. Removes one enemy from a fight.' },
+    'Thunderwave':        { classes:['Bard','Druid','Sorcerer','Wizard'], school:'Evocation', range:'Self (15-ft cube)', duration:'Instant', slots:'1', desc:'A wave of force. CON save or 2d8 thunder and pushed 10 ft. Everything in range is pushed — including objects. Loud (300 ft).' },
+    'Unseen Servant':     { classes:['Bard','Warlock','Wizard'], school:'Conjuration', range:'60 ft', duration:'1 hr', slots:'1 (ritual)', desc:'Summon an invisible force that can perform simple tasks (carry, clean, pour, etc). Can\'t attack. Great for utility.' },
+    'Witch Bolt':         { classes:['Sorcerer','Warlock','Wizard'], school:'Evocation', range:'30 ft', duration:'1 min', slots:'1', desc:'Hit with a bolt of lightning (ranged attack, 1d12 lightning). On subsequent turns use your action for another 1d12 automatically. Concentration.' },
+    'Wrathful Smite':     { classes:['Paladin'], school:'Evocation', range:'Self', duration:'1 min', slots:'1', desc:'Bonus action: next hit deals +1d6 psychic and target makes WIS save or becomes frightened. Concentration. Great debuff for Paladins.' },
+  }
+};
+
+const CLASS_CANTRIPS = {
+  Barbarian:  [],
+  Bard:       ['Blade Ward','Booming Blade','Dancing Lights','Friends','Light','Mage Hand','Mending','Message','Minor Illusion','Prestidigitation','Thunderclap','True Strike','Vicious Mockery'],
+  Cleric:     ['Guidance','Light','Mending','Resistance','Sacred Flame','Spare the Dying','Thaumaturgy','Toll the Dead','Word of Radiance'],
+  Druid:      ['Control Flames','Create Bonfire','Druidcraft','Frostbite','Guidance','Gust','Infestation','Mending','Mold Earth','Poison Spray','Produce Flame','Resistance','Shillelagh','Thunderclap'],
+  Fighter:    [],
+  Monk:       [],
+  Paladin:    [],
+  Ranger:     [],
+  Rogue:      [],
+  Sorcerer:   ['Acid Splash','Blade Ward','Booming Blade','Chill Touch','Control Flames','Create Bonfire','Dancing Lights','Fire Bolt','Friends','Frostbite','Green-Flame Blade','Infestation','Light','Mage Hand','Mending','Message','Mind Sliver','Minor Illusion','Poison Spray','Prestidigitation','Ray of Frost','Shocking Grasp','Thunderclap','True Strike'],
+  Warlock:    ['Blade Ward','Booming Blade','Chill Touch','Create Bonfire','Eldritch Blast','Friends','Frostbite','Green-Flame Blade','Infestation','Mage Hand','Minor Illusion','Poison Spray','Prestidigitation','Thunderclap','Toll the Dead','True Strike'],
+  Wizard:     ['Acid Splash','Blade Ward','Booming Blade','Chill Touch','Control Flames','Create Bonfire','Dancing Lights','Fire Bolt','Friends','Frostbite','Green-Flame Blade','Gust','Infestation','Light','Mage Hand','Mending','Message','Mind Sliver','Minor Illusion','Mold Earth','Poison Spray','Prestidigitation','Ray of Frost','Shocking Grasp','Thunderclap','Toll the Dead','True Strike'],
+};
+
+const CLASS_LEVEL1_SPELLS = {
+  Barbarian:  [],
+  Bard:       ['Animal Friendship','Bane','Charm Person','Color Spray','Command','Comprehend Languages','Cure Wounds','Detect Magic','Disguise Self','Dissonant Whispers','Faerie Fire','False Life','Feather Fall','Healing Word','Heroism','Identify','Illusory Script','Longstrider','Mage Armor','Silent Image','Sleep','Speak with Animals','Tasha\'s Hideous Laughter','Thunderwave','Unseen Servant'],
+  Cleric:     ['Bane','Bless','Command','Create or Destroy Water','Cure Wounds','Detect Magic','Detect Poison and Disease','Guiding Bolt','Healing Word','Heroism','Identify','Inflict Wounds','Protection from Evil and Good','Purify Food and Drink','Sanctuary','Shield of Faith'],
+  Druid:      ['Animal Friendship','Create or Destroy Water','Cure Wounds','Detect Magic','Detect Poison and Disease','Entangle','Faerie Fire','Fog Cloud','Goodberry','Healing Word','Ice Knife','Jump','Longstrider','Speak with Animals','Thunderwave'],
+  Fighter:    [],
+  Monk:       [],
+  Paladin:    ['Bless','Command','Compelled Duel','Cure Wounds','Detect Evil and Good','Detect Magic','Detect Poison and Disease','Divine Favor','Heroism','Protection from Evil and Good','Purify Food and Drink','Shield of Faith','Thunderous Smite','Wrathful Smite'],
+  Ranger:     ['Animal Friendship','Cure Wounds','Detect Magic','Detect Poison and Disease','Fog Cloud','Goodberry','Hunter\'s Mark','Jump','Longstrider','Speak with Animals'],
+  Rogue:      [],
+  Sorcerer:   ['Burning Hands','Charm Person','Color Spray','Comprehend Languages','Detect Magic','Disguise Self','Expeditious Retreat','False Life','Feather Fall','Fog Cloud','Grease','Ice Knife','Jump','Mage Armor','Magic Missile','Ray of Sickness','Shield','Silent Image','Sleep','Thunderwave','Witch Bolt'],
+  Warlock:    ['Armor of Agathys','Arms of Hadar','Charm Person','Comprehend Languages','Expeditious Retreat','Hellish Rebuke','Hex','Illusory Script','Protection from Evil and Good','Unseen Servant','Witch Bolt'],
+  Wizard:     ['Burning Hands','Charm Person','Color Spray','Comprehend Languages','Detect Magic','Disguise Self','Expeditious Retreat','False Life','Feather Fall','Find Familiar','Fog Cloud','Grease','Ice Knife','Identify','Illusory Script','Jump','Longstrider','Mage Armor','Magic Missile','Protection from Evil and Good','Ray of Sickness','Shield','Silent Image','Sleep','Tasha\'s Hideous Laughter','Thunderwave','Unseen Servant','Witch Bolt'],
+};
+
+function buildSpellPickerOptions(type){
+  const cls = document.getElementById('charClass').value;
+  const list = type === 'cantrip' ? (CLASS_CANTRIPS[cls]||[]) : (CLASS_LEVEL1_SPELLS[cls]||[]);
+  const db   = type === 'cantrip' ? SPELL_DB.cantrips : SPELL_DB.level1;
+  const selectId = type === 'cantrip' ? 'cantripPickerSelect' : 'spellPickerSelect1';
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  sel.innerHTML = '<option value="">— Choose a ' + (type==='cantrip'?'cantrip':'spell') + ' to add —</option>';
+  if(list.length === 0){
+    const opt = document.createElement('option');
+    opt.disabled = true;
+    opt.textContent = '(This class has no ' + (type==='cantrip'?'cantrips':'level 1 spells') + ')';
+    sel.appendChild(opt);
+    return;
+  }
+  list.forEach(name => {
+    const data = db[name];
+    if(!data) return;
+    const opt = document.createElement('option');
+    opt.value = name;
+    // Short description: truncate to ~80 chars so it reads well in a dropdown
+    const shortDesc = data.desc.length > 82 ? data.desc.substring(0, 80) + '…' : data.desc;
+    const dmgPart = data.damage && data.damage !== '—' ? ' | Dmg: ' + data.damage : '';
+    opt.textContent = name + dmgPart + ' | ' + shortDesc;
+    sel.appendChild(opt);
+  });
+}
+
+function previewSpellPick(type){
+  const selectId = type === 'cantrip' ? 'cantripPickerSelect' : 'spellPickerSelect1';
+  const previewId = type === 'cantrip' ? 'cantripPreview' : 'spellPreview1';
+  const sel = document.getElementById(selectId);
+  const preview = document.getElementById(previewId);
+  if(!sel || !preview) return;
+  const name = sel.value;
+  const db = type === 'cantrip' ? SPELL_DB.cantrips : SPELL_DB.level1;
+  if(!name){ preview.style.display='none'; return; }
+  const s = db[name];
+  if(!s){ preview.style.display='none'; return; }
+  preview.style.display = 'block';
+  preview.innerHTML = `
+    <strong>${name}</strong> <span style="font-size:0.72rem;color:#8080a8;margin-left:4px">${s.school}</span><br>
+    <span style="color:#9090b8">${s.desc}</span>
+    <div class="sp-tags">
+      <span class="sp-tag highlight">Range: ${s.range}</span>
+      <span class="sp-tag highlight">Duration: ${s.duration}</span>
+      ${s.damage && s.damage!=='—' ? `<span class="sp-tag highlight">Damage: ${s.damage}</span>` : ''}
+    </div>`;
+}
+
+function addSpellFromPicker(type){
+  const selectId = type === 'cantrip' ? 'cantripPickerSelect' : 'spellPickerSelect1';
+  const previewId = type === 'cantrip' ? 'cantripPreview' : 'spellPreview1';
+  const sel = document.getElementById(selectId);
+  if(!sel || !sel.value) return;
+  const name = sel.value;
+  const db = type === 'cantrip' ? SPELL_DB.cantrips : SPELL_DB.level1;
+  const s = db[name];
+  if(!s) return;
+
+  const listId = type === 'cantrip' ? 'cantripsList' : 'spelllist-1';
+  const id = `sp-${type}-${Date.now()}`;
+  const row = document.createElement('div');
+
+  if(type === 'cantrip'){
+    row.className = 'cantrip-row';
+    row.id = id;
+    row.innerHTML = `
+      <input type="text" value="${name}">
+      <input type="text" value="${s.desc.substring(0,80)}${s.desc.length>80?'...':''}">
+      <div style="display:flex;align-items:center;gap:8px">
+        <label class="prepared-check"><input type="checkbox" checked> Prepared</label>
+        <button class="btn btn-remove" onclick="document.getElementById('${id}').remove()">✕</button>
+      </div>`;
+  } else {
+    row.className = 'spell-row';
+    row.id = id;
+    row.innerHTML = `
+      <input type="text" value="${name}">
+      <input type="text" value="${s.desc.substring(0,80)}${s.desc.length>80?'...':''}">
+      <input type="text" value="${s.range}" style="font-size:0.8rem">
+      <input type="text" value="${s.duration}" style="font-size:0.8rem">
+      <div style="display:flex;align-items:center;gap:8px">
+        <label class="prepared-check"><input type="checkbox" checked> Prepared</label>
+        <button class="btn btn-remove" onclick="document.getElementById('${id}').remove()">✕</button>
+      </div>`;
+  }
+
+  const list = document.getElementById(listId);
+  if(list) list.appendChild(row);
+
+  sel.value = '';
+  document.getElementById(previewId).style.display = 'none';
+}
+
+// ════════════════════════════════════════════════════════════════
+//  SPELLS
+// ════════════════════════════════════════════════════════════════
+function addSpell(level){
+  const listId=level==='cantrip'?'cantripsList':`spelllist-${level}`;
+  const id=`sp-${level}-${Date.now()}`;
+  const row=document.createElement('div');
+  if(level==='cantrip'){
+    row.className='cantrip-row';
+    row.id=id;
+    row.innerHTML=`
+      <input type="text" placeholder="Cantrip name (e.g. Eldritch Blast)">
+      <input type="text" placeholder="Description (e.g. 1d10 force damage, 120ft range)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <label class="prepared-check"><input type="checkbox" checked> Prepared</label>
+        <button class="btn btn-remove" onclick="document.getElementById('${id}').remove()">✕</button>
+      </div>`;
+  } else {
+    row.className='spell-row';
+    row.id=id;
+    row.innerHTML=`
+      <input type="text" placeholder="Spell name (e.g. Hex)">
+      <input type="text" placeholder="Description">
+      <input type="text" placeholder="Range (e.g. 90 ft)" style="font-size:0.8rem">
+      <input type="text" placeholder="Duration (e.g. 1 hour)" style="font-size:0.8rem">
+      <div style="display:flex;align-items:center;gap:8px">
+        <label class="prepared-check"><input type="checkbox" checked> Prepared</label>
+        <button class="btn btn-remove" onclick="document.getElementById('${id}').remove()">✕</button>
+      </div>`;
+  }
+  document.getElementById(listId).appendChild(row);
+}
+
+function addSpellLevel(){
+  const existingLevels=spellLevelIds.map(x=>x);
+  let nextLevel=1;
+  while(existingLevels.includes(nextLevel)&&nextLevel<=9) nextLevel++;
+  if(nextLevel>9) return;
+  spellLevelIds.push(nextLevel);
+  const levelNames={1:'1st',2:'2nd',3:'3rd',4:'4th',5:'5th',6:'6th',7:'7th',8:'8th',9:'9th'};
+  const defaultSlots={1:1,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0};
+  const slots=defaultSlots[nextLevel]||0;
+  // Build picker HTML only for level 1 (only level in our DB)
+  const pickerHTML = nextLevel===1 ? `
+    <div class="spell-picker-bar" style="margin-top:10px">
+      <select id="spellPickerSelect1" onchange="previewSpellPick('level1')">
+        <option value="">— Choose a spell to add —</option>
+      </select>
+      <button class="btn-add-weapon" onclick="addSpellFromPicker('level1')">+ Add Spell</button>
+    </div>
+    <div class="spell-picker-preview" id="spellPreview1"></div>` : '';
+  const container=document.createElement('div');
+  container.id=`spelllevel-${nextLevel}`;
+  container.innerHTML=`
+    <div class="spell-level-header" style="margin-top:12px">
+      ${levelNames[nextLevel]}-Level Spells
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="spell-slots">
+          Slots: <input type="number" id="slots-max-${nextLevel}" value="${slots}" min="0" max="9" style="width:44px"> max /
+          <input type="number" id="slots-cur-${nextLevel}" value="${slots}" min="0" max="9" style="width:44px"> current
+        </div>
+        <button class="btn btn-remove" style="font-size:0.78rem" onclick="removeSpellLevel(${nextLevel})">Remove Level</button>
+      </div>
+    </div>
+    ${pickerHTML}
+    <div id="spelllist-${nextLevel}" style="margin-top:8px"></div>
+    <button class="btn btn-add" style="font-size:0.8rem;margin-top:4px" onclick="addSpell(${nextLevel})">+ Add Custom Spell</button>`;
+  document.getElementById('spellLevels').appendChild(container);
+  // Populate the level 1 picker immediately after the element is in the DOM
+  if(nextLevel===1) buildSpellPickerOptions('level1');
+}
+
+function removeSpellLevel(level){
+  const el=document.getElementById(`spelllevel-${level}`);
+  if(el) el.remove();
+  spellLevelIds=spellLevelIds.filter(l=>l!==level);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CONDITIONS
+// ════════════════════════════════════════════════════════════════
+const CONDITIONS=['unconscious','poisoned','stunned','paralyzed','petrified','blinded','deafened','frightened','grappled','restrained'];
+
+// D&D 5e class-based condition immunities.
+// subclass:true  → only granted by a specific subclass choice (shown differently)
+// subclass:false → granted to ALL members of this class at the given level
+const CLASS_CONDITION_IMMUNITIES = {
+  Paladin: [
+    { level:10, conditions:['frightened'], subclass:false,
+      note:'Aura of Courage (lv 10) — You and friendly creatures within 10 ft are immune to Frightened while you are conscious.' }
+  ],
+  Barbarian: [
+    { level:6, conditions:['charmed','frightened'], subclass:true,
+      note:'Berserker subclass — Mindless Rage (lv 6): immune to Charmed & Frightened while raging.' }
+  ],
+  Warlock: [
+    { level:10, conditions:['charmed'], subclass:true,
+      note:'Archfey patron — Beguiling Defenses (lv 10): immune to the Charmed condition.' }
+  ]
+};
+
+function getActiveImmunities(){
+  const cls = document.getElementById('charClass').value;
+  const lvl = getLevel();
+  const rules = CLASS_CONDITION_IMMUNITIES[cls] || [];
+  const result = {};
+  rules.forEach(r => {
+    if(lvl >= r.level){
+      r.conditions.forEach(cond => {
+        // full immunity wins over subclass immunity if both somehow apply
+        if(!result[cond] || result[cond].subclass){
+          result[cond] = { subclass: !!r.subclass, note: r.note };
+        }
+      });
+    }
+  });
+  return result;
+}
+
+function buildConditionsGrid(){
+  refreshConditionsGrid();
+}
+
+function refreshConditionsGrid(){
+  const grid = document.getElementById('conditionsGrid');
+  grid.innerHTML = '';
+  const immunities = getActiveImmunities();
+  const notes = new Set();
+
+  CONDITIONS.forEach(c => {
+    const imm = immunities[c];
+    const div = document.createElement('label');
+    div.id = `cond-label-${c}`;
+    const label = c.charAt(0).toUpperCase() + c.slice(1);
+
+    if(imm){
+      div.className = 'condition-check ' + (imm.subclass ? 'sub-immune' : 'immune');
+      div.title = imm.note;
+      div.innerHTML = `<span>${label}</span><span class="imm-badge">${imm.subclass ? '✦ subclass' : '✦ immune'}</span>`;
+      notes.add((imm.subclass ? '(subclass) ' : '') + imm.note);
+    } else {
+      div.className = 'condition-check';
+      div.innerHTML = `<input type="checkbox" id="cond-${c}" onchange="toggleConditionStyle('${c}')"> ${label}`;
+      // restore checked state if already set
+      const existing = document.getElementById(`cond-${c}`);
+      if(existing && existing.checked) div.querySelector('input').checked = true;
+    }
+    grid.appendChild(div);
+  });
+
+  // Show/hide immunity note beneath grid
+  let noteEl = document.getElementById('condImmunityNote');
+  if(!noteEl){
+    noteEl = document.createElement('div');
+    noteEl.id = 'condImmunityNote';
+    grid.parentNode.insertBefore(noteEl, grid.nextSibling);
+  }
+  if(notes.size){
+    const cls = document.getElementById('charClass').value;
+    const lvl = getLevel();
+    noteEl.innerHTML = `<strong style="color:var(--prof-color)">🛡 ${cls} Class Immunity (lv ${lvl}+)</strong><br>` +
+      [...notes].map(n => '• ' + n).join('<br>');
+    noteEl.style.display = '';
+  } else {
+    noteEl.style.display = 'none';
+  }
+}
+
+function toggleConditionStyle(c){
+  document.getElementById(`cond-label-${c}`).classList.toggle('active', document.getElementById(`cond-${c}`).checked);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  STATUS
+// ════════════════════════════════════════════════════════════════
+function updateStatus(){
+  const name=document.getElementById('charName').value;
+  const cls=document.getElementById('charClass').value;
+  const lvl=document.getElementById('charLevel').value;
+  if(name&&cls) document.getElementById('statusMsg').textContent=`${name} — Level ${lvl} ${cls} — Ready to export!`;
+  else document.getElementById('statusMsg').textContent='Fill in your character name and class to get started.';
+}
+
+// ════════════════════════════════════════════════════════════════
+//  YAML EXPORT
+// ════════════════════════════════════════════════════════════════
+function getWeapons(){
+  const weapons=[];
+  document.querySelectorAll('[id^="weapon-"]').forEach(row=>{
+    const id=row.id.replace('weapon-','');
+    const name=document.getElementById(`wname-${id}`)?.value||'';
+    if(!name) return;
+    const bonus=document.getElementById(`wbonus-${id}`)?.value||'+0';
+    const bonusNum=parseInt(bonus.replace('+',''))||0;
+    weapons.push({
+      name, type:document.getElementById(`wtype-${id}`)?.value||'Melee',
+      bonus:bonusNum, damage:document.getElementById(`wdamage-${id}`)?.value||'1d6',
+      damageType:document.getElementById(`wdmgtype-${id}`)?.value||'piercing',
+      weight:parseFloat(document.getElementById(`wweight-${id}`)?.value)||0, equipped:true
+    });
+  });
+  return weapons;
+}
+
+function getInventory(){
+  const inv=[];
+  document.querySelectorAll('[id^="item-"]').forEach(row=>{
+    const id=row.id.replace('item-','');
+    const name=document.getElementById(`iname-${id}`)?.value||'';
+    if(!name) return;
+    inv.push({name, quantity:parseInt(document.getElementById(`iqty-${id}`)?.value)||1, weight:parseFloat(document.getElementById(`iweight-${id}`)?.value)||0});
+  });
+  return inv;
+}
+
+function getFeatures(){
+  const feats=[];
+  document.querySelectorAll('[id^="feature-"]').forEach(row=>{
+    const inputs=row.querySelectorAll('input[type="text"],textarea');
+    const name=inputs[0]?.value||'';
+    const desc=inputs[1]?.value||'';
+    if(name) feats.push({name, description:desc});
+  });
+  return feats;
+}
+
+function getCantrips(){
+  const list=[];
+  document.querySelectorAll('#cantripsList .cantrip-row').forEach(row=>{
+    const inputs=row.querySelectorAll('input[type="text"]');
+    const name=inputs[0]?.value||'';
+    if(!name) return;
+    const prepared=row.querySelector('input[type="checkbox"]')?.checked??true;
+    list.push({name, description:inputs[1]?.value||'', prepared});
+  });
+  return list;
+}
+
+function getSpellsByLevel(level){
+  const list=[];
+  const container=document.getElementById(`spelllist-${level}`);
+  if(!container) return list;
+  container.querySelectorAll('.spell-row').forEach(row=>{
+    const inputs=row.querySelectorAll('input[type="text"]');
+    const name=inputs[0]?.value||'';
+    if(!name) return;
+    const prepared=row.querySelector('input[type="checkbox"]')?.checked??true;
+    list.push({name, prepared, description:inputs[1]?.value||'', range:inputs[2]?.value||'', duration:inputs[3]?.value||''});
+  });
+  return list;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  YAML IMPORT
+// ════════════════════════════════════════════════════════════════
+function handleImportFile(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      importFromYaml(ev.target.result);
+      document.getElementById('statusMsg').textContent = `✓ Imported "${file.name}" successfully — review and re-export when ready!`;
+    } catch(err) {
+      alert('Failed to import YAML: ' + err.message);
+    }
+    // Reset file input so the same file can be re-imported
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// Lightweight YAML parser — handles the exact format produced by exportYaml()
+function parseYAML(text){
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n')
+    .filter(l => l.trim() && !l.trimStart().startsWith('#'));
+  let i = 0;
+
+  function getIndent(l){ return l.search(/\S/); }
+
+  function parseScalar(s){
+    s = s.trim();
+    if(s==='true') return true;
+    if(s==='false') return false;
+    if(s==='null'||s==='~') return null;
+    if(s==='[]') return [];
+    if(/^-?\d+(\.\d+)?$/.test(s)) return Number(s);
+    if((s[0]==='"'&&s[s.length-1]==='"')||(s[0]==="'"&&s[s.length-1]==="'"))
+      return s.slice(1,-1).replace(/\\"/g,'"').replace(/\\\\/g,'\\');
+    if(s.startsWith('{')&&s.endsWith('}')){
+      const obj={};
+      s.slice(1,-1).split(',').forEach(pair=>{
+        const ci=pair.indexOf(':');
+        if(ci===-1) return;
+        obj[pair.slice(0,ci).trim()] = parseScalar(pair.slice(ci+1).trim());
+      });
+      return obj;
+    }
+    return s;
+  }
+
+  function parseMapping(minInd){
+    const obj={};
+    while(i<lines.length){
+      const line=lines[i];
+      const ind=getIndent(line);
+      if(ind<minInd) break;
+      const c=line.trim();
+      const ci=c.indexOf(':');
+      if(ci===-1){i++;continue;}
+      const key=c.slice(0,ci).trim();
+      const rest=c.slice(ci+1).trim();
+      i++;
+      if(rest===''||rest==='null'){
+        if(i<lines.length&&getIndent(lines[i])>ind){
+          const nextContent=lines[i].trimStart();
+          if(nextContent.startsWith('- ')) obj[key]=parseSequence(getIndent(lines[i]));
+          else obj[key]=parseMapping(getIndent(lines[i]));
+        } else { obj[key]=null; }
+      } else if(rest==='[]'){ obj[key]=[]; }
+      else { obj[key]=parseScalar(rest); }
+    }
+    return obj;
+  }
+
+  function parseSequence(minInd){
+    const arr=[];
+    while(i<lines.length){
+      const line=lines[i];
+      const ind=getIndent(line);
+      if(ind<minInd) break;
+      const c=line.trim();
+      if(!c.startsWith('- ')){break;}
+      const rest=c.slice(2).trim();
+      i++;
+      if(rest===''||rest==='null'){
+        if(i<lines.length&&getIndent(lines[i])>ind) arr.push(parseMapping(getIndent(lines[i])));
+        else arr.push(null);
+      } else if(rest.includes(': ')){
+        const ci=rest.indexOf(': ');
+        const subKey=rest.slice(0,ci).trim();
+        const subVal=parseScalar(rest.slice(ci+2).trim());
+        const obj={[subKey]:subVal};
+        if(i<lines.length&&getIndent(lines[i])>ind) Object.assign(obj,parseMapping(getIndent(lines[i])));
+        arr.push(obj);
+      } else { arr.push(parseScalar(rest)); }
+    }
+    return arr;
+  }
+
+  return parseMapping(0);
+}
+
+function importFromYaml(text){
+  const data = parseYAML(text);
+  const char  = data.character  || {};
+  const abil  = data.abilities  || {};
+  const com   = data.combat     || {};
+  const sk    = data.skills     || {};
+  const sv    = data.saves      || {};
+  const eq    = data.equipment  || {};
+  const spell = data.spellcasting || {};
+  const cond  = data.conditions || {};
+  const notes = data.notes      || {};
+
+  // ── 1. Reset dynamic content ─────────────────────────────────
+  document.getElementById('weaponsList').innerHTML   = '';
+  document.getElementById('inventoryList').innerHTML = '';
+  document.getElementById('cantripsList').innerHTML  = '';
+  document.getElementById('spellLevels').innerHTML   = '';
+  spellLevelIds = [];
+  weaponId = 0; itemId = 0; featureId = 0;
+  skillProf.clear(); bgSkills.clear(); classSkills.clear(); freeSkills.clear();
+
+  // ── 2. Character identity ─────────────────────────────────────
+  document.getElementById('charName').value       = char.name       || '';
+  document.getElementById('charXP').value         = char.experience || 0;
+  document.getElementById('playerName').value     = char.player     || '';
+  document.getElementById('campaignName').value   = char.campaign   || '';
+  document.getElementById('charMulticlass').value = Array.isArray(char.multiclass)
+    ? char.multiclass.join(', ') : (char.multiclass || '');
+
+  // Class → triggers save profs, spell section, default features
+  const cls = char.class || '';
+  document.getElementById('charClass').value = cls;
+  onClassChange();
+
+  // Clear auto-loaded default features; we'll restore from YAML
+  document.getElementById('featuresList').innerHTML = '';
+  featureId = 0;
+
+  // Level
+  document.getElementById('charLevel').value = char.level || 1;
+
+  // Background → triggers bg skill profs
+  document.getElementById('charBackground').value = char.background || '';
+  if(char.background) onBackgroundChange();
+
+  // Alignment
+  document.getElementById('charAlignment').value = char.alignment || 'True Neutral';
+
+  // ── 3. Ability scores (switch to manual) ─────────────────────
+  ABILITIES.forEach(ab => {
+    manualScores[ab] = abil[ab] || 10;
+    const inp = document.getElementById(`manual-${ab}`);
+    if(inp){ inp.value = manualScores[ab]; }
+    const mod = document.getElementById(`manmod-${ab}`);
+    if(mod) mod.textContent = fmtMod(getMod(manualScores[ab]));
+  });
+  setMethod('manual');
+
+  // ── 4. Override combat stats ──────────────────────────────────
+  const hp = com.hp || {};
+  document.getElementById('combatHPMax').value     = hp.max       || 10;
+  document.getElementById('combatHPCurrent').value = hp.current   || hp.max || 10;
+  document.getElementById('combatAC').value        = com.ac       || 10;
+  document.getElementById('combatInit').value      = com.initiative || 0;
+
+  // Armor
+  const armorName = eq.armor || 'No Armor';
+  const armorSel  = document.getElementById('armorSelect');
+  let armorMatched = false;
+  Array.from(armorSel.options).forEach(opt=>{
+    if(opt.value.split('|')[0] === armorName){ armorSel.value = opt.value; armorMatched=true; }
+  });
+  if(!armorMatched) armorSel.value = armorSel.options[0].value;
+
+  // ── 5. Skill proficiencies — restore free picks from YAML ─────
+  // classSkills/bgSkills already set by onClassChange/onBackgroundChange.
+  // Any additional proficient skills in the YAML are treated as free picks.
+  Object.keys(sk).forEach(s=>{
+    const info=sk[s];
+    if(info&&info.proficient&&!classSkills.has(s)&&!bgSkills.has(s)){
+      if(freeSkills.size<FREE_SKILL_LIMIT){ freeSkills.add(s); skillProf.add(s); }
+    }
+  });
+  buildSkillsGrid();
+
+  // ── 6. Saves are fully determined by class — just rebuild ─────
+  buildSavesGrid();
+
+  // ── 7. Weapons ────────────────────────────────────────────────
+  (eq.weapons||[]).forEach(w=>{
+    if(!w || !w.name) return;
+    const bonus = typeof w.bonus==='number' ? (w.bonus>=0?`+${w.bonus}`:String(w.bonus)) : (w.bonus||'+0');
+    addWeapon({ name:w.name, type:w.type||'Melee', bonus, damage:w.damage||'1d6', dmgType:w.damageType||'piercing', weight:w.weight||0 });
+  });
+
+  // ── 8. Inventory ──────────────────────────────────────────────
+  (eq.inventory||[]).forEach(item=>{
+    if(!item || !item.name) return;
+    addInventoryItem({ name:item.name, qty:item.quantity||1, weight:item.weight||0 });
+  });
+
+  // ── 9. Features ───────────────────────────────────────────────
+  (data.features||[]).forEach(f=>{
+    if(!f || !f.name) return;
+    addFeature(f.name, f.description||'');
+  });
+
+  // ── 10. Spellcasting ─────────────────────────────────────────
+  const spellAb = (spell.ability||'Charisma').toLowerCase();
+  document.getElementById('spellAbility').value = spellAb;
+  const spells = spell.spells || {};
+
+  // Cantrips
+  (spells.cantrips||[]).forEach(c=>{
+    if(!c||!c.name) return;
+    addSpell('cantrip');
+    const rows = document.querySelectorAll('#cantripsList .cantrip-row');
+    const row  = rows[rows.length-1];
+    if(row){
+      const inputs = row.querySelectorAll('input[type="text"]');
+      if(inputs[0]) inputs[0].value = c.name;
+      if(inputs[1]) inputs[1].value = c.description||'';
+      const cb = row.querySelector('input[type="checkbox"]');
+      if(cb) cb.checked = c.prepared!==false;
+    }
+  });
+
+  // Levelled spells (1-9)
+  for(let lvl=1; lvl<=9; lvl++){
+    const ld = spells[`level_${lvl}`];
+    if(!ld) continue;
+    const hasSlots = ld.slots && (ld.slots.max>0 || ld.slots.current>0);
+    const hasSpells = Array.isArray(ld.spells) && ld.spells.length>0;
+    if(!hasSlots && !hasSpells) continue;
+
+    // Ensure levels up to lvl are created (addSpellLevel always adds the next sequential one)
+    while(!spellLevelIds.includes(lvl)) addSpellLevel();
+
+    const maxEl = document.getElementById(`slots-max-${lvl}`);
+    const curEl = document.getElementById(`slots-cur-${lvl}`);
+    if(maxEl) maxEl.value = ld.slots ? (ld.slots.max||0) : 0;
+    if(curEl) curEl.value = ld.slots ? (ld.slots.current||0) : 0;
+
+    (ld.spells||[]).forEach(s=>{
+      if(!s||!s.name) return;
+      addSpell(lvl);
+      const rows = document.querySelectorAll(`#spelllist-${lvl} .spell-row`);
+      const row  = rows[rows.length-1];
+      if(row){
+        const inputs = row.querySelectorAll('input[type="text"]');
+        if(inputs[0]) inputs[0].value = s.name;
+        if(inputs[1]) inputs[1].value = s.description||'';
+        if(inputs[2]) inputs[2].value = s.range||'';
+        if(inputs[3]) inputs[3].value = s.duration||'';
+        const cb = row.querySelector('input[type="checkbox"]');
+        if(cb) cb.checked = s.prepared!==false;
+      }
+    });
+  }
+
+  // ── 11. Conditions ────────────────────────────────────────────
+  CONDITIONS.forEach(c=>{
+    const cb = document.getElementById(`cond-${c}`);
+    if(cb){
+      cb.checked = !!cond[c];
+      toggleConditionStyle(c);
+    }
+  });
+  document.getElementById('exhaustionLevel').value = cond.exhaustion||0;
+
+  // ── 12. Notes ─────────────────────────────────────────────────
+  document.getElementById('noteBiography').value = notes.biography||'';
+  document.getElementById('noteBonds').value     = notes.bonds    ||'';
+  document.getElementById('noteIdeals').value    = notes.ideals   ||'';
+  document.getElementById('noteFlaws').value     = notes.flaws    ||'';
+  document.getElementById('noteTreasures').value = notes.treasures||'';
+
+  // ── 13. Refresh all calculations ──────────────────────────────
+  updateAllCalculations();
+  refreshConditionsGrid();
+  updateStatus();
+
+  // Scroll to top so user sees the populated form
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function escYaml(s){ return s.replace(/\\/g,'\\\\').replace(/"/g,'\\"'); }
+
+function exportYaml(){
+  const name=document.getElementById('charName').value||'New Character';
+  const cls=document.getElementById('charClass').value||'Warlock';
+  const level=getLevel();
+  const prof=getProf();
+  const xp=parseInt(document.getElementById('charXP').value)||0;
+  const bg=document.getElementById('charBackground').value||'Sage';
+  const align=document.getElementById('charAlignment').value||'True Neutral';
+  const player=document.getElementById('playerName').value||'';
+  const campaign=document.getElementById('campaignName').value||'';
+  const multiStr=document.getElementById('charMulticlass').value.trim();
+  const multiArr=multiStr?multiStr.split(',').map(s=>s.trim()).filter(Boolean):[];
+
+  const scores=getAllScores();
+  const hpMax=parseInt(document.getElementById('combatHPMax').value)||1;
+  const hpCur=parseInt(document.getElementById('combatHPCurrent').value)||hpMax;
+  const ac=parseInt(document.getElementById('combatAC').value)||10;
+  const init=parseInt(document.getElementById('combatInit').value)||0;
+  const armorName=document.getElementById('armorSelect').value.split('|')[0]||'No Armor';
+
+  const weapons=getWeapons();
+  const inventory=getInventory();
+  const features=getFeatures();
+  const cantrips=getCantrips();
+  const spellAbility=document.getElementById('spellAbility').value;
+  const spellAbilityDisplay=spellAbility.charAt(0).toUpperCase()+spellAbility.slice(1);
+  const spellSaveDC=parseInt(document.getElementById('spellSaveDC').value)||12;
+  const spellAtk=parseInt(document.getElementById('spellAtkBonus').value)||0;
+
+  function skillEntry(sk){
+    const mod=getMod(scores[SKILL_MAP[sk]])+(skillProf.has(sk)?prof:0);
+    return `  ${sk}: {modifier: ${mod}, proficient: ${skillProf.has(sk)}}`;
+  }
+  function saveEntry(ab){
+    const isProficient=getClassSaves().has(ab);
+    const mod=getMod(scores[ab])+(isProficient?prof:0);
+    return `  ${ab}: {modifier: ${mod}, proficient: ${isProficient}}`;
+  }
+
+  let y=`# D&D 5e Character Sheet\n`;
+  y+=`character:\n`;
+  y+=`  name: "${escYaml(name)}"\n`;
+  y+=`  class: "${escYaml(cls)}"\n`;
+  if(multiArr.length>0){
+    y+=`  multiclass:\n`;
+    multiArr.forEach(m=>{ y+=`    - "${escYaml(m)}"\n`; });
+  } else {
+    y+=`  multiclass: []\n`;
+  }
+  y+=`  level: ${level}\n`;
+  y+=`  experience: ${xp}\n`;
+  y+=`  background: "${escYaml(bg)}"\n`;
+  y+=`  alignment: "${escYaml(align)}"\n`;
+  y+=`  player: "${escYaml(player)}"\n`;
+  y+=`  campaign: "${escYaml(campaign)}"\n`;
+  y+=`  lastPlayed: null\n\n`;
+
+  y+=`abilities:\n`;
+  ABILITIES.forEach(ab=>{ y+=`  ${ab}: ${scores[ab]}\n`; });
+
+  y+=`\ncombat:\n`;
+  y+=`  ac: ${ac}\n`;
+  y+=`  hp:\n`;
+  y+=`    current: ${hpCur}\n`;
+  y+=`    max: ${hpMax}\n`;
+  y+=`  initiative: ${init}\n`;
+  y+=`  proficiencyBonus: ${prof}\n`;
+
+  y+=`\nskills:\n`;
+  Object.keys(SKILL_MAP).forEach(sk=>{ y+=skillEntry(sk)+'\n'; });
+
+  y+=`\nsaves:\n`;
+  ABILITIES.forEach(ab=>{ y+=saveEntry(ab)+'\n'; });
+
+  y+=`\nresistances:\n  damage: []\n  conditions: []\n`;
+
+  y+=`\nequipment:\n`;
+  y+=`  armor: "${escYaml(armorName==='none'?'No Armor':armorName)}"\n`;
+  y+=`  weapons:\n`;
+  weapons.forEach(w=>{
+    y+=`    - name: "${escYaml(w.name)}"\n`;
+    y+=`      type: "${w.type}"\n`;
+    y+=`      bonus: ${w.bonus}\n`;
+    y+=`      damage: "${w.damage}"\n`;
+    y+=`      damageType: "${w.damageType}"\n`;
+    y+=`      equipped: ${w.equipped}\n`;
+  });
+  if(weapons.length===0) y+=`    []\n`;
+  y+=`  inventory:\n`;
+  inventory.forEach(i=>{
+    y+=`    - name: "${escYaml(i.name)}"\n`;
+    y+=`      quantity: ${i.quantity}\n`;
+  });
+  if(inventory.length===0) y+=`    []\n`;
+
+  y+=`\nfeatures:\n`;
+  features.forEach(f=>{
+    y+=`  - name: "${escYaml(f.name)}"\n`;
+    y+=`    description: "${escYaml(f.description)}"\n`;
+  });
+  if(features.length===0) y+=`  []\n`;
+
+  y+=`\nspellcasting:\n`;
+  y+=`  ability: "${spellAbilityDisplay}"\n`;
+  y+=`  spellSaveDC: ${spellSaveDC}\n`;
+  y+=`  spellAttackBonus: ${spellAtk}\n`;
+  y+=`  spells:\n`;
+  y+=`    cantrips:\n`;
+  if(cantrips.length>0){
+    cantrips.forEach(c=>{
+      y+=`      - name: "${escYaml(c.name)}"\n`;
+      y+=`        description: "${escYaml(c.description)}"\n`;
+      y+=`        prepared: ${c.prepared}\n`;
+    });
+  } else {
+    y+=`      []\n`;
+  }
+  spellLevelIds.forEach(lvl=>{
+    const spells=getSpellsByLevel(lvl);
+    const maxSlots=parseInt(document.getElementById(`slots-max-${lvl}`)?.value)||0;
+    const curSlots=parseInt(document.getElementById(`slots-cur-${lvl}`)?.value)||0;
+    const levelKey=`level_${lvl}`;
+    y+=`    ${levelKey}:\n`;
+    y+=`      slots: {current: ${curSlots}, max: ${maxSlots}}\n`;
+    y+=`      spells:\n`;
+    if(spells.length>0){
+      spells.forEach(s=>{
+        y+=`        - name: "${escYaml(s.name)}"\n`;
+        y+=`          prepared: ${s.prepared}\n`;
+        if(s.description) y+=`          description: "${escYaml(s.description)}"\n`;
+        if(s.range) y+=`          range: "${escYaml(s.range)}"\n`;
+        if(s.duration) y+=`          duration: "${escYaml(s.duration)}"\n`;
+      });
+    } else {
+      y+=`        []\n`;
+    }
+  });
+
+  y+=`\nconditions:\n`;
+  CONDITIONS.forEach(c=>{
+    y+=`  ${c}: ${document.getElementById(`cond-${c}`)?.checked||false}\n`;
+  });
+  y+=`  exhaustion: ${parseInt(document.getElementById('exhaustionLevel').value)||0}\n`;
+
+  y+=`\nnotes:\n`;
+  y+=`  biography: "${escYaml(document.getElementById('noteBiography').value||'')}"\n`;
+  y+=`  bonds: "${escYaml(document.getElementById('noteBonds').value||'')}"\n`;
+  y+=`  ideals: "${escYaml(document.getElementById('noteIdeals').value||'')}"\n`;
+  y+=`  flaws: "${escYaml(document.getElementById('noteFlaws').value||'')}"\n`;
+  y+=`  treasures: "${escYaml(document.getElementById('noteTreasures').value||'')}"\n`;
+
+  // Download
+  const blob=new Blob([y],{type:'text/yaml;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`${name.replace(/\s+/g,'_').toLowerCase()}.yaml`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  document.getElementById('statusMsg').textContent=`✓ Exported ${name.replace(/\s+/g,'_').toLowerCase()}.yaml successfully!`;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════════
+function init(){
+  buildAbilityGrids();
+  buildSkillsGrid();
+  buildSavesGrid();
+  buildConditionsGrid();
+
+  // Default to Warlock since that's the template
+  document.getElementById('charClass').value='Warlock';
+  document.getElementById('charAlignment').value='Neutral Evil';
+  document.getElementById('charBackground').value='Sage';
+  onClassChange();
+  onBackgroundChange();
+
+  // Default weapon (Dagger)
+  addWeapon({name:'Dagger',type:'Melee',bonus:'+3',damage:'1d4+1',dmgType:'piercing'});
+
+  // Default inventory
+  DEFAULT_INVENTORY.forEach(i=>addInventoryItem(i));
+
+  // Build cantrip picker, then pre-add Eldritch Blast for Warlock default
+  buildSpellPickerOptions('cantrip');
+  document.getElementById('cantripPickerSelect').value='Eldritch Blast';
+  previewSpellPick('cantrip');
+  addSpellFromPicker('cantrip');
+
+  // Add level 1 slot block (this also builds the level 1 spell picker)
+  addSpellLevel();
+  // Pre-add Hex for Warlock default
+  document.getElementById('spellPickerSelect1').value='Hex';
+  previewSpellPick('level1');
+  addSpellFromPicker('level1');
+
+  updateAllCalculations();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

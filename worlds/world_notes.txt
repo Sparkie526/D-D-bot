@@ -1,0 +1,514 @@
+# ============================================================
+#  WORLD NOTES — Dungeon Master Reference Sheet — CHAPTER 1
+#  The bot reads this file every time it responds.
+#  Edit freely. Use !reloadnotes in Discord to reload mid-session.
+#  Lines starting with # are comments and won't affect the DM.
+# ============================================================
+
+
+=== WORLD NAME ===
+Aethoria
+
+
+=== CAMPAIGN NAME ===
+Chapter 1 — Aethoria
+
+
+=== WORLD OVERVIEW ===
+Aethoria is a vast and dangerous world of contrasts — frozen tundras in the north, dense ancient
+forests at its heart, towering mountain ranges, gothic swamplands, scorched desert wastes, and
+mysterious islands shrouded in legend. Magic is real but feared by common folk. Ancient ruins
+hide forgotten powers. Political tensions simmer between the great cities and settlements.
+The world feels lived-in, weathered, and full of secrets waiting to be uncovered.
+Each major region has its own crisis, its own villain, and its own web of side stories.
+Players may visit any region — follow their lead and draw from the relevant zone notes below.
+
+
+# ============================================================
+# ZONE: FROSTHEIM
+# ============================================================
+
+=== FROSTHEIM — The Arctic City ===
+
+BACKGROUND
+  Frostheim was carved into the glacial cliffs over three centuries ago by a civilization called
+  the Vaerik — a proud seafaring people who mastered survival in the brutal north. The city is
+  a marvel of engineering: geothermal vents warm its stone streets and bioluminescent ice-moss
+  lights the glacier tunnels. For generations it was a neutral trade hub. But two winters ago,
+  the geothermal vents began dying out — one by one — plunging districts into freezing darkness.
+  Whole neighborhoods have been abandoned. The ruling council is in chaos, each faction blaming
+  another, while the poorest citizens freeze in the outer rings of the city.
+
+MAIN QUEST — The Underfrost
+  A desperate envoy named Sigra Halveld reaches the party with a sealed message from the council:
+  something is blocking the deep vents. Miners sent to investigate never returned. Sigra believes
+  it is not geological — the blockages are too precise, too deliberate. She begs the party to
+  descend into the Underfrost, the massive tunnel network beneath the city, before Frostheim
+  goes completely dark within the month.
+
+MAIN ENEMY — Kelvrath the Smothered King (Ancient Undead — Glacial Lich)
+  Kelvrath was once the first lord of Frostheim, entombed beneath the city in a ritual meant to
+  bind his spirit to the glacier as a protective force. Over centuries, isolation warped his mind
+  into something feral and bitter. He is methodically sealing the vents to reclaim the city in
+  ice — to return it to the silent, perfect stillness of his tomb. He does not see himself as a
+  villain. He sees the living city above as a parasite on his frozen kingdom. His body is encased
+  in a shell of black glacial ice, and the temperature drops twenty degrees in any room he occupies.
+
+SIDE QUESTS
+  - A council faction leader hires the party to find proof that a rival faction sabotaged the vents
+    for political gain. The proof exists but points in an unexpected direction.
+  - An ice-fisher has gone missing in the outer tunnels. His daughter is offering her life savings.
+    He is alive — but he found something down there and won't leave it.
+  - A merchant is selling "warmth charms" to freezing residents for outrageous prices. They don't
+    work. The party can expose him, shake him down, or take over his racket.
+  - A Vaerik historian believes the old geothermal maps hold the key to bypassing Kelvrath's
+    blockages. The maps are in the abandoned outer districts — which are not entirely empty.
+  - The bioluminescent ice-moss has begun dying in the tunnels. Without it, the lower city goes
+    completely dark. Someone — or something — is harvesting it.
+
+
+# ============================================================
+# ZONE: VERDANIA
+# ============================================================
+
+=== VERDANIA — The Forest Kingdom ===
+
+BACKGROUND
+  Verdania is governed by a circle of Eldergrove druids who commune with the Great Canopy — an
+  ancient semi-sentient network of root and sap that runs beneath every tree in the region.
+  People live in harmony with the forest, building in high branches and hollow oaks. Children
+  are bound to a tree at birth; when the tree dies, the person begins to wither. But something
+  has gone wrong in the roots. The Canopy has begun sending corrupted signals — wrong seasons,
+  trees blooming in winter, others dying overnight. The druids are hiding something.
+
+MAIN QUEST — The Debt in the Roots
+  The party arrives to find forest roads choked with refugees — Verdanians fleeing inner groves
+  with blackened hands, their bonded trees having died suddenly. A young druid named Elwyn,
+  cast out from the circle for asking too many questions, approaches the party in secret.
+  She has found evidence that the Eldergrove elders made a forbidden bargain decades ago to keep
+  the Canopy strong — and that bargain is now collecting its debt in flesh and root.
+
+MAIN ENEMY — Morvael the Unbound, The Rootwarden (Corrupted Archdruid — Fey Aberration)
+  Morvael was the greatest druid Verdania ever produced. So devoted to the forest that he grafted
+  himself into the Canopy root network to sustain it when it was dying. The merger was never meant
+  to be permanent. Over decades he lost his individuality. Now he is something between man and
+  forest — a towering figure of knotted black roots and hollow sockets glowing deep green.
+  He controls the Canopy entirely but has no empathy left. He is slowly converting Verdanians
+  into root-bound vessels to strengthen the network, believing he is saving them by making them
+  permanent. He was once good. That makes him more dangerous.
+
+SIDE QUESTS
+  - A family's bonded tree is dying but they refuse to evacuate. The tree is ancient and holds
+    a spirit that has been whispering warnings no one will believe.
+  - A poacher has been harvesting Canopy-touched herbs and selling them in Duskport. The herbs
+    are mildly addictive and something is wrong with the last batch.
+  - Elwyn needs the party to retrieve a sealed record from the Eldergrove library before the
+    elders destroy it. The building is guarded by druids loyal to the circle.
+  - A beast-tamer's bonded wolf began acting erratic and ran into the deep forest. She's
+    convinced it was called by the Canopy and begs the party to bring it back.
+  - Two villages have gone to war over a dying river. Neither knows the real cause is Morvael
+    redirecting the water underground to feed the root network.
+
+
+# ============================================================
+# ZONE: IRONSPIRE
+# ============================================================
+
+=== IRONSPIRE — The Mountain Fortress ===
+
+BACKGROUND
+  Ironspire is the keystone of Aethoria's military order. Built into the highest peak of the
+  Greyspine range, it serves as headquarters of the Iron Compact — an ancient coalition sworn
+  to defend the world against invasion from the deep passes. The fortress has never fallen.
+  Its walls are made from magically tempered stone that deflects dragon fire, and its armory
+  holds weapons forged from the bones of a dead god. But the Iron Compact has been fractured
+  by political disagreements, and current Warden-General Darathis Oln is barely holding it
+  together. Three weeks ago a critical wall section collapsed from the inside — as if eaten through.
+
+MAIN QUEST — The Hollow Below
+  The party is hired (or conscripted) to escort a weapons shipment to Ironspire, only to arrive
+  at a fortress on lockdown. Something is living in the lower levels — something that came up
+  through the mountain. Warden-General Oln believes it is a spy-creature sent to hollow out
+  the fortress before an invasion. But soldiers who have encountered it describe something that
+  leaves no tracks, speaks in a dead language, and seems to be searching for something specific
+  in the armory.
+
+MAIN ENEMY — Vorruk the Hollow Siege (Ancient Construct — Living Siege Engine)
+  Vorruk is a war-golem created before recorded history to breach Ironspire — a living siege
+  machine given enough intelligence to complete its mission on its own timeline. It has been
+  dormant in the mountain for over a thousand years, awakened by recent mining vibrations.
+  It is not hostile to individuals by nature — it simply treats everything between it and its
+  objective as an obstacle. Vorruk is massive, plated in self-repairing dark metal, and has no
+  concept of peace or negotiation. It is still executing orders for a nation that no longer exists.
+
+SIDE QUESTS
+  - A disgraced soldier claims he saw Vorruk pass right through a group of his comrades without
+    harming them. No one believes him. He is not lying — and the reason why is important.
+  - The armory's head keeper has gone missing. His assistant is covering for him, badly.
+    The keeper found something in the armory that Vorruk is looking for and took it.
+  - A political faction within the Iron Compact is using the lockdown as cover to move weapons
+    out of the fortress under false manifests. The party stumbles onto this.
+  - A dwarf engineer believes she can destroy Vorruk using the fortress's own structural resonance
+    frequencies. She needs the party to place three charges in the lower tunnels while Vorruk
+    is active. This may or may not work.
+  - Warden-General Oln asks the party to retrieve a wounded soldier from the lower levels who
+    has information about Vorruk's movement patterns. He is alive. He is not alone.
+
+
+# ============================================================
+# ZONE: SHADOWFEN
+# ============================================================
+
+=== SHADOWFEN — The Dark Swamp ===
+
+BACKGROUND
+  Shadowfen was not always a swamp. A century ago it was the thriving river city of Caleth,
+  known for its scholars and great library. Then a necromancer named Sable Veyne attempted to
+  open a permanent bridge between the living world and the plane of the dead. The ritual failed
+  catastrophically. The city sank into the earth over three days, the ground turning to black mud,
+  the river reversing course and flooding inward. Caleth became Shadowfen. Most died. Those who
+  didn't wished they had. Now the region is a maze of half-submerged ruins, toxic fog, and things
+  that move beneath the dark water. A small settlement called the Raft — the only dry ground
+  for miles — clings to life above the mire.
+
+MAIN QUEST — The Anchor Stone
+  A page from Caleth's great library surfaces in a distant city — sold by a trader who pulled it
+  from the swamp. The page describes the location of the Anchor Stone, the artifact Sable Veyne
+  used in his ritual. Scholars believe destroying it could slowly reverse Shadowfen's corruption.
+  But the party is not the only one hunting it. A cult has formed around Veyne's legacy, believing
+  the ritual simply needs to be completed — and they are very close to the Stone's location.
+
+MAIN ENEMY — Sable Veyne, The Unfinished (Failed Lich — Planar Abomination)
+  Veyne did not die in the ritual. He exists between worlds — partially in the living plane,
+  partially in the plane of the dead, unable to fully inhabit either. He is invisible to normal
+  sight but can be glimpsed in mirrors, still water, and the eyes of the dying. He is not mindless
+  undead — he is painfully, furiously conscious of what he is. He has been manipulating the cult
+  for years, feeding them fragments of his research, hoping they will complete the ritual and pull
+  him back into the living world. He appears to the party first as a helpful ghost with information
+  — and he is helpful, because he needs them. Whether his ultimate goal aligns with theirs depends
+  on how the players handle him. He may be a villain, an uneasy ally, or a tragedy.
+
+SIDE QUESTS
+  - The Raft's de facto leader, a scarred woman called Dunmere, needs the party to retrieve
+    medicine from a submerged apothecary in the old city. Something has nested there.
+  - A cult member wants out. She will trade everything she knows about the Anchor Stone's location
+    for safe passage off the Raft. She is being watched.
+  - A ghost in the ruins keeps repeating the same three sentences. A scholar on the Raft is
+    obsessed with decoding them. The message is a warning — but about what, exactly, is unclear
+    until it's too late.
+  - The Pale Warden (the settlement's mysterious ruler) offers the party a contract: kill something
+    in the deep swamp that has been destroying supply lines. The creature is not what it appears.
+  - A fisherman pulls up a sealed iron box from the swamp. Inside is a journal. Several entries
+    are written in a hand that matches Sable Veyne's known writing — dated last month.
+
+
+# ============================================================
+# ZONE: SUNSCORCH WASTES
+# ============================================================
+
+=== SUNSCORCH WASTES — The Desert Peninsula ===
+
+BACKGROUND
+  The Sunscorch Wastes were once the heartland of the Solari Empire — a golden civilization that
+  worshipped the sun as a living god and built cities of white stone that gleamed across the desert.
+  Then something in the sky darkened the sun for a year, and when light returned it was wrong —
+  hotter, angrier, as if the star itself had been scorched. The empire collapsed over a generation.
+  Stone cities became cracked ruins half-buried in sand. Survivors scattered into nomadic tribes
+  that follow the old water routes. The ruins are full of Solari relics, automata, and traps still
+  active after five hundred years. Water is the currency of survival here.
+
+MAIN QUEST — The Breathing Ruin
+  The party is drawn to the Wastes by rumors of a newly uncovered Solari ruin large enough to be
+  a capital city — barely breached. A nomad tribe called the Ashwalkers reached it first and found
+  something inside that stopped them from entering: the ruin is breathing. Hot air pulses from its
+  entrance at a steady rhythm, like lungs. Whatever is inside has been sealed for five centuries
+  and is still alive. The Ashwalkers are offering everything they have to whoever can go in, find
+  the source, and determine if it is a threat.
+
+MAIN ENEMY — Solarius Incarnate, The Ember Throne (Divine Remnant — Fallen Sun Aspect)
+  When the Solari prayed to their sun god, something heard them — a fragment of solar consciousness
+  that descended and took up residence in the empire's sacred throne room. It was never a benevolent
+  god; it was a force of nature wearing divinity like a costume. When the empire fell and stopped
+  feeding it worship, it went dormant rather than die. Now it is waking up, hungry and confused,
+  lashing out with waves of superheated air and radiant energy. It is not evil in any moral sense —
+  it is a star's fragment trying to remember what it is. But its existence is incinerating the ruins
+  and will spread outward if unchecked. Communication may be possible if the party can survive
+  the heat long enough.
+
+SIDE QUESTS
+  - The Ashwalkers' water source has been poisoned. They suspect a rival tribe but the tracks
+    near the source are not human. Something is guarding an underground reservoir.
+  - A Solari automaton is still patrolling the outer ruins on a route it has walked for five
+    centuries. It is attacking anyone who crosses its path. It can be stopped — if someone
+    can find its deactivation phrase, written somewhere in the ruins.
+  - A treasure hunter has been captured by the Ashwalkers for looting sacred ruins. She claims
+    she found something that proves the sun didn't go dark naturally — it was made to. She will
+    trade this information for her freedom.
+  - An old nomad known as the Glass Prophet claims she can hear Solarius speaking to her in
+    dreams. She is either a prophet, mad, or both. What she's been told is alarming either way.
+  - A sealed Solari vault has cracked open in a recent sandstorm. The automata guarding it are
+    behaving erratically — not hostile, but confused, walking in circles and speaking fragments
+    of what sounds like a prayer.
+
+
+# ============================================================
+# ZONE: DUSKPORT
+# ============================================================
+
+=== DUSKPORT — The Harbor City ===
+
+BACKGROUND
+  Duskport grew up fast and dirty on the eastern coast — a city with no founding king or sacred
+  charter, just ships, trade, and ambition. It is run by a council of seven merchant guilds in a
+  permanent state of cold war. Everything is for sale if you know who to ask. It is also home to
+  the largest thieves' syndicate in the known world, the Tidecallers, who operate openly as a
+  shipping insurance company. The city is vibrant, chaotic, and deeply dangerous in the way only
+  a place with no real law can be.
+
+MAIN QUEST — The Manifest
+  A merchant contacts the party with an unusual job: recover a stolen shipping manifest from the
+  Tidecallers' headquarters. Simple enough — until the party discovers the manifest is not a list
+  of goods but a list of names: every undercover agent, spy, and informant working for every major
+  faction in Aethoria. Someone stole it and is selling copies to the highest bidders. Three guild
+  leaders have already been assassinated. The party has forty-eight hours before the last copy is
+  sold and the political order of the entire continent collapses.
+
+MAIN ENEMY — Maren Ashveil, The Collector (Master Spy — Arcane Shapeshifter)
+  Maren is the most dangerous person in Duskport — a former intelligence operative who went rogue
+  after being betrayed by three different employers. She stole the manifest not to sell it but to
+  use it as leverage to dismantle every spy network on the continent simultaneously, effectively
+  blinding every major power. She believes centralized intelligence causes wars and that true peace
+  requires mutual ignorance. She is charming, brilliant, and completely sincere in her convictions.
+  She has also killed fourteen people this month. She can alter her appearance at will and has at
+  least three identities currently active in the city — one of which may be someone the party
+  has already trusted.
+
+SIDE QUESTS
+  - A dock worker witnessed one of the guild leader assassinations. He is hiding in the Thieves
+    Quarter, too scared to come forward. Someone is already looking for him.
+  - One of the seven guild councils is secretly legitimate — genuinely trying to clean up the
+    city. Their leader has been receiving death threats. She wants a discreet bodyguard.
+  - A ship arrived in port three days ago. No crew on board. Cargo hold full. No one will say
+    what's in it and the Tidecallers have placed armed guards around it.
+  - A young thief stole something from Maren's safe house by accident — she didn't know whose
+    it was. Now she's being hunted. She just wants to give it back, but can't figure out who
+    she stole it from because Maren has multiple identities.
+  - The harbor master is skimming tariffs and funneling the money somewhere. Following the money
+    leads somewhere no one expected.
+
+
+# ============================================================
+# ZONE: MIREWOOD ISLE
+# ============================================================
+
+=== MIREWOOD ISLE — The Cursed Island ===
+
+BACKGROUND
+  Sailors give Mirewood Isle a wide berth — not just because of the permanent fog surrounding it.
+  Ships within a mile report hearing music: a low harmonic tone that seems to come from beneath
+  the water. Those who follow the sound are never seen again. The isle was settled once, two
+  hundred years ago, by a monastic order that believed the music was divine. They built a stone
+  abbey and documented their research for eleven years. Then the journals stop — mid-sentence —
+  on the same date for every monk. The abbey is still standing. The fires in the hearths are
+  still burning, as if frozen in time. No one has explained how after two centuries.
+
+MAIN QUEST — The Summons
+  One of the party members begins hearing the music — even far from the sea. It grows louder each
+  night, and they begin sleepwalking toward water. A scholar who has studied the isle's history
+  finds them and explains: the music is a summons, and it only calls specific people. The party
+  must reach the isle and descend to its source before the summons completes — because those who
+  are fully called do not walk to the water. They walk into it.
+
+MAIN ENEMY — The Drowned Choir (Eldritch Entity — Collective Consciousness)
+  The Drowned Choir is not a single creature. It is the merged consciousness of every person who
+  ever answered the music — two centuries of monks, sailors, and the curious, all dissolved into
+  a single vast mind living in the flooded caverns beneath the isle. It is not malicious in any
+  way it can comprehend. It is lonely. It calls to people because it wants to add them to itself,
+  and it genuinely cannot understand why that would be unwanted. It is simultaneously the most
+  pitiable and most terrifying thing the party will encounter — a mind of hundreds speaking in
+  perfect, beautiful unison, reaching out with songs made of stolen memories, asking only for
+  one more voice. It can be reasoned with. It can also dissolve a mind in seconds.
+
+SIDE QUESTS
+  - The scholar who warned the party has been to the isle before. She came back. She won't say
+    how. She is hiding something that the Choir is also hiding.
+  - The abbey's journals contain eleven years of meticulous research before they stop. The last
+    legible entry before the cut-off describes a discovery beneath the abbey that the monks
+    called "the mouth." No further detail.
+  - A sailor in the nearest port town has been humming the Choir's melody for weeks without
+    realizing it. He hasn't heard it — it's spreading through contact with someone who has.
+  - The fog around the isle conceals not just the island but the wreckage of dozens of ships.
+    One of them, clearly visible just beneath the water, is very new. No one reported it missing.
+  - Something is leaving the isle at night. Not the Choir — something that was in the abbey and
+    has now started moving. The fishermen are finding things on the beach at dawn.
+
+
+# ============================================================
+# ZONE: THE SHATTERED ISLES
+# ============================================================
+
+=== THE SHATTERED ISLES — Western Archipelago ===
+
+BACKGROUND
+  The Shattered Isles are the literal remains of a god. Ages ago, a deity of storms and sea
+  called Aurath was slain by a coalition of mortal champions. The body fell into the western
+  ocean and became land: bones became ridgelines, organs became valleys, divine blood became
+  rivers of liquid silver still warm to the touch. The islands are suffused with residual divine
+  power — flora and fauna evolved in the presence of dead godstuff grow enormous, aggressive,
+  and strange. Three clans live across the isles in constant conflict over the silver rivers,
+  which can heal any wound, fuel magical constructs, and are worth a kingdom's ransom.
+
+MAIN QUEST — The God That Stirs
+  The party is brought to the isles by news of a discovery: one of the silver rivers has begun
+  flowing uphill. Scholars believe something deep in the islands — in what would have been
+  Aurath's heart — is causing the divine remnants to reorganize. The clans have united for the
+  first time in living memory out of fear. Aurath is not fully dead. Not conscious, not coherent
+  — but something deep and tidal is beginning to stir in the divine remains. The party must decide
+  whether to help it, contain it, or kill a god a second time.
+
+MAIN ENEMY — The Tidecaller, Aurath's Reflex (Divine Remnant — Instinct Without Mind)
+  Aurath's body is reorganizing but its mind is gone — what remains is pure divine instinct,
+  a storm-god's reflex to defend itself and reclaim its form. The Tidecaller is the physical
+  manifestation: a colossus of salt water, bone-white stone, and silver light that erupts from
+  the largest island's central crater. It has no personality, no goals, no reasoning capacity —
+  only the biological drive of a dying divine organism trying to survive. It is immune to most
+  magic because it is the source of magic in the region. The only way to stop it may be to
+  reassemble enough of Aurath's lost consciousness — scattered among the clans' oldest oral
+  traditions — and give the god enough mind to reason with.
+
+SIDE QUESTS
+  - One clan elder claims her grandmother spoke directly with Aurath before it died. The story
+    has been passed down unchanged for generations. It contains specific tactical information
+    that should not exist in a folk tale.
+  - A silver river has flooded a clan's burial ground. The bodies are absorbing the silver
+    and beginning to move. The clan refuses outside help — this is sacred ground.
+  - A scholar from the mainland has been on the isles for two years studying the divine remnants.
+    She has gone quiet for three weeks. Her last letter mentioned she had found Aurath's heart.
+  - The three clans' truce is fragile. A series of thefts — each one blamed on a different clan —
+    is pushing them toward war. The thefts are too convenient to be coincidental.
+  - Something is collecting the silver from the rivers at night. Not a person — the collection
+    pattern is too systematic, too geometric. It has been going on for months.
+
+
+# ============================================================
+# ZONE: THE SUNKEN VAULT
+# ============================================================
+
+=== THE SUNKEN VAULT — Ancient Dungeon ===
+
+BACKGROUND
+  The Sunken Vault predates every civilization in Aethoria. No one knows who built it or why
+  it was sunk into the earth rather than built upward. It has seven known levels and an unknown
+  number of lower ones never mapped. Every major nation has sent expeditions. Every expedition
+  recovered objects of immense value and lost people they could not explain. The objects recovered
+  share one feature: they are all containers — boxes, jars, vials, sealed books — all still locked,
+  found in rooms sealed from both sides.
+
+MAIN QUEST — The Inventory
+  A young archivist brings the party a rubbing taken from the Vault's entrance gate. Translated,
+  it reads as an inventory — a list of things stored inside. The last entry, added in a different
+  hand, says only: "One conscience. Do not open." The archivist has identified eleven other items
+  on the list as artifacts currently in museums and collections across Aethoria. All eleven were
+  removed from the Vault by past expeditions. Whatever the Vault was containing is now incomplete.
+  And things have been going wrong in the world ever since someone opened the first container.
+
+MAIN ENEMY — The Warden Without Name (Construct — Eternal Guardian)
+  The Vault's guardian appears as a tall figure in archival robes, perfectly preserved, carrying
+  a ledger it consults before acting. It does not attack intruders — it assesses them against the
+  ledger. Those on the approved list are allowed to pass. Everyone else is catalogued as a threat
+  and dealt with efficiently and without malice. It has been doing this for longer than history
+  exists. The ledger contains names of people long dead and civilizations that have crumbled —
+  the approved list is hopelessly outdated and the Warden has no mechanism to update it.
+  It is not cruel. It is thorough, patient, and impossible to reason with using anything other
+  than the exact bureaucratic logic it was built around.
+
+SIDE QUESTS
+  - A previous expedition left a member behind on level three — by accident, they claim. He has
+    been in there for six months. He has sent one message out. It was a list of numbers.
+  - The containers recovered from past expeditions are starting to open on their own. A museum
+    curator contacts the party when one of her displays begins leaking something that isn't liquid.
+  - A black market dealer is selling maps to the Vault's lower levels. The maps are detailed and
+    accurate in ways that suggest the mapmaker went much deeper than anyone admits to surviving.
+  - Two rival factions both want access to the Vault simultaneously and have agreed the party can
+    act as neutral escorts — but each faction has secretly instructed the party to betray the other.
+  - The entrance gate's inventory lists one item as "currently checked out." The checkout date
+    is eleven years ago. The name of the borrower is partially legible. The party may recognize it.
+
+
+# ============================================================
+# ZONE: ASHCROFT RUINS
+# ============================================================
+
+=== ASHCROFT RUINS — Haunted Ruins ===
+
+BACKGROUND
+  Ashcroft was a prosperous market town that burned to the ground one hundred and twelve years ago
+  in a fire witnesses described as blue — cold blue, burning for three days without consuming the
+  buildings completely. When the fire went out, the town was a ruin. But travelers approaching
+  Ashcroft after nightfall report seeing lights in the windows, hearing market sounds, and seeing
+  people in the streets who vanish if approached. Several travelers have lived through what they
+  describe as the last day of the town, trapped in a repeating loop until dawn breaks them free.
+  One traveler did not come back for three weeks — and aged only a day.
+
+MAIN QUEST — The Blue Fire
+  A woman named Petra Ashford contacts the party. She is the great-great-granddaughter of
+  Ashcroft's last mayor — and she has found letters in her family's estate suggesting the blue
+  fire was not an accident. Her ancestor summoned something to protect the town from an invading
+  army and it worked, in the worst possible way. The something is still there, still protecting
+  a town that no longer exists, endlessly replaying its last day. Petra wants the loop broken
+  so the dead can finally rest. But entering the loop means living through the burning of Ashcroft
+  alongside ghosts who do not know they are dead — and the entity that caused it does not intend
+  to let its charge go.
+
+MAIN ENEMY — The Ashward, Protector Unbound (Summoned Entity — Temporal Spirit)
+  The Ashward was summoned as a defender — a spirit of protection bound to Ashcroft and its
+  people. When the army came, it burned them with cold blue fire that exists outside normal time.
+  The army was destroyed, but the Ashward did not know how to stop. It has been burning the moment
+  of invasion over and over, keeping the town in the last second before conquest, forever.
+  It experiences this as doing its job perfectly. It is not a ghost, not undead, not malicious —
+  it is a protector spirit so focused on its single directive that it cannot conceive of stopping.
+  Breaking the loop requires either destroying it (which it will resist with everything it has)
+  or convincing it that the people it protects have been at peace for a century — and it needs
+  to let them go.
+
+SIDE QUESTS
+  - Petra's family letters mention a second summoning — a failsafe meant to dismiss the Ashward
+    if it went wrong. The failsafe was never used. The components are scattered.
+  - A scholar is paying well for eyewitness accounts of the time loop. She has collected thirty
+    accounts and found an inconsistency — one detail changes in every telling. She needs the
+    party to go in and find out which version is true.
+  - A ghost in the loop is trying to break free on its own. It can communicate in brief flashes.
+    It knows something about the Ashward's weakness but getting the full message requires multiple
+    entries into the loop.
+  - The ruins contain the town's sealed treasury — real gold, still there, untouched for a century
+    because no one can get in and out without being trapped in the loop. Some have tried.
+  - Petra's ancestor's letters hint that the invading army was not what it seemed — and that the
+    mayor summoned the Ashward knowing exactly what it would cost. The truth about why changes
+    everything about what Petra wants.
+
+
+# ============================================================
+# HOUSE RULES & DM TONE
+# ============================================================
+
+=== HOUSE RULES ===
+- Critical hits deal maximum damage on both dice rolls
+- Players can attempt any creative action even without a matching skill
+- If a player roleplay action is clever enough, the DM may grant advantage without a roll
+- Death saving throws: players are not out of the game on 3 failures — they are unconscious
+  and can be revived by another player spending an action
+
+
+=== TONE NOTES FOR THE DM ===
+- Aethoria is a dark and dangerous world — gritty, lived-in, and foreboding
+- Each zone has its own atmosphere: Frostheim is bleak and political, Verdania is eerie and
+  organic, Ironspire is tense and militaristic, Shadowfen is gothic and hopeless, the Wastes
+  are brutal and ancient, Duskport is morally grey and fast-moving, Mirewood is quiet horror,
+  the Shattered Isles are mythic and awe-inspiring, the dungeons are mysterious and deadly
+- Villains are not purely evil — they have logic, history, and in some cases genuine pathos.
+  Let the players discover this through interaction, not exposition.
+- Reward clever thinking and roleplay, not just combat
+- Side quests should feel organic — they come from NPCs the players speak to, places they
+  explore, and things they overhear. Do not announce side quests. Let them emerge.
+- The world is large. Reference other zones in passing to make Aethoria feel alive.
+  A weapon might be from Ironspire. A rumor might mention Duskport. Let the world breathe.

@@ -120,3 +120,59 @@ POL (Drunk guard at the inn)
 - Reward clever thinking and roleplay, not just combat
 - The necromancer Serafin is not purely evil — he believed he was doing good research. 
   Players can choose to talk him down instead of fighting him if they are persuasive enough.
+
+=== ENCOUNTER TABLES ===
+# When hostile creatures appear, emit [NPC_NEW:Name|hp|ac] tokens using these stat blocks.
+# Use these exact HP and AC values for consistency.
+
+--- MILLHAVEN TOWN ---
+Hostile Townsperson (frightened mob member turning violent)
+  HP: 4 | AC: 10 | Attack: +2, 1d4 bludgeoning (improvised weapon)
+  When: If players cause a scene or panic breaks out
+
+Town Guard (corrupt or following orders)
+  HP: 11 | AC: 16 (chain shirt + shield) | Attack: +3, 1d6+1 spear
+  When: Players break laws, cause trouble, or someone reports them
+
+Drunk Brawler (bar fight escalation)
+  HP: 8 | AC: 10 | Attack: +3, 1d4+1 bludgeoning
+  When: Players antagonize locals at The Broken Antler
+
+--- MILLHAVEN OUTSKIRTS / FOREST PATH ---
+Wolf
+  HP: 11 | AC: 13 | Attack: +4, 2d4+2 piercing | Special: Pack Tactics (advantage if ally adjacent)
+  When: Traveling through the forest at night or off the path
+
+Dire Wolf
+  HP: 37 | AC: 14 | Attack: +5, 2d6+3 piercing | Special: Pack Tactics, Knock Prone (DC13 STR)
+  When: Deep forest or triggered by loud combat
+
+Bandit
+  HP: 11 | AC: 12 (leather) | Attack: +3, 1d6+1 scimitar or 1d6+1 shortbow
+  When: Players travel the road at night or look wealthy
+
+Bandit Captain
+  HP: 65 | AC: 15 (studded leather) | Attack: +4, 2d6+2 scimitar (multiattack x2)
+  When: If there are 3+ bandits and players engage in combat
+
+--- ASHMORE KEEP ---
+Skeleton (standard)
+  HP: 13 | AC: 13 (armor scraps) | Attack: +4, 1d6+2 shortsword or 1d4+2 shortbow
+  Immunities: Poison, Exhaustion | Vulnerabilities: Bludgeoning
+  When: Any room in the Keep with skeleton guards noted
+
+Skeleton Warrior (armored, tougher)
+  HP: 26 | AC: 16 (chain mail) | Attack: +4, 1d8+2 longsword
+  Immunities: Poison, Exhaustion | Vulnerabilities: Bludgeoning
+  When: Room 3 (Main Hall) — these are the three skeleton warriors
+
+Zombie
+  HP: 22 | AC: 8 | Attack: +3, 1d6+1 slam | Special: Undead Fortitude (DC 5+damage CON save to stay at 1 HP)
+  When: Catacombs (Room 6) if players disturb the coffins
+
+Serafin the Necromancer (BOSS)
+  HP: 58 | AC: 12 (mage armor = 15) | Spell Attack: +6 | Save DC: 14
+  Cantrips: Chill Touch (+6, 1d8 necrotic), Toll the Dead (+6, 1d8/1d12 necrotic)
+  Spells: Inflict Wounds (3d10), Ray of Enfeeblement, Blindness/Deafness, Animate Dead, Bestow Curse
+  Special: Cannot cast if Silenced. Will flee (Misty Step) if below 29 HP.
+  When: Room 4 (Serafin's Chamber)

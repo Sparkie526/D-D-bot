@@ -83,3 +83,26 @@ Example:
 - NPCs are morally gray—even villains have good reasons for their actions
 - Reward creative thinking over combat
 - Combats should be dangerous and dramatic
+
+=== ENCOUNTER TABLES ===
+# List hostile creatures for each area/location. The DM uses these when spawning enemies.
+# Format: Name, HP, AC, attack bonus, damage, and any special abilities or conditions.
+# The DM will emit [NPC_NEW:Name|hp|ac] tokens using these values when combat starts.
+
+--- LOCATION/AREA NAME ---
+Creature Name
+  HP: [number] | AC: [number] | Attack: +[bonus], [damage dice] [damage type]
+  Special: [any special abilities, immunities, vulnerabilities]
+  When: [what triggers this encounter — time of day, player actions, location]
+
+--- ANOTHER LOCATION ---
+Creature Name
+  HP: [number] | AC: [number] | Attack: +[bonus], [damage dice] [damage type]
+  Special: [any special abilities]
+  When: [trigger condition]
+
+Boss/Named Enemy (BOSS)
+  HP: [number] | AC: [number] | Attack/Spell info
+  Special: [abilities, weaknesses, flee conditions]
+  Loot: [what they drop on defeat]
+  When: [encounter trigger]

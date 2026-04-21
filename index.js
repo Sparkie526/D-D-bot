@@ -588,7 +588,26 @@ Track player names, their actions, and the consequences in the story.
 When a player rolls dice, acknowledge the result dramatically and narrate the outcome based on whether they succeeded.
 The adventure begins when someone says "start game" or "begin".
 IMPORTANT: Use the world reference material below to stay consistent with locations, NPCs, secrets, and lore.
-Only reveal secrets when players discover them through actions or rolls — do not volunteer hidden information.`;
+Only reveal secrets when players discover them through actions or rolls — do not volunteer hidden information.
+
+COMBAT MECHANICS — emit these tokens at the very END of your response, after your narration, when mechanical events occur. Players never see these tokens — they are stripped automatically:
+- New hostile creature appears: [NPC_NEW:Name|hp|ac]  — use accurate D&D 5e stat block values
+- Player takes damage:          [DMG:CharacterName|amount|damageType]
+- Player is healed:             [HEAL:CharacterName|amount]
+- Condition applied to player:  [COND+:CharacterName|conditionName]
+- Condition removed:            [COND-:CharacterName|conditionName]
+- Enemy takes damage:           [NPC_DMG:EnemyName|amount]
+- Enemy is healed:              [NPC_HEAL:EnemyName|amount]
+
+Token rules:
+- Emit [NPC_NEW] the moment any hostile creature enters the scene — goblins, dragons, bandits, hostile NPCs, animated objects, anything that will fight. Use D&D 5e stat block HP and AC values for the creature type.
+- If multiple identical creatures appear, emit one [NPC_NEW] per creature (e.g. three goblins = three tokens).
+- For player damage/healing, use the exact character name from [CHARACTER CONTEXT].
+- Emit ALL tokens that apply (e.g. fireball hitting two players = two [DMG] tokens).
+- Only emit [DMG] if an attack actually hits. Do not emit if the attack missed or the player succeeded on a saving throw to avoid all damage.
+- Damage types: fire, cold, lightning, acid, poison, necrotic, radiant, psychic, bludgeoning, piercing, slashing, thunder, force.
+- Valid conditions: blinded, charmed, deafened, frightened, grappled, incapacitated, invisible, paralyzed, petrified, poisoned, prone, restrained, stunned, unconscious.
+- Place ALL tokens after the narration on the final line. Never mid-sentence.`;
 
   if (!worldNotes) {
     cachedSystemPrompt = basePrompt;
@@ -616,6 +635,7 @@ function sanitizeLLMOutput(text) {
     .replace(/<system-reminder>[\s\S]*?<\/system-reminder>/gi, "")
     .replace(/<system[^>]*>[\s\S]*?<\/system[^>]*>/gi, "")
     .replace(/\[ADVANCE_TURN\]/gi, "")
+    .replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL):[^\]]+\]/gi, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -736,6 +756,8 @@ function getSession(guildId) {
       // Character Sheet System
       characterSheets: {},  // { userId: characterSheetData }
       currentCharacters: {}, // { userId: characterName }
+      // Combat / Encounter tracking
+      encounter: { active: false, enemies: [] }, // { id, name, hp, maxHp, ac, dead }
     };
   }
   return sessions[guildId];
@@ -791,6 +813,106 @@ function pickTurnTransition(name) {
     `**${name}**, it's your move.`,
   ];
   return options[Math.floor(Math.random() * options.length)];
+}
+
+// ── Combat token parsing ─────────────────────────────────────
+
+function findPlayerByCharacterName(name) {
+  const nameLower = name.toLowerCase().trim();
+  for (const [discordId, player] of Object.entries(dashState.players)) {
+    if ((player.characterName || '').toLowerCase() === nameLower) {
+      return { discordId, player };
+    }
+  }
+  return null;
+}
+
+function applyPlayerDamage(name, amount) {
+  const found = findPlayerByCharacterName(name);
+  if (!found) return;
+  const { discordId, player } = found;
+  player.hp = Math.max(0, (player.hp || 0) - amount);
+  saveDashboardState();
+  io.emit('state_update', dashState);
+}
+
+function applyPlayerHeal(name, amount) {
+  const found = findPlayerByCharacterName(name);
+  if (!found) return;
+  const { discordId, player } = found;
+  player.hp = Math.min(player.maxHp || player.hp, (player.hp || 0) + amount);
+  saveDashboardState();
+  io.emit('state_update', dashState);
+}
+
+function applyCondition(name, condition, active) {
+  const found = findPlayerByCharacterName(name);
+  if (!found) return;
+  const { player } = found;
+  if (!player.conditions) player.conditions = {};
+  player.conditions[condition.toLowerCase()] = active;
+  saveDashboardState();
+  io.emit('state_update', dashState);
+}
+
+function applyNpcDamage(guildId, name, amount) {
+  const session = getSession(guildId);
+  const enemy = session.encounter.enemies.find(e => e.name.toLowerCase() === name.toLowerCase());
+  if (!enemy) return;
+  enemy.hp = Math.max(0, enemy.hp - amount);
+  if (enemy.hp === 0) enemy.dead = true;
+  const allDead = session.encounter.enemies.every(e => e.dead);
+  if (allDead) session.encounter.active = false;
+  io.emit('encounter_update', session.encounter.enemies);
+}
+
+function applyNpcHeal(guildId, name, amount) {
+  const session = getSession(guildId);
+  const enemy = session.encounter.enemies.find(e => e.name.toLowerCase() === name.toLowerCase());
+  if (!enemy || enemy.dead) return;
+  enemy.hp = Math.min(enemy.maxHp, enemy.hp + amount);
+  io.emit('encounter_update', session.encounter.enemies);
+}
+
+function spawnEnemy(guildId, name, hp, ac) {
+  const session = getSession(guildId);
+  // Deduplicate names: Goblin, Goblin 2, Goblin 3...
+  const baseName = name.trim();
+  const existing = session.encounter.enemies.filter(e => e.name === baseName || e.name.startsWith(baseName + ' '));
+  const finalName = existing.length > 0 ? `${baseName} ${existing.length + 1}` : baseName;
+  const enemy = { id: Date.now() + Math.random(), name: finalName, hp, maxHp: hp, ac, dead: false };
+  session.encounter.enemies.push(enemy);
+  session.encounter.active = true;
+  io.emit('encounter_update', session.encounter.enemies);
+}
+
+function parseCombatTokens(text, guildId) {
+  // Spawn new enemies
+  for (const m of text.matchAll(/\[NPC_NEW:([^|]+)\|(\d+)\|(\d+)\]/gi)) {
+    spawnEnemy(guildId, m[1], parseInt(m[2]), parseInt(m[3]));
+  }
+  // Player damage
+  for (const m of text.matchAll(/\[DMG:([^|]+)\|(\d+)\|?([^\]]*)\]/gi)) {
+    applyPlayerDamage(m[1], parseInt(m[2]));
+  }
+  // Player healing
+  for (const m of text.matchAll(/\[HEAL:([^|]+)\|(\d+)\]/gi)) {
+    applyPlayerHeal(m[1], parseInt(m[2]));
+  }
+  // Conditions
+  for (const m of text.matchAll(/\[COND\+:([^|]+)\|([^\]]+)\]/gi)) {
+    applyCondition(m[1], m[2], true);
+  }
+  for (const m of text.matchAll(/\[COND-:([^|]+)\|([^\]]+)\]/gi)) {
+    applyCondition(m[1], m[2], false);
+  }
+  // Enemy damage/heal
+  for (const m of text.matchAll(/\[NPC_DMG:([^|]+)\|(\d+)\]/gi)) {
+    applyNpcDamage(guildId, m[1], parseInt(m[2]));
+  }
+  for (const m of text.matchAll(/\[NPC_HEAL:([^|]+)\|(\d+)\]/gi)) {
+    applyNpcHeal(guildId, m[1], parseInt(m[2]));
+  }
 }
 
 function advanceTurn(guildId) {
@@ -1215,6 +1337,24 @@ Background: ${charData.background}
 [END CHARACTER CONTEXT]`;
     
     systemPrompt += "\n" + characterContext;
+  }
+
+  // Inject all players' HP/AC so the LLM can deal damage correctly to any player
+  const allPlayers = Object.values(dashState.players);
+  if (allPlayers.length > 1) {
+    const partyContext = allPlayers.map(p =>
+      `${p.characterName}: HP ${p.hp}/${p.maxHp}, AC ${p.ac}`
+    ).join(' | ');
+    systemPrompt += `\n[PARTY STATUS: ${partyContext}]`;
+  }
+
+  // Inject active encounter enemies so LLM knows their remaining HP
+  const enc = session.encounter;
+  if (enc.active && enc.enemies.length > 0) {
+    const enemyContext = enc.enemies
+      .map(e => `${e.name}: HP ${e.hp}/${e.maxHp} AC ${e.ac}${e.dead ? ' (DEAD)' : ''}`)
+      .join(' | ');
+    systemPrompt += `\n[ENEMIES: ${enemyContext}]`;
   }
 
   const messages = [
@@ -2033,10 +2173,14 @@ Use the world's title or filename in the \`world\` parameter.
       interaction.user.id
     );
 
+    // Parse and apply combat tokens before stripping them
+    parseCombatTokens(reply, guildId);
+
     // Handle turn advancement via [ADVANCE_TURN] signal from LLM
     let finalReply = reply;
     const shouldAdvance = finalReply.includes('[ADVANCE_TURN]');
     finalReply = finalReply.replace(/\[ADVANCE_TURN\]/gi, '').trim();
+    finalReply = finalReply.replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL):[^\]]+\]/gi, '').trim();
 
     if (session.turnOrder.length > 1 && shouldAdvance) {
       // Send the DM's narration cleanly first

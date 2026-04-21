@@ -55,6 +55,45 @@ socket.on('active_players', (ids) => {
   renderPlayers();
 });
 
+// ── Encounter / Enemy tracker ─────────────────────────────────
+
+let gameEncounter = [];
+
+socket.on('encounter_update', (enemies) => {
+  gameEncounter = enemies || [];
+  renderEnemies();
+});
+
+function renderEnemies() {
+  const panel  = document.getElementById('encounterPanel');
+  const cards  = document.getElementById('enemyCards');
+  if (!panel || !cards) return;
+
+  if (!gameEncounter.length) {
+    panel.classList.add('hidden');
+    return;
+  }
+  panel.classList.remove('hidden');
+
+  cards.innerHTML = gameEncounter.map(e => {
+    const pct   = e.maxHp > 0 ? Math.max(0, Math.min(1, e.hp / e.maxHp)) : 0;
+    const color = pct > 0.5 ? '#2d6b1f' : pct > 0.25 ? '#8a7a00' : '#8b1a1a';
+    const barW  = Math.round(pct * 100);
+    const dead  = e.dead || e.hp <= 0;
+    return `
+      <div class="enemy-card${dead ? ' enemy-dead' : ''}">
+        <div class="enemy-name">${dead ? '☠ ' : ''}${esc(e.name)}</div>
+        <div class="enemy-stats">AC ${e.ac}</div>
+        <div class="enemy-hp-row">
+          <div class="enemy-hp-track">
+            <div class="enemy-hp-fill" style="width:${barW}%;background:${color}"></div>
+          </div>
+          <span class="enemy-hp-nums">${e.hp}/${e.maxHp}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
 // ── Turn countdown timer ──────────────────────────────────────
 
 let turnTimerInterval = null;

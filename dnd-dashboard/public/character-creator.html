@@ -1041,6 +1041,7 @@
         <button class="method-tab active" onclick="setMethod('standard')">Standard Array</button>
         <button class="method-tab" onclick="setMethod('pointbuy')">Point Buy</button>
         <button class="method-tab" onclick="setMethod('manual')">Manual Entry</button>
+        <button class="method-tab" onclick="randomizeAllAttributes()" style="margin-left:auto;background:rgba(139,26,26,0.3);border-color:#8b1a1a;color:#e8d5a3;">🎲 Randomize All</button>
       </div>
 
       <!-- Standard Array -->
@@ -1711,6 +1712,23 @@ function buildManualGrid(){
 function onManualChange(ab,val){
   manualScores[ab]=parseInt(val)||10;
   document.getElementById(`manmod-${ab}`).textContent=fmtMod(getMod(manualScores[ab]));
+  updateAllCalculations();
+}
+
+function roll4d6DropLowest(){
+  const rolls=[0,0,0,0].map(()=>Math.ceil(Math.random()*6));
+  return rolls.reduce((a,b)=>a+b,0)-Math.min(...rolls);
+}
+
+function randomizeAllAttributes(){
+  setMethod('manual');
+  ABILITIES.forEach(ab=>{
+    manualScores[ab]=roll4d6DropLowest();
+    const input=document.getElementById(`manual-${ab}`);
+    if(input) input.value=manualScores[ab];
+    const modEl=document.getElementById(`manmod-${ab}`);
+    if(modEl) modEl.textContent=fmtMod(getMod(manualScores[ab]));
+  });
   updateAllCalculations();
 }
 

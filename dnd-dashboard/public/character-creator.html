@@ -908,6 +908,7 @@
       <span class="section-icon">🧙</span>
       <h2>Who Are You?</h2>
       <span class="section-hint">Basic character info</span>
+      <button onclick="randomizeAllAttributes()" style="margin-left:auto;background:rgba(139,26,26,0.3);border:1px solid #8b1a1a;border-radius:4px;color:#e8d5a3;padding:5px 14px;cursor:pointer;font-family:'Georgia',serif;font-size:0.82rem;letter-spacing:0.5px">🎲 Randomize All</button>
     </div>
     <div class="section-body">
       <div class="grid-3">
@@ -1041,7 +1042,6 @@
         <button class="method-tab active" onclick="setMethod('standard')">Standard Array</button>
         <button class="method-tab" onclick="setMethod('pointbuy')">Point Buy</button>
         <button class="method-tab" onclick="setMethod('manual')">Manual Entry</button>
-        <button class="method-tab" onclick="randomizeAllAttributes()" style="margin-left:auto;background:rgba(139,26,26,0.3);border-color:#8b1a1a;color:#e8d5a3;">🎲 Randomize All</button>
       </div>
 
       <!-- Standard Array -->
@@ -1725,14 +1725,16 @@ function randomizeAllAttributes(){
     'Varek','Lyria','Dorn','Seraphel','Kade','Mira','Theron','Zara','Brant','Elara',
     'Gruff','Nyla','Sorin','Vesper','Aldric','Talia','Cael','Rynn','Faolan','Ishara'
   ];
-  const CLASSES=['Barbarian','Bard','Cleric','Druid','Fighter','Monk','Paladin','Ranger','Rogue','Sorcerer','Warlock','Wizard'];
+  const ALL_CLASSES=['Barbarian','Bard','Cleric','Druid','Fighter','Monk','Paladin','Ranger','Rogue','Sorcerer','Warlock','Wizard'];
   const BACKGROUNDS=['Acolyte','Charlatan','Criminal','Entertainer','Folk Hero','Guild Artisan','Hermit','Noble','Outlander','Sage','Sailor','Soldier','Urchin'];
   const ALIGNMENTS=['Lawful Good','Neutral Good','Chaotic Good','Lawful Neutral','True Neutral','Chaotic Neutral','Lawful Evil','Neutral Evil','Chaotic Evil'];
   const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
+  const pickN=(arr,n)=>{ const s=[...arr].sort(()=>Math.random()-0.5); return s.slice(0,Math.min(n,s.length)); };
 
   // Identity fields
   document.getElementById('charName').value=pick(FANTASY_NAMES)+' '+pick(['Ashborne','Ironveil','Dusk','Stormcloak','Maren','Coldwater','Embervane','Nighthollow']);
-  document.getElementById('charClass').value=pick(CLASSES);
+  const cls=pick(ALL_CLASSES);
+  document.getElementById('charClass').value=cls;
   document.getElementById('charBackground').value=pick(BACKGROUNDS);
   document.getElementById('charAlignment').value=pick(ALIGNMENTS);
 
@@ -1750,6 +1752,102 @@ function randomizeAllAttributes(){
     if(modEl) modEl.textContent=fmtMod(getMod(manualScores[ab]));
   });
   updateAllCalculations();
+
+  // Weapons — clear existing and add class-appropriate loadout
+  document.getElementById('weaponsList').innerHTML='';
+  const mainWeapons=CLASS_STARTING_WEAPONS[cls]||[];
+  const rangedPool=CLASS_RANGED_WEAPONS[cls]||[];
+  if(mainWeapons.length){
+    // Pick a primary melee weapon
+    const primary=pick(mainWeapons);
+    const pw=WEAPON_PRESETS[primary];
+    if(pw){
+      const scores=getAllScores();
+      const usesDex=pw.props.includes('Finesse')||pw.type==='Ranged';
+      const statMod=usesDex?getMod(scores.dexterity):getMod(scores.strength);
+      const bonus=getProf()+statMod;
+      const bonusStr=bonus>=0?`+${bonus}`:`${bonus}`;
+      const dmgMod=statMod>=0?`+${statMod}`:`${statMod}`;
+      addWeapon({name:primary,type:pw.type,bonus:bonusStr,damage:pw.damage==='—'?'—':pw.damage+dmgMod,dmgType:pw.dmgType==='—'?'piercing':pw.dmgType,weight:pw.weight||0});
+    }
+    // Pick a secondary ranged weapon if the class has one and it differs from primary
+    if(rangedPool.length){
+      const secondary=pick(rangedPool.filter(w=>w!==primary)||rangedPool);
+      const sw=WEAPON_PRESETS[secondary];
+      if(sw&&secondary!==primary){
+        const scores=getAllScores();
+        const statMod=getMod(scores.dexterity);
+        const bonus=getProf()+statMod;
+        const bonusStr=bonus>=0?`+${bonus}`:`${bonus}`;
+        const dmgMod=statMod>=0?`+${statMod}`:`${statMod}`;
+        addWeapon({name:secondary,type:sw.type,bonus:bonusStr,damage:sw.damage==='—'?'—':sw.damage+dmgMod,dmgType:sw.dmgType==='—'?'piercing':sw.dmgType,weight:sw.weight||0});
+      }
+    }
+  }
+
+  // Inventory — clear existing and add class-appropriate starting gear
+  document.getElementById('inventoryList').innerHTML='';
+  itemId=0;
+  const invItems=CLASS_STARTING_INVENTORY[cls]||[];
+  invItems.forEach(item=>addInventoryItem(item));
+
+  // Spells — only for spellcasting classes
+  const clsData=CLASSES[cls];
+  if(clsData&&clsData.spellAbility){
+    // Clear cantrips
+    const cantripsList=document.getElementById('cantripsList');
+    if(cantripsList) cantripsList.innerHTML='';
+
+    // Clear all spell levels and reset
+    spellLevelIds.forEach(lvl=>{ const el=document.getElementById(`spelllevel-${lvl}`); if(el) el.remove(); });
+    spellLevelIds=[];
+
+    // Add spell level 1 container
+    addSpellLevel();
+
+    const cantripPool=CLASS_CANTRIPS[cls]||[];
+    const spellPool=CLASS_LEVEL1_SPELLS[cls]||[];
+    const numCantrips=Math.min(2,cantripPool.length);
+    const numSpells=Math.min(2,spellPool.length);
+
+    pickN(cantripPool,numCantrips).forEach(name=>{
+      const s=SPELL_DB.cantrips[name];
+      if(!s) return;
+      const id=`sp-cantrip-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const row=document.createElement('div');
+      row.className='cantrip-row';
+      row.id=id;
+      row.innerHTML=`
+        <input type="text" value="${name}">
+        <input type="text" value="${s.desc.substring(0,80)}${s.desc.length>80?'...':''}">
+        <div style="display:flex;align-items:center;gap:8px">
+          <label class="prepared-check"><input type="checkbox" checked> Prepared</label>
+          <button class="btn btn-remove" onclick="document.getElementById('${id}').remove()">✕</button>
+        </div>`;
+      const list=document.getElementById('cantripsList');
+      if(list) list.appendChild(row);
+    });
+
+    pickN(spellPool,numSpells).forEach(name=>{
+      const s=SPELL_DB.level1[name];
+      if(!s) return;
+      const id=`sp-level1-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const row=document.createElement('div');
+      row.className='spell-row';
+      row.id=id;
+      row.innerHTML=`
+        <input type="text" value="${name}">
+        <input type="text" value="${s.desc.substring(0,80)}${s.desc.length>80?'...':''}">
+        <input type="text" value="${s.range}" style="font-size:0.8rem">
+        <input type="text" value="${s.duration}" style="font-size:0.8rem">
+        <div style="display:flex;align-items:center;gap:8px">
+          <label class="prepared-check"><input type="checkbox" checked> Prepared</label>
+          <button class="btn btn-remove" onclick="document.getElementById('${id}').remove()">✕</button>
+        </div>`;
+      const list=document.getElementById('spelllist-1');
+      if(list) list.appendChild(row);
+    });
+  }
 }
 
 function setMethod(method){
@@ -2331,6 +2429,43 @@ const SPELL_DB = {
     'Witch Bolt':         { classes:['Sorcerer','Warlock','Wizard'], school:'Evocation', range:'30 ft', duration:'1 min', slots:'1', desc:'Hit with a bolt of lightning (ranged attack, 1d12 lightning). On subsequent turns use your action for another 1d12 automatically. Concentration.' },
     'Wrathful Smite':     { classes:['Paladin'], school:'Evocation', range:'Self', duration:'1 min', slots:'1', desc:'Bonus action: next hit deals +1d6 psychic and target makes WIS save or becomes frightened. Concentration. Great debuff for Paladins.' },
   }
+};
+
+const CLASS_STARTING_WEAPONS = {
+  Barbarian: ['Greataxe','Handaxe','Javelin','Greatclub'],
+  Bard:      ['Rapier','Shortsword','Dagger','Hand Crossbow'],
+  Cleric:    ['Mace','Warhammer','Light Hammer','Quarterstaff'],
+  Druid:     ['Quarterstaff','Sickle','Dagger','Club'],
+  Fighter:   ['Longsword','Greatsword','Greataxe','Battleaxe','Warhammer'],
+  Monk:      ['Shortsword','Quarterstaff','Dagger'],
+  Paladin:   ['Longsword','Warhammer','Morningstar','Flail'],
+  Ranger:    ['Longbow','Shortbow','Shortsword','Scimitar'],
+  Rogue:     ['Shortsword','Rapier','Dagger','Hand Crossbow'],
+  Sorcerer:  ['Dagger','Quarterstaff','Arcane Focus Staff'],
+  Warlock:   ['Dagger','Eldritch Blade','Arcane Focus Staff'],
+  Wizard:    ['Dagger','Quarterstaff','Arcane Focus Staff','Wand'],
+};
+
+const CLASS_RANGED_WEAPONS = {
+  Barbarian: ['Javelin','Handaxe'],
+  Ranger:    ['Longbow','Shortbow'],
+  Fighter:   ['Longbow','Heavy Crossbow','Light Crossbow'],
+  Rogue:     ['Hand Crossbow','Shortbow'],
+};
+
+const CLASS_STARTING_INVENTORY = {
+  Barbarian: [{name:'Backpack',qty:1,weight:5},{name:'Bedroll',qty:1,weight:7},{name:'Rations',qty:5,weight:2},{name:'Torch',qty:5,weight:1},{name:'Rope (hempen, 50 ft)',qty:1,weight:10},{name:'Gold Pieces',qty:10,weight:0.02}],
+  Bard:      [{name:'Backpack',qty:1,weight:5},{name:'Bedroll',qty:1,weight:7},{name:'Lute',qty:1,weight:2},{name:'Costume',qty:1,weight:4},{name:'Candle',qty:5,weight:0},{name:'Rations',qty:5,weight:2},{name:'Gold Pieces',qty:15,weight:0.02}],
+  Cleric:    [{name:'Backpack',qty:1,weight:5},{name:'Bedroll',qty:1,weight:7},{name:'Holy Symbol',qty:1,weight:1},{name:'Prayer Book',qty:1,weight:3},{name:'Rations',qty:5,weight:2},{name:'Torch',qty:5,weight:1},{name:'Gold Pieces',qty:15,weight:0.02}],
+  Druid:     [{name:'Backpack',qty:1,weight:5},{name:'Bedroll',qty:1,weight:7},{name:'Druidic Focus (Sprig of Mistletoe)',qty:1,weight:0},{name:'Herbalism Kit',qty:1,weight:3},{name:'Rations',qty:5,weight:2},{name:'Torchwood',qty:5,weight:1},{name:'Gold Pieces',qty:10,weight:0.02}],
+  Fighter:   [{name:'Backpack',qty:1,weight:5},{name:'Bedroll',qty:1,weight:7},{name:'Rations',qty:5,weight:2},{name:'Torch',qty:5,weight:1},{name:"Healer's Kit",qty:1,weight:3},{name:'Rope (hempen, 50 ft)',qty:1,weight:10},{name:'Gold Pieces',qty:10,weight:0.02}],
+  Monk:      [{name:'Backpack',qty:1,weight:5},{name:'Bedroll',qty:1,weight:7},{name:'Rations',qty:5,weight:2},{name:'10 Darts',qty:1,weight:2.5},{name:'Meditation Beads',qty:1,weight:0},{name:'Gold Pieces',qty:5,weight:0.02}],
+  Paladin:   [{name:'Backpack',qty:1,weight:5},{name:'Bedroll',qty:1,weight:7},{name:'Holy Symbol',qty:1,weight:1},{name:'Chain Mail',qty:1,weight:55},{name:'Rations',qty:5,weight:2},{name:'Torch',qty:5,weight:1},{name:'Gold Pieces',qty:15,weight:0.02}],
+  Ranger:    [{name:'Backpack',qty:1,weight:5},{name:'Bedroll',qty:1,weight:7},{name:'Quiver (20 arrows)',qty:1,weight:1},{name:'Rations',qty:5,weight:2},{name:'Rope (hempen, 50 ft)',qty:1,weight:10},{name:'Hunting Trap',qty:1,weight:25},{name:'Gold Pieces',qty:10,weight:0.02}],
+  Rogue:     [{name:'Backpack',qty:1,weight:5},{name:'Bedroll',qty:1,weight:7},{name:"Thieves' Tools",qty:1,weight:1},{name:'Crowbar',qty:1,weight:5},{name:'Dark Cloak',qty:1,weight:1},{name:'Rations',qty:5,weight:2},{name:'Gold Pieces',qty:15,weight:0.02}],
+  Sorcerer:  [{name:'Backpack',qty:1,weight:5},{name:'Bedroll',qty:1,weight:7},{name:'Arcane Focus',qty:1,weight:2},{name:'Rations',qty:5,weight:2},{name:'Spellbook',qty:1,weight:3},{name:'Gold Pieces',qty:10,weight:0.02}],
+  Warlock:   [{name:'Backpack',qty:1,weight:5},{name:'Bedroll',qty:1,weight:7},{name:'Arcane Focus',qty:1,weight:2},{name:'Rations',qty:5,weight:2},{name:'Tome of Forbidden Knowledge',qty:1,weight:3},{name:'Gold Pieces',qty:10,weight:0.02}],
+  Wizard:    [{name:'Backpack',qty:1,weight:5},{name:'Bedroll',qty:1,weight:7},{name:'Spellbook',qty:1,weight:3},{name:'Arcane Focus',qty:1,weight:2},{name:'Rations',qty:5,weight:2},{name:'Ink & Quill',qty:1,weight:0},{name:'Gold Pieces',qty:10,weight:0.02}],
 };
 
 const CLASS_CANTRIPS = {

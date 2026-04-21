@@ -241,7 +241,39 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => { activeSessions.delete(socket.id); broadcastActivePlayers(); });
 });
 
-httpServer.listen(3000, () => console.log("🗺️  Dashboard running at http://localhost:3000"));
+httpServer.listen(3000, () => {
+  console.log("🗺️  Dashboard running at http://localhost:3000");
+  startCloudflareTunnel();
+});
+
+let dashboardPublicUrl = null;
+
+// Cloudflare Tunnel — exposes dashboard to the internet
+function startCloudflareTunnel() {
+  const { spawn } = require("child_process");
+  const CLOUDFLARED = "C:\\Program Files (x86)\\cloudflared\\cloudflared.exe";
+
+  const tunnel = spawn(CLOUDFLARED, ["tunnel", "--url", "http://127.0.0.1:3000"], {
+    windowsHide: true,
+  });
+
+  tunnel.stderr.on("data", (data) => {
+    const text = data.toString();
+    const match = text.match(/https:\/\/[a-z0-9\-]+\.trycloudflare\.com/);
+    if (match) {
+      dashboardPublicUrl = match[0];
+      console.log(`🌐 Dashboard public URL: ${dashboardPublicUrl}`);
+    }
+  });
+
+  tunnel.on("error", (err) => console.error("Cloudflare tunnel error:", err.message));
+  tunnel.on("exit", (code) => {
+    if (code !== 0) console.warn(`⚠️  Cloudflare tunnel exited (code ${code}). Dashboard is local-only.`);
+  });
+
+  process.on("exit", () => tunnel.kill());
+  process.on("SIGINT", () => { tunnel.kill(); process.exit(); });
+}
 
 // Dashboard helper functions
 function addStoryEntry(type, name, text) {
@@ -941,11 +973,9 @@ async function sendDMResponseWithVoice(interaction, connection, dmText, guildId)
       await speakInVoice(connection, audioFile);
     } catch (err) {
       console.error("Voice playback error:", err.message);
-      interaction.channel.send("⚠️ *Voice playback failed, but the narration continues...*");
     }
   } else {
-    // Voice synthesis failed
-    interaction.channel.send("⚠️ *Voice synthesis failed (service unavailable), but the narration continues...*");
+    console.warn("Voice synthesis unavailable — text-only narration.");
   }
 }
 
@@ -1872,8 +1902,11 @@ Use the world's title or filename in the \`world\` parameter.
     saveDashboardState();
     io.emit("state_update", dashState);
 
+    const dashboardLine = dashboardPublicUrl
+      ? `\n🗺️ **Campaign Dashboard:** ${dashboardPublicUrl}`
+      : "";
     await interaction.reply(
-      "⚔️ **The adventure begins...** Listen closely, adventurers."
+      `⚔️ **The adventure begins...** Listen closely, adventurers.${dashboardLine}`
     );
 
     // DM intro asking for character names

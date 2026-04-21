@@ -230,6 +230,41 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════
+       ARSENAL MODAL
+       ═══════════════════════════════════════════════════════ -->
+  <div id="arsenalModal" class="arsenal-overlay hidden" onclick="if(event.target===this)closeArsenalModal()">
+    <div class="arsenal-box">
+      <div class="arsenal-header">
+        <div class="arsenal-portrait" id="arsenalInitial">?</div>
+        <div class="arsenal-header-info">
+          <div class="arsenal-char-name" id="arsenalCharName">—</div>
+          <div class="arsenal-char-class" id="arsenalCharClass">—</div>
+        </div>
+        <button class="close-btn arsenal-close" onclick="closeArsenalModal()">✕</button>
+      </div>
+
+      <div class="arsenal-sections">
+        <div class="arsenal-section">
+          <div class="arsenal-section-title">⚔ Weapons</div>
+          <div class="arsenal-section-body" id="arsenalWeapons"></div>
+        </div>
+        <div class="arsenal-section">
+          <div class="arsenal-section-title">✦ Abilities &amp; Features</div>
+          <div class="arsenal-section-body" id="arsenalAbilities"></div>
+        </div>
+        <div class="arsenal-section">
+          <div class="arsenal-section-title">✧ Spells</div>
+          <div class="arsenal-section-body arsenal-spells-body" id="arsenalSpells"></div>
+        </div>
+        <div class="arsenal-section">
+          <div class="arsenal-section-title">🎒 Inventory</div>
+          <ul class="arsenal-section-body arsenal-inventory-body" id="arsenalInventory"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>

@@ -23,6 +23,8 @@ socket.on('state_update', (state) => {
   handleIdentityCheck();
   renderAll();
   checkHpChanges(prev, state);
+  checkInventoryChanges(prev, state);
+  refreshArsenalModal();
 });
 
 socket.on('story_entry', (entry) => {
@@ -757,8 +759,9 @@ function buildPlayerCard(player) {
     </div>
     <div class="player-info-col">
       <div class="player-char-name">
-        ${esc(player.characterName)}
+        <span class="player-char-name-text">${esc(player.characterName)}</span>
         ${isMe ? '<span class="player-me-tag">YOU</span>' : ''}
+        <span class="arsenal-btn" data-arsenal-id="${esc(player.discordId)}" onclick="openArsenalModal('${esc(player.discordId)}')" title="View Arsenal">🎒</span>
       </div>
       <div class="player-class-level">${esc(player.class)} · Level ${player.level}</div>
       <div class="hp-row">
@@ -780,6 +783,89 @@ function hpColor(pct) {
   if (pct > 0.5)  return '#2d6b1f';
   if (pct > 0.25) return '#8a7a00';
   return '#8b1a1a';
+}
+
+// ── Arsenal Modal ────────────────────────────────────────────
+
+let arsenalOpenId = null;
+
+function openArsenalModal(discordId) {
+  arsenalOpenId = discordId;
+  renderArsenalModal();
+  document.getElementById('arsenalModal').classList.remove('hidden');
+}
+
+function closeArsenalModal() {
+  arsenalOpenId = null;
+  document.getElementById('arsenalModal').classList.add('hidden');
+}
+
+function refreshArsenalModal() {
+  if (arsenalOpenId) renderArsenalModal();
+}
+
+function renderArsenalModal() {
+  if (!arsenalOpenId || !gameState) return;
+  const p = gameState.players[arsenalOpenId];
+  if (!p) { closeArsenalModal(); return; }
+
+  const initial = (p.characterName || '?').charAt(0).toUpperCase();
+
+  // Header
+  document.getElementById('arsenalCharName').textContent = p.characterName || 'Unknown';
+  document.getElementById('arsenalCharClass').textContent = `${p.class || '—'} · Level ${p.level || 1}`;
+  document.getElementById('arsenalInitial').textContent = initial;
+
+  // Weapons
+  const weapons = p.weapons || [];
+  document.getElementById('arsenalWeapons').innerHTML = weapons.length
+    ? weapons.map(w => `
+        <div class="arsenal-weapon-row">
+          <span class="arsenal-weapon-name">${esc(w.name || 'Unknown')}</span>
+          <span class="arsenal-weapon-dmg">${esc(w.damage || '—')}</span>
+          <span class="arsenal-weapon-type">${esc(w.damageType || w.type || '')}</span>
+          ${w.bonus != null ? `<span class="arsenal-weapon-bonus">${w.bonus >= 0 ? '+' : ''}${w.bonus} atk</span>` : ''}
+        </div>`).join('')
+    : '<span class="arsenal-none">None</span>';
+
+  // Spells
+  const spells = p.spells || [];
+  document.getElementById('arsenalSpells').innerHTML = spells.length
+    ? spells.map(s => `<span class="arsenal-spell-pill">${esc(s)}</span>`).join('')
+    : '<span class="arsenal-none">None</span>';
+
+  // Abilities & Features
+  const features = p.features || [];
+  document.getElementById('arsenalAbilities').innerHTML = features.length
+    ? features.map(f => `
+        <div class="arsenal-feature-row">
+          <div class="arsenal-feature-name">${esc(f.name || 'Unknown')}${f.uses ? `<span class="arsenal-feature-uses">${f.uses.current}/${f.uses.max}</span>` : ''}</div>
+          ${f.description ? `<div class="arsenal-feature-desc">${esc(f.description)}</div>` : ''}
+        </div>`).join('')
+    : '<span class="arsenal-none">None</span>';
+
+  // Inventory
+  const inventory = p.inventory || [];
+  document.getElementById('arsenalInventory').innerHTML = inventory.length
+    ? inventory.map(item => `<li class="arsenal-item">${esc(item)}</li>`).join('')
+    : '<span class="arsenal-none">Nothing yet</span>';
+}
+
+function checkInventoryChanges(prev, next) {
+  if (!prev || !next) return;
+  Object.keys(next.players || {}).forEach(id => {
+    const prevLen = (prev.players?.[id]?.inventory || []).length;
+    const nextLen = (next.players?.[id]?.inventory || []).length;
+    if (nextLen > prevLen) {
+      const btn = document.querySelector(`.arsenal-btn[data-arsenal-id="${id}"]`);
+      if (btn) {
+        btn.classList.remove('bag-wiggle');
+        void btn.offsetWidth; // reflow to restart animation
+        btn.classList.add('bag-wiggle');
+        btn.addEventListener('animationend', () => btn.classList.remove('bag-wiggle'), { once: true });
+      }
+    }
+  });
 }
 
 // ── My Character button ──────────────────────────────────────

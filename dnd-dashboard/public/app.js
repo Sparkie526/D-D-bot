@@ -68,7 +68,7 @@ socket.on('turn_timer', ({ playerName, duration, startedAt }) => {
   const countdown   = document.getElementById('turnTimerCountdown');
 
   nameEl.textContent = playerName ? `${playerName}` : '';
-  wrap.classList.remove('hidden', 'urgent');
+  wrap.classList.remove('urgent');
 
   if (turnTimerInterval) clearInterval(turnTimerInterval);
 
@@ -89,7 +89,6 @@ socket.on('turn_timer', ({ playerName, duration, startedAt }) => {
     if (remaining <= 0) {
       clearInterval(turnTimerInterval);
       turnTimerInterval = null;
-      wrap.classList.add('hidden');
     }
   }
 

@@ -808,6 +808,30 @@
     box-shadow: 0 4px 20px rgba(201,168,76,0.5);
     transform: translateY(-1px);
   }
+  .btn-dashboard {
+    background: linear-gradient(135deg, #1a4a2a, #0d2a15);
+    color: #7ed4a0;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    padding: 12px 32px;
+    border-radius: 4px;
+    border: 1px solid #3a8a4a;
+    cursor: pointer;
+    font-family: 'Georgia', serif;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(58,138,74,0.2);
+    margin-left: 8px;
+  }
+  .btn-dashboard:hover {
+    background: linear-gradient(135deg, #1f6b35, #145e24);
+    border-color: #5abf6a;
+    color: #c0f0cc;
+    box-shadow: 0 0 18px rgba(90,191,106,0.55), 0 4px 16px rgba(0,0,0,0.5);
+    transform: translateY(-1px);
+  }
+
   .btn-import {
     background: linear-gradient(135deg, #1a2a3a, #2a4a6a);
     color: #7ab8e8;
@@ -1456,7 +1480,7 @@
     <input type="file" id="importFileInput" accept=".yaml,.yml" style="display:none" onchange="handleImportFile(event)">
     <button class="btn-import" onclick="document.getElementById('importFileInput').click()">⬆ Import YAML</button>
     <button class="btn-export" onclick="exportYaml()">⬇ Export Character YAML</button>
-    <button class="btn-export" style="background:linear-gradient(135deg,#1a4a2a,#0d2a15);border-color:#3a8a4a;margin-left:8px" onclick="addToDashboard()">🎮 Add to Dashboard</button>
+    <button class="btn-dashboard" onclick="addToDashboard()">🎮 Add to Dashboard</button>
   </div>
 </div>
 
@@ -1741,6 +1765,30 @@ function randomizeAllAttributes(){
   // Trigger derived stat recalculation for class & background
   onClassChange();
   onBackgroundChange();
+
+  // Free skill proficiencies — pick 2 from class choices not already class/bg granted
+  const clsData0=CLASSES[cls];
+  const clsChoices=clsData0?.choices||[];
+  const allSkillKeys=Object.keys(SKILL_MAP);
+  const choicePool=clsChoices[0]==='all'?allSkillKeys:clsChoices;
+  const availableForFree=choicePool.filter(sk=>!classSkills.has(sk)&&!bgSkills.has(sk));
+  pickN(availableForFree, FREE_SKILL_LIMIT).forEach(sk=>{ freeSkills.add(sk); skillProf.add(sk); });
+  buildSkillsGrid();
+  updateSkillModifiers();
+  updateFreeSkillCounter();
+
+  // Backstory fields
+  const bg=document.getElementById('charBackground').value;
+  const fullName=document.getElementById('charName').value;
+  const bioList=CLASS_BIOGRAPHIES[cls]||[];
+  const idealList=CLASS_IDEALS[cls]||[];
+  const bondList=BACKGROUND_BONDS[bg]||BACKGROUND_BONDS['Outlander'];
+  const flawList=CLASS_FLAWS[cls]||[];
+  if(bioList.length)   document.getElementById('noteBiography').value=pick(bioList).replace(/\{name\}/g,fullName);
+  if(idealList.length) document.getElementById('noteIdeals').value=pick(idealList);
+  if(bondList.length)  document.getElementById('noteBonds').value=pick(bondList);
+  if(flawList.length)  document.getElementById('noteFlaws').value=pick(flawList);
+  document.getElementById('noteTreasures').value=pick(RANDOM_TREASURES);
 
   // Ability scores (4d6 drop lowest, switch to manual)
   setMethod('manual');
@@ -2430,6 +2478,126 @@ const SPELL_DB = {
     'Wrathful Smite':     { classes:['Paladin'], school:'Evocation', range:'Self', duration:'1 min', slots:'1', desc:'Bonus action: next hit deals +1d6 psychic and target makes WIS save or becomes frightened. Concentration. Great debuff for Paladins.' },
   }
 };
+
+const CLASS_BIOGRAPHIES = {
+  Barbarian: [
+    "Raised among a fierce hill tribe, {name} fought their first battle before their tenth winter. Their rage is not mere anger — it is primal power that surges when blood is spilled.",
+    "{name} was the sole survivor when raiders burned their village. They wandered for years, offering their sword arm to anyone who could point them toward revenge.",
+    "Once a gladiator who earned freedom through sheer brutality, {name} now walks their own road. The roar of the crowd still echoes in their dreams.",
+  ],
+  Bard: [
+    "{name} spent years traveling the trade roads, trading songs for meals and spinning tall tales for coin. They've heard every rumor worth knowing.",
+    "Trained at a prestigious college of magic and music, {name} was expelled for experimenting with forbidden melodies. They carry the knowledge — and the reputation.",
+    "A former court jester who accidentally exposed a noble's corruption mid-performance, {name} fled before dawn and has been on the road ever since.",
+  ],
+  Cleric: [
+    "{name} grew up in a temple and showed remarkable faith from childhood. Their god spoke to them in a dream and sent them into the world to serve a greater purpose.",
+    "After nearly dying from a terrible illness, {name} was healed by a wandering priest and devoted their life to repaying that debt by healing others.",
+    "A former soldier who witnessed the aftermath of a devastating battle, {name} turned to faith to make sense of the death they saw and now walks the path of the divine.",
+  ],
+  Druid: [
+    "Born during a thunderstorm in the deep forest, {name} has always heard the voice of nature more clearly than the voice of people. The wilderness is their true home.",
+    "{name} was raised by a circle of druids after being found abandoned as an infant beside a sacred grove. They have served nature ever since.",
+    "A former farmer whose lands were destroyed by magical blight, {name} learned to draw power from the natural world to prevent such destruction from happening again.",
+  ],
+  Fighter: [
+    "Veteran of three campaigns and a dozen skirmishes, {name} has seen enough war to know what it costs — and enough peace to know what it's worth fighting for.",
+    "{name} trained under a legendary swordmaster for seven years before striking out alone. The lessons were brutal, but the skills are unmatched.",
+    "Once a city guard who uncovered a conspiracy within the ranks, {name} was forced to flee and now sells their considerable combat skills to whoever needs them most.",
+  ],
+  Monk: [
+    "From age five, {name} trained in a remote mountain monastery. Every breath, every movement is discipline. They left only when their master said there was nothing left to teach.",
+    "{name} sought the monastery after years of violence left them hollow. The discipline of the order gave them peace — and sharper instincts than any weapon.",
+    "A wandering ascetic who rejects material wealth, {name} believes the body is the only true instrument. They travel to understand, not to acquire.",
+  ],
+  Paladin: [
+    "{name} swore their sacred oath before a shrine after witnessing a village saved by a lone paladin. They have never broken that oath and never intend to.",
+    "Born into a family of knights, {name} was expected to follow tradition. But their oath goes deeper than duty — it is the core of who they are.",
+    "After a terrible mistake in their youth, {name} devoted themselves to a holy order seeking redemption. Their conviction is unwavering; their past still haunts them.",
+  ],
+  Ranger: [
+    "{name} grew up on the frontier, tracking game through thick forest before most children could read. The wilds are more familiar to them than any city street.",
+    "A former military scout who lost their unit in a disastrous ambush, {name} roams alone — part hunter, part ghost, always watchful.",
+    "Trained by an elder ranger who warned of a growing darkness in the north, {name} set out to investigate and hasn't stopped moving since.",
+  ],
+  Rogue: [
+    "Raised on the streets of a port city, {name} learned early that survival favored the quick and clever. They've been two steps ahead of trouble ever since.",
+    "{name} was once a trusted member of a thieves' guild until the guild master betrayed them. Now they work alone, beholden to no one.",
+    "A former merchant's assistant who discovered their employer was funding slavers, {name} took what they were owed and disappeared into the underworld.",
+  ],
+  Sorcerer: [
+    "Magic runs in {name}'s blood — literally. Their power first manifested at age twelve, accidentally setting their bedroom on fire. They've been learning control ever since.",
+    "{name} woke one morning with raw magical power and no idea why. They've been chasing that answer across the known world.",
+    "Descended from a dragon-touched ancestor, {name} has always felt the fire inside. Most days they keep it contained. Most days.",
+  ],
+  Warlock: [
+    "Desperate after years of failure, {name} made a pact with an entity they still do not fully understand. The power is real. The price remains to be seen.",
+    "{name} was visited in a fever dream by a presence of immense power. When they woke, they could do things no mortal should be able to do.",
+    "A scholar who delved too deep into forbidden texts, {name} accidentally summoned something that offered power in exchange for service. They told themselves it was temporary.",
+  ],
+  Wizard: [
+    "{name} spent twenty years in a library before their mentor declared them ready to see the world. Their spellbook is impeccable; their social skills are a work in progress.",
+    "Fascinated by magic from childhood, {name} graduated top of their arcane class and immediately set out to discover things the curriculum hadn't covered.",
+    "A self-taught wizard who reverse-engineered spells from old scrolls found in ruins, {name} is unconventional but effective. And occasionally explosive.",
+  ],
+};
+
+const CLASS_IDEALS = {
+  Barbarian: ["Strength — the strong protect the weak. Weakness is not a sin; failing to grow stronger is.", "Freedom — chains of any kind, physical or social, are meant to be broken.", "Honor — I fight openly and without tricks. Victory earned through deception is no victory at all."],
+  Bard:      ["Creativity — the world is a story still being written and I intend to add the best chapters.", "Knowledge — every person has a tale worth hearing. I collect them all.", "Change — tradition is just peer pressure from dead people. Progress demands new ideas."],
+  Cleric:    ["Compassion — I help those who suffer because it is right, not for reward.", "Faith — my god's will guides every step. I need no other compass.", "Justice — the law serves the people, not the other way around. I enforce the spirit, not the letter."],
+  Druid:     ["Balance — nature is neither cruel nor kind; it simply is. My role is to preserve the balance.", "Life — every living thing has worth. I protect it whether it asks me to or not.", "Respect — the land endures while empires crumble. I show it the reverence it deserves."],
+  Fighter:   ["Duty — I made a commitment. I honor it no matter the cost.", "Protection — someone has to stand between the innocent and those who would harm them. Might as well be me.", "Excellence — I train every day because the day I stop improving is the day I get someone killed."],
+  Monk:      ["Discipline — the mind and body are instruments to be perfected, not indulged.", "Serenity — anger clouds judgment. I act from stillness, even in violence.", "Wisdom — I seek understanding above all else. Power is only useful if you know when not to use it."],
+  Paladin:   ["Righteousness — I will not compromise my oath for convenience or survival.", "Protection — the helpless deserve a champion. I am that champion.", "Redemption — every person can be saved. I have to believe that."],
+  Ranger:    ["Vigilance — the wilderness hides threats that civilized folk never see coming. I see them.", "Independence — I answer to the land and my own conscience. No lord owns my loyalty.", "Survival — I do what must be done to endure. Sentimentality is a luxury I rarely afford."],
+  Rogue:     ["Freedom — rules are written by people with power to protect that power. I play by my own.", "Loyalty — I don't make many promises, but the ones I make I keep absolutely.", "Adaptability — the situation changes, so must I. Rigid plans break; flexible people survive."],
+  Sorcerer:  ["Discovery — I want to understand every facet of my power, no matter how dangerous the experiment.", "Potential — magic is proof the world is larger than most people dream. I intend to see all of it.", "Acceptance — my power is part of who I am. I stopped apologizing for it years ago."],
+  Warlock:   ["Power — the strong shape the world. I intend to be among them, whatever the cost.", "Knowledge — my patron gives me access to truths beyond mortal comprehension. I must understand them.", "Survival — I made a deal to keep breathing. I intend to make it worth the price."],
+  Wizard:    ["Knowledge — magic is the universe explaining itself. I intend to listen to every word.", "Logic — the answer to every problem can be found if one thinks carefully enough.", "Mastery — there is no ceiling to what arcane study can achieve. I have not yet found my limit."],
+};
+
+const BACKGROUND_BONDS = {
+  Acolyte:       ["The temple where I grew up is under threat. I will do whatever it takes to protect it.", "My mentor at the temple sacrificed everything for me. I carry their teachings into the world."],
+  Charlatan:     ["I once cheated the wrong person and I am still paying for it — one way or another.", "Somewhere out there is my mark: the one who conned me first. I intend to return the favor."],
+  Criminal:      ["My crew was like family. One of them betrayed us all. I haven't forgotten.", "The neighborhood I grew up in was rough. I send coin back whenever I can."],
+  Entertainer:   ["My mentor taught me everything I know. They have disappeared and I mean to find them.", "I performed for a crowd once and it changed everything. I chase that feeling still."],
+  'Folk Hero':   ["The village that made me a hero still sends letters. I carry their faith like armor.", "The tyrant I stood against once is still powerful. Still patient. Still waiting."],
+  'Guild Artisan':["My guild gave me my start. I owe them a debt I take seriously.", "A rival guild destroyed my mentor's workshop. That loss drives me forward every day."],
+  Hermit:        ["My solitude revealed a terrible truth about the world. I descended to act on it.", "The person who drove me to isolation still walks free. I have had years to think about that."],
+  Noble:         ["My family's honor was tarnished by a rival house. Restoring it is a matter of principle.", "I left the estate to experience life as common folk do. What I found changed everything."],
+  Outlander:     ["My tribe entrusted me with a mission when I left. I have not forgotten it.", "The land of my birth calls to me in dreams. Something is wrong there and I must return."],
+  Sage:          ["I spent years searching for knowledge others said was lost. I have not given up.", "My research partner vanished in the middle of our work. I continue alone, for both of us."],
+  Sailor:        ["My crewmates saved my life more than once. I would do the same for any of them.", "The sea took something precious from me. I have not made peace with that yet."],
+  Soldier:       ["The soldiers who served under me trusted me with their lives. I carry them with me.", "War cost me someone I love. Everything I do now is in their memory."],
+  Urchin:        ["The streets that raised me still have people who need protecting. I send coin back when I can.", "The one person who was kind to me when I had nothing — I will find a way to repay them."],
+};
+
+const CLASS_FLAWS = {
+  Barbarian: ["My temper erupts before my brain catches up. I have broken more things than I intended.", "I don't trust people who fight with cleverness instead of strength. Tricksters make me uneasy."],
+  Bard:      ["I embellish constantly. Sometimes I can't tell where the story ends and the truth begins.", "I cannot resist an audience and have gotten into serious trouble simply by trying to impress strangers."],
+  Cleric:    ["I believe my faith absolves me of difficult decisions. Sometimes that means I don't decide fast enough.", "I judge people who lack devotion more harshly than I should. My patience for the faithless is thin."],
+  Druid:     ["Civilization makes me deeply uncomfortable. My social skills in cities leave something to be desired.", "I am more concerned with ecosystems than individuals. People sometimes find this unsettling."],
+  Fighter:   ["I follow orders more easily than I make my own decisions. Without direction I can be slow to act.", "I solve most problems with force first. I have been told this is a flaw. I remain unconvinced."],
+  Monk:      ["My serenity reads as coldness. People think I don't care when I simply do not panic.", "I hold others to the same standards of discipline I hold myself. They rarely appreciate this."],
+  Paladin:   ["My principles are not flexible. This has cost me allies and, on one occasion, a very good meal.", "I assume evil intent in those who don't share my values. I am working on this. Slowly."],
+  Ranger:    ["I am better with animals than people. This is not always a problem, but it frequently is.", "I trust my own instincts so completely that I sometimes ignore information I should have heeded."],
+  Rogue:     ["I lie reflexively, even when the truth would serve me better. Old habit, very hard to break.", "I keep score of every slight. Forgiveness is not something that comes naturally to me."],
+  Sorcerer:  ["My power surges when emotions run high. I have caused accidental damage at inopportune moments.", "I am convinced my magic makes me special. People have called me arrogant about this. They're probably right."],
+  Warlock:   ["I do not talk about my patron. When people ask, I change the subject. This makes them suspicious.", "I made a deal with something I don't fully understand. I tell myself this is fine. I am not always convincing."],
+  Wizard:    ["I talk down to people who don't understand magic. I know this is rude. I do it anyway.", "I get lost in theoretical problems at inopportune moments. Practicality is not always my strong suit."],
+};
+
+const RANDOM_TREASURES = [
+  "A folded letter from someone I left behind — I haven't opened it since the day I left.",
+  "A strange coin that isn't from any kingdom I've encountered. It always comes up heads.",
+  "A small carved figurine of an animal that a dying stranger pressed into my hand. I keep it for luck.",
+  "A journal full of encrypted notes. I wrote them. I can no longer read them.",
+  "A vial of sand from a beach where something important happened. I'm not ready to talk about it.",
+  "An old wanted poster with my name on it from a city I'd rather not return to.",
+  "A ring I was told is worthless. I've had three people offer extraordinary sums for it.",
+  "A map with a location marked in red ink and the word 'DON'T' written beside it.",
+];
 
 const CLASS_STARTING_WEAPONS = {
   Barbarian: ['Greataxe','Handaxe','Javelin','Greatclub'],

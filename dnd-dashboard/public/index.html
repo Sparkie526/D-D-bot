@@ -36,10 +36,10 @@
     <header class="header">
       <div class="header-left">
         <span class="header-emblem">☩</span>
-        <h1 class="header-title">Chronicle</h1>
+        <h1 class="header-title">D&amp;D Dashboard</h1>
         <span class="connection-dot" id="connectionDot" title="Disconnected"></span>
       </div>
-      <div class="header-center" id="headerLocation">— Unknown Lands —</div>
+      <div class="header-center" id="headerLocation" onclick="editHeaderTitle()" title="Click to edit title">— Unknown Lands —</div>
       <div class="header-right">
 <button class="logout-btn" id="logoutBtn" onclick="logout()" title="Switch character">⏏ Leave</button>
         <button class="my-char-btn" id="myCharBtn">
@@ -56,7 +56,7 @@
       <section class="panel story-panel">
         <div class="panel-header">
           <span class="panel-icon">✦</span>
-          <h2>Story Chronicle</h2>
+          <h2>Adventure Log</h2>
           <div class="turn-timer-wrap" id="turnTimerWrap">
             <span class="turn-timer-name" id="turnTimerName"></span>
             <span class="turn-timer-bar-wrap">

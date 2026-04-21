@@ -2492,3 +2492,19 @@ code {
 }
 .turn-timer-wrap.urgent .turn-timer-bar       { background: var(--red-bright); }
 .turn-timer-wrap.urgent .turn-timer-countdown { color: var(--red-bright); }
+
+/* ── Editable header title ───────────────────────────────────── */
+#headerLocation { cursor: pointer; }
+#headerLocation:hover { color: var(--text-bright); }
+.header-title-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-accent);
+  color: var(--text-bright);
+  font-family: 'Cinzel', serif;
+  font-size: inherit;
+  text-align: center;
+  width: 220px;
+  outline: none;
+  padding: 0 4px;
+}

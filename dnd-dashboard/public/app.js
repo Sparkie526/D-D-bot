@@ -264,6 +264,32 @@ function renderLocation() {
   }
 }
 
+function editHeaderTitle() {
+  const el = document.getElementById('headerLocation');
+  if (el.querySelector('input')) return; // already editing
+
+  const current = (gameState?.location?.name) || 'The Adventure Begins';
+  el.innerHTML = `<input id="headerTitleInput" class="header-title-input" value="${esc(current)}" maxlength="60" autofocus>`;
+  const input = document.getElementById('headerTitleInput');
+  input.select();
+
+  async function save() {
+    const val = input.value.trim() || 'The Adventure Begins';
+    await fetch('/api/location', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: val }),
+    });
+    // renderLocation() will update the text via the state_update broadcast
+  }
+
+  input.addEventListener('keydown', async (e) => {
+    if (e.key === 'Enter')  { await save(); input.blur(); }
+    if (e.key === 'Escape') { el.textContent = `— ${current} —`; }
+  });
+  input.addEventListener('blur', save);
+}
+
 // ── Tokens ───────────────────────────────────────────────────
 
 // ── Map zoom / pan / token-scale state ───────────────────────

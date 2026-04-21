@@ -1721,6 +1721,26 @@ function roll4d6DropLowest(){
 }
 
 function randomizeAllAttributes(){
+  const FANTASY_NAMES=[
+    'Varek','Lyria','Dorn','Seraphel','Kade','Mira','Theron','Zara','Brant','Elara',
+    'Gruff','Nyla','Sorin','Vesper','Aldric','Talia','Cael','Rynn','Faolan','Ishara'
+  ];
+  const CLASSES=['Barbarian','Bard','Cleric','Druid','Fighter','Monk','Paladin','Ranger','Rogue','Sorcerer','Warlock','Wizard'];
+  const BACKGROUNDS=['Acolyte','Charlatan','Criminal','Entertainer','Folk Hero','Guild Artisan','Hermit','Noble','Outlander','Sage','Sailor','Soldier','Urchin'];
+  const ALIGNMENTS=['Lawful Good','Neutral Good','Chaotic Good','Lawful Neutral','True Neutral','Chaotic Neutral','Lawful Evil','Neutral Evil','Chaotic Evil'];
+  const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
+
+  // Identity fields
+  document.getElementById('charName').value=pick(FANTASY_NAMES)+' '+pick(['Ashborne','Ironveil','Dusk','Stormcloak','Maren','Coldwater','Embervane','Nighthollow']);
+  document.getElementById('charClass').value=pick(CLASSES);
+  document.getElementById('charBackground').value=pick(BACKGROUNDS);
+  document.getElementById('charAlignment').value=pick(ALIGNMENTS);
+
+  // Trigger derived stat recalculation for class & background
+  onClassChange();
+  onBackgroundChange();
+
+  // Ability scores (4d6 drop lowest, switch to manual)
   setMethod('manual');
   ABILITIES.forEach(ab=>{
     manualScores[ab]=roll4d6DropLowest();

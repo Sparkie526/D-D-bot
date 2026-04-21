@@ -18,9 +18,11 @@ socket.on('disconnect', () => { dot.className = 'connection-dot disconnected'; d
 // ── Socket events ────────────────────────────────────────────
 
 socket.on('state_update', (state) => {
+  const prev = gameState;
   gameState = state;
   handleIdentityCheck();
   renderAll();
+  checkHpChanges(prev, state);
 });
 
 socket.on('story_entry', (entry) => {
@@ -33,6 +35,7 @@ socket.on('dice_entry', (entry) => {
   if (!gameState) return;
   gameState.diceLog.unshift(entry);
   renderDiceLog();
+  showDiceAnimation(entry);
 });
 
 socket.on('token_move', ({ id, x, y }) => {
@@ -1404,4 +1407,91 @@ function esc(text) {
   return String(text)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ── Dice Roll Animation ───────────────────────────────────────
+
+function showDiceAnimation(entry) {
+  const match  = (entry.dice || '').match(/d(\d+)/i);
+  const sides  = match ? parseInt(match[1]) : 20;
+  const total  = entry.total;
+
+  const overlay  = document.getElementById('diceRollOverlay');
+  const dieFace  = document.getElementById('dieFace');
+  const dieNum   = document.getElementById('dieNumber');
+  const label    = document.getElementById('diceRollLabel');
+  const notation = document.getElementById('diceRollNotation');
+  if (!overlay) return;
+
+  // Reset state
+  dieFace.className  = `die-face die-d${sides}`;
+  dieFace.style.animation = '';
+  dieNum.textContent  = '?';
+  label.textContent   = `${entry.name} rolls`;
+  notation.textContent = entry.dice || `1d${sides}`;
+  overlay.style.opacity   = '1';
+  overlay.style.animation = '';
+  overlay.style.display   = 'flex';
+
+  // Rolling animation + number cycling
+  dieFace.style.animation = 'die-rolling 1.2s ease-out forwards';
+  const cycle = setInterval(() => {
+    dieNum.textContent = Math.floor(Math.random() * sides) + 1;
+  }, 55);
+
+  // Reveal result at end of roll
+  setTimeout(() => {
+    clearInterval(cycle);
+    dieNum.textContent = total;
+    dieFace.style.animation = 'die-land 0.45s ease-out forwards';
+    if (sides === 20 && total === 20) dieFace.classList.add('nat20');
+    else if (sides === 20 && total === 1) dieFace.classList.add('nat1');
+  }, 1200);
+
+  // Fade overlay out
+  setTimeout(() => {
+    overlay.style.animation = 'die-exit 0.45s ease forwards';
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      overlay.style.animation = '';
+    }, 450);
+  }, 2500);
+}
+
+// ── HP change detection ───────────────────────────────────────
+
+function checkHpChanges(prevState, newState) {
+  if (!prevState?.players || !newState?.players) return;
+  Object.entries(newState.players).forEach(([id, p]) => {
+    const prev = prevState.players[id];
+    if (!prev) return;
+    const oldHp = prev.hp ?? 0;
+    const newHp = p.hp  ?? 0;
+    if (newHp === oldHp) return;
+    const delta = newHp - oldHp;
+    triggerPlayerEffect(id, delta < 0 ? 'damage' : 'heal', Math.abs(delta));
+  });
+}
+
+function triggerPlayerEffect(discordId, type, amount) {
+  const card = document.querySelector(`.player-card[data-id="${discordId}"]`);
+  if (!card) return;
+
+  // Border flash — remove first to restart if already animating
+  card.classList.remove('card-flash-damage', 'card-flash-heal');
+  void card.offsetWidth;
+  card.classList.add(type === 'damage' ? 'card-flash-damage' : 'card-flash-heal');
+  card.addEventListener('animationend', () => {
+    card.classList.remove('card-flash-damage', 'card-flash-heal');
+  }, { once: true });
+
+  // Floating number
+  const rect = card.getBoundingClientRect();
+  const el   = document.createElement('div');
+  el.className   = `float-number ${type}`;
+  el.textContent = (type === 'damage' ? '−' : '+') + amount;
+  el.style.left  = (rect.left + rect.width  / 2 - 28) + 'px';
+  el.style.top   = (rect.top  + rect.height / 3)      + 'px';
+  document.body.appendChild(el);
+  el.addEventListener('animationend', () => el.remove(), { once: true });
 }

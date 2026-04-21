@@ -219,6 +219,17 @@
   </div>
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
+  <!-- Dice Roll Overlay -->
+  <div id="diceRollOverlay" class="dice-roll-overlay" style="display:none">
+    <div class="dice-roll-modal">
+      <div class="dice-roll-label" id="diceRollLabel"></div>
+      <div class="die-face" id="dieFace">
+        <span class="die-number" id="dieNumber">?</span>
+      </div>
+      <div class="dice-roll-notation" id="diceRollNotation"></div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>

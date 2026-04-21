@@ -39,7 +39,16 @@
         <h1 class="header-title">Chronicle</h1>
         <span class="connection-dot" id="connectionDot" title="Disconnected"></span>
       </div>
-      <div class="header-center" id="headerLocation">— Unknown Lands —</div>
+      <div class="header-center">
+        <div id="headerLocation">— Unknown Lands —</div>
+        <div class="turn-timer-wrap hidden" id="turnTimerWrap">
+          <span class="turn-timer-name" id="turnTimerName"></span>
+          <span class="turn-timer-bar-wrap">
+            <span class="turn-timer-bar" id="turnTimerBar"></span>
+          </span>
+          <span class="turn-timer-countdown" id="turnTimerCountdown"></span>
+        </div>
+      </div>
       <div class="header-right">
 <button class="logout-btn" id="logoutBtn" onclick="logout()" title="Switch character">⏏ Leave</button>
         <button class="my-char-btn" id="myCharBtn">

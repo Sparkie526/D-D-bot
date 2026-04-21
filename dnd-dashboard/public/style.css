@@ -2451,3 +2451,49 @@ code {
   color: var(--text-faint);
   flex-shrink: 0;
 }
+
+/* ── Turn countdown timer (header) ──────────────────────────── */
+.header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.turn-timer-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+.turn-timer-name {
+  font-family: 'Cinzel', serif;
+  color: var(--text-mid);
+  white-space: nowrap;
+}
+.turn-timer-bar-wrap {
+  width: 80px;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.turn-timer-bar {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: 2px;
+  background: var(--gold);
+  transform-origin: left;
+  transition: background 0.5s ease;
+}
+.turn-timer-countdown {
+  font-family: 'Cinzel', serif;
+  font-size: 0.78rem;
+  min-width: 28px;
+  text-align: right;
+  color: var(--gold);
+}
+.turn-timer-wrap.urgent .turn-timer-bar      { background: var(--red-bright); }
+.turn-timer-wrap.urgent .turn-timer-countdown { color: var(--red-bright); }

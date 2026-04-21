@@ -55,6 +55,48 @@ socket.on('active_players', (ids) => {
   renderPlayers();
 });
 
+// ── Turn countdown timer ──────────────────────────────────────
+
+let turnTimerInterval = null;
+let turnTimerEnd = null;
+
+socket.on('turn_timer', ({ playerName, duration, startedAt }) => {
+  turnTimerEnd = startedAt + duration;
+  const wrap        = document.getElementById('turnTimerWrap');
+  const nameEl      = document.getElementById('turnTimerName');
+  const bar         = document.getElementById('turnTimerBar');
+  const countdown   = document.getElementById('turnTimerCountdown');
+
+  nameEl.textContent = playerName ? `${playerName}` : '';
+  wrap.classList.remove('hidden', 'urgent');
+
+  if (turnTimerInterval) clearInterval(turnTimerInterval);
+
+  function tick() {
+    const remaining = Math.max(0, turnTimerEnd - Date.now());
+    const secs      = Math.ceil(remaining / 1000);
+    const pct       = (remaining / duration) * 100;
+
+    bar.style.width      = pct + '%';
+    countdown.textContent = secs + 's';
+
+    if (secs <= 15) {
+      wrap.classList.add('urgent');
+    } else {
+      wrap.classList.remove('urgent');
+    }
+
+    if (remaining <= 0) {
+      clearInterval(turnTimerInterval);
+      turnTimerInterval = null;
+      wrap.classList.add('hidden');
+    }
+  }
+
+  tick();
+  turnTimerInterval = setInterval(tick, 250);
+});
+
 // ── Identity check ───────────────────────────────────────────
 
 function handleIdentityCheck() {

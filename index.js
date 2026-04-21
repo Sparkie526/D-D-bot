@@ -805,20 +805,30 @@ function advanceTurn(guildId) {
   return nextPlayer;
 }
 
+const TURN_TIMEOUT_MS = 90000; // 90 seconds
+
 function resetTurnTimeout(guildId) {
   const session = getSession(guildId);
-  
+
   // Clear any existing timeout
   if (session.turnTimeoutHandle) {
     clearTimeout(session.turnTimeoutHandle);
   }
-  
-  // Set new 75-second timeout
+
+  // Broadcast timer reset to dashboard
+  const currentPlayer = getCurrentTurnPlayer(guildId);
+  io.emit("turn_timer", {
+    playerName: currentPlayer?.characterName || null,
+    duration: TURN_TIMEOUT_MS,
+    startedAt: Date.now(),
+  });
+
+  // Set new 90-second timeout
   session.turnTimeoutHandle = setTimeout(() => {
     console.log(`⏱️ Turn timeout for ${session.players[session.turnOrder[session.currentTurnIndex]]}`);
     // Auto-advance to next player
     advanceTurn(guildId);
-  }, 75000); // 75 seconds
+  }, TURN_TIMEOUT_MS);
 }
 
 async function proceedAfterNames(interaction, guildId, connection) {

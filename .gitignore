@@ -1,0 +1,6 @@
+.env
+node_modules/
+node_modules.zip
+dm_response.mp3
+*.mp3
+.claude/

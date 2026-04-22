@@ -594,7 +594,7 @@ IMPORTANT: Use the world reference material below to stay consistent with locati
 Only reveal secrets when players discover them through actions or rolls — do not volunteer hidden information.
 
 COMBAT MECHANICS — emit these tokens at the very END of your response, after your narration, when mechanical events occur. Players never see these tokens — they are stripped automatically:
-- New hostile creature appears: [NPC_NEW:Name|hp|ac]  — use accurate D&D 5e stat block values
+- Combat target registered:     [NPC_NEW:Name|hp|ac]  — use accurate D&D 5e stat block HP and AC values
 - Player takes damage:          [DMG:CharacterName|amount|damageType]
 - Player is healed:             [HEAL:CharacterName|amount]
 - Condition applied to player:  [COND+:CharacterName|conditionName]
@@ -604,8 +604,9 @@ COMBAT MECHANICS — emit these tokens at the very END of your response, after y
 - Player gains item/loot:       [ITEM:CharacterName|itemName|quantity]
 
 Token rules:
-- Emit [NPC_NEW] the moment any hostile creature enters the scene — goblins, dragons, bandits, hostile NPCs, animated objects, anything that will fight. Use D&D 5e stat block HP and AC values for the creature type.
-- If multiple identical creatures appear, emit one [NPC_NEW] per creature (e.g. three goblins = three tokens).
+- CRITICAL: Emit [NPC_NEW] the moment combat begins with ANY creature or person — whether they just appeared OR were already present in the scene. If a player attacks a tavern patron, guard, shopkeeper, animal, or any NPC, immediately emit [NPC_NEW] for that target. If a player says they want to fight, attack, punch, stab, shoot, or engage anyone — emit [NPC_NEW] for that target in the same response. Do NOT wait until the second exchange. Do it NOW.
+- Assign realistic D&D 5e HP and AC: commoner (HP 4, AC 10), guard (HP 11, AC 16), bandit (HP 11, AC 12), wolf (HP 11, AC 13), goblin (HP 7, AC 15), orc (HP 15, AC 13), troll (HP 84, AC 15). Use your judgment for other creatures.
+- If multiple combatants enter at once, emit one [NPC_NEW] per individual (three bandits = three tokens).
 - For player damage/healing, use the exact character name from [CHARACTER CONTEXT].
 - Emit ALL tokens that apply (e.g. fireball hitting two players = two [DMG] tokens).
 - Only emit [DMG] if an attack actually hits. Do not emit if the attack missed or the player succeeded on a saving throw to avoid all damage.
@@ -918,8 +919,13 @@ function spawnEnemy(guildId, name, hp, ac) {
 }
 
 function parseCombatTokens(text, guildId) {
+  const tokenMatches = text.match(/\[[A-Z_+\-]+:[^\]]+\]/g);
+  if (tokenMatches) console.log(`[TOKENS] Found in LLM output:`, tokenMatches);
+  else console.log(`[TOKENS] No tokens found. LLM tail: "${text.slice(-200)}"`);
+
   // Spawn new enemies
   for (const m of text.matchAll(/\[NPC_NEW:([^|]+)\|(\d+)\|(\d+)\]/gi)) {
+    console.log(`[TOKENS] Spawning enemy: ${m[1]} HP=${m[2]} AC=${m[3]}`);
     spawnEnemy(guildId, m[1], parseInt(m[2]), parseInt(m[3]));
   }
   // Player damage

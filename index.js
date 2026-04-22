@@ -546,6 +546,7 @@ function buildSystemPrompt() {
 Keep responses focused (2–5 sentences). Enough to paint the scene vividly — not enough to lecture.
 IMPORTANT: Prioritize grammatically correct, complete sentences above all else. Ensure every response is polished and flows naturally.
 Never break character. Never mention being an AI.
+CRITICAL: NEVER conclude, end, or wrap up the adventure. No matter what happens — even if players are defeated, a major goal is achieved, or the scene feels resolved — the story ALWAYS continues. There is always a new threat, a new twist, a new scene waiting. The adventure only ends when the DM explicitly uses the /endgame command. If players are knocked out, they wake up. If a quest ends, a new one begins immediately. Keep the world alive and moving forward.
 
 TURN-TAKING (critical rules — follow exactly):
 - When you see [TURN CONTEXT: It is now X's turn], X is the active player for this exchange.
@@ -2132,6 +2133,13 @@ Use the world's title or filename in the \`world\` parameter.
 
     await interaction.reply(`⚔️ *${playerName}: "${action}"*`);
     addStoryEntry("player", playerName, action);
+
+    // Start the timer immediately so the dashboard shows it ticking while the LLM thinks
+    io.emit("turn_timer", {
+      playerName,
+      duration: TURN_TIMEOUT_MS,
+      startedAt: Date.now(),
+    });
 
     // ===== ROLL PROMPT CHECK =====
     // Check if action requires a roll (unless force override is set)

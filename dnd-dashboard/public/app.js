@@ -20,8 +20,12 @@ socket.on('disconnect', () => { dot.className = 'connection-dot disconnected'; d
 socket.on('state_update', (state) => {
   const prev = gameState;
   gameState = state;
+  if (state.encounter) {
+    gameEncounter = state.encounter.active ? (state.encounter.enemies || []) : [];
+  }
   handleIdentityCheck();
   renderAll();
+  renderEnemies();
   checkHpChanges(prev, state);
   checkInventoryChanges(prev, state);
   refreshArsenalModal();

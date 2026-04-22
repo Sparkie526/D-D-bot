@@ -91,6 +91,7 @@ function loadDashboardState() {
     if (fs.existsSync(GAME_STATE_PATH)) {
       const s = JSON.parse(fs.readFileSync(GAME_STATE_PATH, "utf-8"));
       if (!s.tokens) s.tokens = [];
+      if (!s.encounter) s.encounter = { active: false, enemies: [] };
       return s;
     }
   } catch (e) {
@@ -102,6 +103,7 @@ function loadDashboardState() {
     storyFeed: [],
     diceLog: [],
     tokens: [],
+    encounter: { active: false, enemies: [] },
   };
 }
 
@@ -874,6 +876,16 @@ function givePlayerItem(name, itemName, quantity) {
   io.emit('state_update', dashState);
 }
 
+function syncEncounterToDash(guildId) {
+  const session = getSession(guildId);
+  dashState.encounter = {
+    active: session.encounter.active,
+    enemies: session.encounter.enemies,
+  };
+  saveDashboardState();
+  io.emit('state_update', dashState);
+}
+
 function applyNpcDamage(guildId, name, amount) {
   const session = getSession(guildId);
   const enemy = session.encounter.enemies.find(e => e.name.toLowerCase() === name.toLowerCase());
@@ -882,7 +894,7 @@ function applyNpcDamage(guildId, name, amount) {
   if (enemy.hp === 0) enemy.dead = true;
   const allDead = session.encounter.enemies.every(e => e.dead);
   if (allDead) session.encounter.active = false;
-  io.emit('encounter_update', session.encounter.enemies);
+  syncEncounterToDash(guildId);
 }
 
 function applyNpcHeal(guildId, name, amount) {
@@ -890,7 +902,7 @@ function applyNpcHeal(guildId, name, amount) {
   const enemy = session.encounter.enemies.find(e => e.name.toLowerCase() === name.toLowerCase());
   if (!enemy || enemy.dead) return;
   enemy.hp = Math.min(enemy.maxHp, enemy.hp + amount);
-  io.emit('encounter_update', session.encounter.enemies);
+  syncEncounterToDash(guildId);
 }
 
 function spawnEnemy(guildId, name, hp, ac) {
@@ -902,7 +914,7 @@ function spawnEnemy(guildId, name, hp, ac) {
   const enemy = { id: Date.now() + Math.random(), name: finalName, hp, maxHp: hp, ac, dead: false };
   session.encounter.enemies.push(enemy);
   session.encounter.active = true;
-  io.emit('encounter_update', session.encounter.enemies);
+  syncEncounterToDash(guildId);
 }
 
 function parseCombatTokens(text, guildId) {

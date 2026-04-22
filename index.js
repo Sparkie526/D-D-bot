@@ -599,6 +599,7 @@ COMBAT MECHANICS — emit these tokens at the very END of your response, after y
 - Condition removed:            [COND-:CharacterName|conditionName]
 - Enemy takes damage:           [NPC_DMG:EnemyName|amount]
 - Enemy is healed:              [NPC_HEAL:EnemyName|amount]
+- Player gains item/loot:       [ITEM:CharacterName|itemName|quantity]
 
 Token rules:
 - Emit [NPC_NEW] the moment any hostile creature enters the scene — goblins, dragons, bandits, hostile NPCs, animated objects, anything that will fight. Use D&D 5e stat block HP and AC values for the creature type.
@@ -608,7 +609,8 @@ Token rules:
 - Only emit [DMG] if an attack actually hits. Do not emit if the attack missed or the player succeeded on a saving throw to avoid all damage.
 - Damage types: fire, cold, lightning, acid, poison, necrotic, radiant, psychic, bludgeoning, piercing, slashing, thunder, force.
 - Valid conditions: blinded, charmed, deafened, frightened, grappled, incapacitated, invisible, paralyzed, petrified, poisoned, prone, restrained, stunned, unconscious.
-- Place ALL tokens after the narration on the final line. Never mid-sentence.`;
+- Place ALL tokens after the narration on the final line. Never mid-sentence.
+- Emit [ITEM] whenever a player picks up, loots, receives, or is given any item — weapons, potions, gold, keys, quest items, etc. Use quantity 1 if unspecified.`;
 
   if (!worldNotes) {
     cachedSystemPrompt = basePrompt;
@@ -636,7 +638,7 @@ function sanitizeLLMOutput(text) {
     .replace(/<system-reminder>[\s\S]*?<\/system-reminder>/gi, "")
     .replace(/<system[^>]*>[\s\S]*?<\/system[^>]*>/gi, "")
     .replace(/\[ADVANCE_TURN\]/gi, "")
-    .replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL):[^\]]+\]/gi, "")
+    .replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM):[^\]]+\]/gi, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -856,6 +858,22 @@ function applyCondition(name, condition, active) {
   io.emit('state_update', dashState);
 }
 
+function givePlayerItem(name, itemName, quantity) {
+  const found = findPlayerByCharacterName(name);
+  if (!found) return;
+  const { player } = found;
+  if (!player.inventory) player.inventory = [];
+  // Merge with existing stack if same item name
+  const existing = player.inventory.find(i => i.name && i.name.toLowerCase() === itemName.toLowerCase());
+  if (existing) {
+    existing.qty = (existing.qty || 1) + quantity;
+  } else {
+    player.inventory.push({ name: itemName, qty: quantity });
+  }
+  saveDashboardState();
+  io.emit('state_update', dashState);
+}
+
 function applyNpcDamage(guildId, name, amount) {
   const session = getSession(guildId);
   const enemy = session.encounter.enemies.find(e => e.name.toLowerCase() === name.toLowerCase());
@@ -913,6 +931,10 @@ function parseCombatTokens(text, guildId) {
   }
   for (const m of text.matchAll(/\[NPC_HEAL:([^|]+)\|(\d+)\]/gi)) {
     applyNpcHeal(guildId, m[1], parseInt(m[2]));
+  }
+  // Player gains item
+  for (const m of text.matchAll(/\[ITEM:([^|]+)\|([^|]+)\|(\d+)\]/gi)) {
+    givePlayerItem(m[1], m[2].trim(), parseInt(m[3]));
   }
 }
 
@@ -1523,6 +1545,19 @@ async function setPlayerName(interaction, characterName) {
 
   // Update the player's session name
   session.players[userId] = nameWithSuffix;
+
+  // Link to dashboard: find a dashState entry whose characterName matches and re-key it to this Discord userId
+  const nameLower = characterName.toLowerCase().trim();
+  for (const [existingId, player] of Object.entries(dashState.players)) {
+    if ((player.characterName || '').toLowerCase() === nameLower && existingId !== userId) {
+      // Move the entry to the real Discord userId
+      dashState.players[userId] = { ...player, discordId: userId };
+      delete dashState.players[existingId];
+      saveDashboardState();
+      io.emit('state_update', dashState);
+      break;
+    }
+  }
 
   // Try to update Discord nickname
   try {
@@ -2188,7 +2223,7 @@ Use the world's title or filename in the \`world\` parameter.
     let finalReply = reply;
     const shouldAdvance = finalReply.includes('[ADVANCE_TURN]');
     finalReply = finalReply.replace(/\[ADVANCE_TURN\]/gi, '').trim();
-    finalReply = finalReply.replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL):[^\]]+\]/gi, '').trim();
+    finalReply = finalReply.replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM):[^\]]+\]/gi, '').trim();
 
     if (session.turnOrder.length > 1 && shouldAdvance) {
       // Send the DM's narration cleanly first

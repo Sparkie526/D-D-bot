@@ -610,7 +610,7 @@ Token rules:
 - Damage types: fire, cold, lightning, acid, poison, necrotic, radiant, psychic, bludgeoning, piercing, slashing, thunder, force.
 - Valid conditions: blinded, charmed, deafened, frightened, grappled, incapacitated, invisible, paralyzed, petrified, poisoned, prone, restrained, stunned, unconscious.
 - Place ALL tokens after the narration on the final line. Never mid-sentence.
-- Emit [ITEM] whenever a player picks up, loots, receives, or is given any item — weapons, potions, gold, keys, quest items, etc. Use quantity 1 if unspecified.`;
+- Emit [ITEM] whenever a player physically obtains an item in ANY way: picking it up off the ground, putting it in a pocket or bag, looting a corpse or chest, receiving it as a gift or reward from an NPC, finding it during exploration, buying it, or being handed it by another character. This includes mundane objects (mugs, rope, torches), weapons, armor, potions, gold coins, keys, letters, quest items, and treasures. Use quantity 1 if unspecified. If a player takes 3 gold coins, emit [ITEM:Name|Gold Coins|3]. Never skip this token when an item changes hands into a player's possession.`;
 
   if (!worldNotes) {
     cachedSystemPrompt = basePrompt;

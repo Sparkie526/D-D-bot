@@ -1393,6 +1393,7 @@ Background: ${charData.background}
       ? await askOpenAI(messages) 
       : await askOllama(messages);
 
+    parseCombatTokens(fullText, guildId);
     const reply = sanitizeLLMOutput(fullText);
     addToHistory(guildId, "assistant", reply);
     return reply;
@@ -1456,6 +1457,7 @@ async function askDM(guildId, userMessage, playerName) {
     ];
     const reply =
       LLM_PROVIDER === "openai" ? await askOpenAI(messages) : await askOllama(messages);
+    parseCombatTokens(reply, guildId);
     const cleaned = sanitizeLLMOutput(reply);
     addToHistory(guildId, "assistant", cleaned);
     return cleaned;
@@ -2215,9 +2217,6 @@ Use the world's title or filename in the \`world\` parameter.
       },
       interaction.user.id
     );
-
-    // Parse and apply combat tokens before stripping them
-    parseCombatTokens(reply, guildId);
 
     // Handle turn advancement via [ADVANCE_TURN] signal from LLM
     let finalReply = reply;

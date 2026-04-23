@@ -781,6 +781,9 @@ function makeDefaultSession() {
     lastActionTime: null,
     turnTimeoutHandle: null,
     turnTimerDelayHandle: null,
+    initiativePhase: false,
+    initiativeRolls: {},
+    lastTextChannel: null,
     lastRollResult: null,
     pendingAction: null,
     characterSheets: {},
@@ -965,6 +968,7 @@ function applyNpcHeal(guildId, name, amount) {
 
 function spawnEnemy(guildId, name, hp, ac) {
   const session = getSession(guildId);
+  const wasActive = session.encounter.active;
   // Deduplicate names: Goblin, Goblin 2, Goblin 3...
   const baseName = name.trim();
   const existing = session.encounter.enemies.filter(e => e.name === baseName || e.name.startsWith(baseName + ' '));
@@ -973,6 +977,21 @@ function spawnEnemy(guildId, name, hp, ac) {
   session.encounter.enemies.push(enemy);
   session.encounter.active = true;
   syncEncounterToDash(guildId);
+  // Kick off initiative rolling the first time combat starts
+  if (!wasActive) startInitiativePhase(guildId);
+}
+
+function startInitiativePhase(guildId) {
+  const session = getSession(guildId);
+  if (session.initiativePhase) return; // already running
+  session.initiativePhase = true;
+  session.initiativeRolls = {};
+  const playerList = session.activePlayers.map(p => `**${session.players[p.userId] || p.displayName}**`).join(', ');
+  // Broadcast to the guild's last-used text channel via a stored reference
+  const ch = session.lastTextChannel;
+  if (ch) {
+    ch.send(`⚔️ **Combat begins!** Roll for initiative!\n${playerList} — each type \`/roll 1d20\` now. The order of battle will be set once all players have rolled.`);
+  }
 }
 
 function parseCombatTokens(text, guildId) {
@@ -2278,10 +2297,23 @@ Use the world's title or filename in the \`world\` parameter.
       );
     }
 
+    // Always keep track of the channel so we can send initiative prompts
+    session.lastTextChannel = interaction.channel;
+
     const action = interaction.options.getString("what");
     if (!action) return interaction.reply("Tell me what you want to do!");
-    
+
     const forceSkipRoll = interaction.options.getBoolean("force") || false;
+
+    // ===== BLOCK ACTIONS DURING INITIATIVE PHASE =====
+    if (session.initiativePhase) {
+      const rolled = session.initiativeRolls[interaction.user.id];
+      if (rolled !== undefined) {
+        return interaction.reply(`⏳ Waiting for the other players to roll initiative before combat begins.`);
+      } else {
+        return interaction.reply(`⚔️ Roll for initiative first! Type \`/roll 1d20\` before taking any action.`);
+      }
+    }
 
     // ===== TURN-TAKING CHECK (combat only — free-form outside combat) =====
     if (session.encounter.active && session.turnOrder.length > 1) {
@@ -2421,6 +2453,34 @@ Use the world's title or filename in the \`world\` parameter.
 
     await interaction.reply(`🎲 ${rollText}`);
     addDiceEntry(playerName, diceArg, rolls, total);
+
+    // ===== INITIATIVE PHASE — collect rolls, don't send to DM yet =====
+    if (session.initiativePhase) {
+      session.initiativeRolls[interaction.user.id] = total;
+      const needed = session.activePlayers.map(p => p.userId);
+      const waiting = needed.filter(id => session.initiativeRolls[id] === undefined);
+
+      if (waiting.length > 0) {
+        const waitNames = waiting.map(id => session.players[id] || id).join(', ');
+        interaction.channel.send(`📋 **${playerName}** rolled **${total}** for initiative. Waiting on: ${waitNames}`);
+      } else {
+        // Everyone has rolled — sort highest to lowest, set turn order
+        const sorted = needed
+          .map(id => ({ userId: id, name: session.players[id] || id, roll: session.initiativeRolls[id] }))
+          .sort((a, b) => b.roll - a.roll);
+
+        session.turnOrder = sorted.map(p => p.userId);
+        session.currentTurnIndex = 0;
+        session.initiativePhase = false;
+        session.initiativeRolls = {};
+
+        const orderStr = sorted.map((p, i) => `**${i + 1}.** ${p.name} (rolled ${p.roll})`).join('\n');
+        const first = sorted[0];
+        interaction.channel.send(`⚔️ **Initiative order set!**\n${orderStr}\n\n▶️ **${first.name}**, you go first — what do you do?`);
+        resetTurnTimeout(guildId);
+      }
+      return;
+    }
 
     if (session.active && connections[guildId]) {
       // Store roll result for context

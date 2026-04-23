@@ -4,6 +4,8 @@
 // ============================================================
 
 require("dotenv").config();
+const db = require("./db");
+const { sheets: dbSheets, session: dbSession, characters: dbChars } = db;
 const {
   Client,
   GatewayIntentBits,
@@ -49,6 +51,18 @@ const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID;
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const WORLD_FILE = process.env.WORLD_FILE || null; // Specific world file, or null for random
+
+// Comma-separated Discord user IDs that can use /debug commands.
+// The guild owner is always included automatically.
+const ADMIN_IDS = new Set(
+  (process.env.ADMIN_IDS || "").split(",").map(s => s.trim()).filter(Boolean)
+);
+
+function isAdmin(interaction) {
+  if (ADMIN_IDS.has(interaction.user.id)) return true;
+  if (interaction.guild?.ownerId === interaction.user.id) return true;
+  return false;
+}
 
 // How many past messages to remember (keeps token use low).
 // Older messages are dropped from the tail to stay within context.
@@ -144,7 +158,30 @@ const mapUpload = multer({
 });
 
 // REST endpoints
-expressApp.get("/api/state", (req, res) => res.json(dashState));
+expressApp.get("/api/state", (req, res) => {
+  // Merge live session player data from all active guilds so HP/AC/inventory
+  // are always fresh even if syncPlayerToDash was missed.
+  const merged = { ...dashState };
+  merged.players = { ...dashState.players };
+  for (const [gId, sess] of Object.entries(sessions)) {
+    for (const [userId, character] of Object.entries(sess.characterSheets || {})) {
+      if (merged.players[userId]) {
+        // Patch in live HP/AC/level from the character sheet
+        const cs = character.combat || {};
+        const ch = character.character || {};
+        merged.players[userId] = {
+          ...merged.players[userId],
+          hp: cs.hp?.current ?? merged.players[userId].hp,
+          maxHp: cs.hp?.max ?? merged.players[userId].maxHp,
+          ac: cs.ac ?? merged.players[userId].ac,
+          class: ch.class || merged.players[userId].class,
+          level: ch.level || merged.players[userId].level,
+        };
+      }
+    }
+  }
+  res.json(merged);
+});
 
 expressApp.post("/api/player/new", (req, res) => {
   const { discordId, discordName, characterName } = req.body;
@@ -169,6 +206,20 @@ expressApp.post("/api/player/:discordId", (req, res) => {
   if (!dashState.players[discordId]) return res.status(404).json({ error: "Player not found" });
   Object.assign(dashState.players[discordId], req.body);
   saveDashboardState();
+
+  // Propagate HP/AC changes from the dashboard back into the live session character sheet
+  const { hp, maxHp, ac } = req.body;
+  if (hp !== undefined || maxHp !== undefined || ac !== undefined) {
+    for (const sess of Object.values(sessions)) {
+      const sheet = sess.characterSheets?.[discordId];
+      if (sheet?.combat) {
+        if (hp !== undefined && sheet.combat.hp) sheet.combat.hp.current = hp;
+        if (maxHp !== undefined && sheet.combat.hp) sheet.combat.hp.max = maxHp;
+        if (ac !== undefined) sheet.combat.ac = ac;
+      }
+    }
+  }
+
   io.emit("state_update", dashState);
   res.json({ ok: true });
 });
@@ -663,13 +714,6 @@ const DND_CLASSES = [
 // Standard Array for ability scores
 const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
 
-function ensureCharacterDirectory(guildId, userId) {
-  const userPath = path.join(CHARACTER_SHEETS_PATH, guildId, userId);
-  if (!fs.existsSync(userPath)) {
-    fs.mkdirSync(userPath, { recursive: true });
-  }
-}
-
 function loadCharacterTemplate(className) {
   const templatePath = path.join(TEMPLATES_PATH, `${className.toLowerCase()}.yaml`);
   if (!fs.existsSync(templatePath)) {
@@ -686,31 +730,19 @@ function loadCharacterTemplate(className) {
 }
 
 function saveCharacter(guildId, userId, character) {
-  ensureCharacterDirectory(guildId, userId);
-  const fileName = `${character.character.name.toLowerCase().replace(/\s+/g, "_")}.yaml`;
-  const filePath = path.join(CHARACTER_SHEETS_PATH, guildId, userId, fileName);
   try {
-    const content = yaml.dump(character, { lineWidth: -1 });
-    fs.writeFileSync(filePath, content, "utf-8");
-    // Also save auto-save version with timestamp
-    const autoSavePath = path.join(CHARACTER_SHEETS_PATH, guildId, userId, `.${fileName}.autosave`);
-    fs.writeFileSync(autoSavePath, content, "utf-8");
+    const name = character.character.name;
+    dbSheets.saveSheet(userId, guildId, name, character);
     return true;
   } catch (err) {
-    console.error(`Failed to save character:`, err.message);
+    console.error("Failed to save character:", err.message);
     return false;
   }
 }
 
 function loadCharacter(guildId, userId, characterName) {
-  const fileName = `${characterName.toLowerCase().replace(/\s+/g, "_")}.yaml`;
-  const filePath = path.join(CHARACTER_SHEETS_PATH, guildId, userId, fileName);
-  if (!fs.existsSync(filePath)) {
-    return null;
-  }
   try {
-    const content = fs.readFileSync(filePath, "utf-8");
-    return yaml.load(content);
+    return dbSheets.loadSheet(userId, guildId, characterName);
   } catch (err) {
     console.error(`Failed to load character ${characterName}:`, err.message);
     return null;
@@ -718,17 +750,10 @@ function loadCharacter(guildId, userId, characterName) {
 }
 
 function listPlayerCharacters(guildId, userId) {
-  const userPath = path.join(CHARACTER_SHEETS_PATH, guildId, userId);
-  if (!fs.existsSync(userPath)) {
-    return [];
-  }
   try {
-    const files = fs.readdirSync(userPath);
-    return files
-      .filter(f => f.endsWith(".yaml") && !f.startsWith("."))
-      .map(f => f.replace(".yaml", "").replace(/_/g, " "));
+    return dbSheets.listSheets(userId, guildId);
   } catch (err) {
-    console.error(`Failed to list characters:`, err.message);
+    console.error("Failed to list characters:", err.message);
     return [];
   }
 }
@@ -740,33 +765,63 @@ function listPlayerCharacters(guildId, userId) {
 // Stores conversation history and player info per Discord server.
 const sessions = {};
 
+function makeDefaultSession() {
+  return {
+    history: [],
+    players: {},
+    originalNicknames: {},
+    activePlayers: [],
+    active: false,
+    nameCollectionActive: false,
+    nameCollectionTimeout: null,
+    currentLocation: "generic",
+    ambientSoundPlayer: null,
+    turnOrder: [],
+    currentTurnIndex: 0,
+    lastActionTime: null,
+    turnTimeoutHandle: null,
+    lastRollResult: null,
+    pendingAction: null,
+    characterSheets: {},
+    currentCharacters: {},
+    encounter: { active: false, enemies: [] },
+    forcedRoll: null, // { value: number } — consumed by next /roll
+  };
+}
+
 function getSession(guildId) {
   if (!sessions[guildId]) {
-    sessions[guildId] = {
-      history: [],       // Chat history sent to LLM
-      players: {},        // { userId: characterName }
-      originalNicknames: {}, // { userId: originalNickname } for reverting
-      activePlayers: [],  // Array of { userId, displayName, characterName } currently in voice channel
-      active: false,      // Is a game running?
-      nameCollectionActive: false, // Currently waiting for player names
-      nameCollectionTimeout: null, // Timer for auto-proceeding with missing names
-      currentLocation: "generic", // Current location for ambient sounds
-      ambientSoundPlayer: null, // Currently playing ambient sound (for stopping)
-      // Turn-taking system
-      turnOrder: [],      // Array of userId in turn order
-      currentTurnIndex: 0, // Index into turnOrder
-      lastActionTime: null, // Timestamp of last action (for 75-sec timeout)
-      turnTimeoutHandle: null, // Handle for turn auto-advance timer
-      lastRollResult: null, // { playerName, dice, total } from last roll
-      pendingAction: null, // { action, playerName, expectedDC } waiting for roll
-      // Character Sheet System
-      characterSheets: {},  // { userId: characterSheetData }
-      currentCharacters: {}, // { userId: characterName }
-      // Combat / Encounter tracking
-      encounter: { active: false, enemies: [] }, // { id, name, hp, maxHp, ac, dead }
-    };
+    // Try to restore persisted state from the last run
+    try {
+      const saved = dbSession.loadSessionState(guildId);
+      if (saved) {
+        sessions[guildId] = Object.assign(makeDefaultSession(), saved);
+        console.log(`♻️  Restored session state for guild ${guildId}`);
+        // Re-sync restored character sheets into dashState so the dashboard stays in sync
+        const s = sessions[guildId];
+        for (const [userId, character] of Object.entries(s.characterSheets || {})) {
+          // Use Discord display name from activePlayers if available
+          const ap = (s.activePlayers || []).find(p => p.userId === userId);
+          syncPlayerToDash(userId, ap?.displayName || userId, character);
+        }
+      }
+    } catch (_) {
+      // DB may not be ready yet during very early startup calls — fall through
+    }
+    if (!sessions[guildId]) {
+      sessions[guildId] = makeDefaultSession();
+    }
   }
   return sessions[guildId];
+}
+
+// Persist the current session state to SQLite
+function persistSession(guildId) {
+  try {
+    dbSession.saveSessionState(guildId, sessions[guildId] || {});
+  } catch (err) {
+    console.warn("Session persist failed:", err.message);
+  }
 }
 
 function addToHistory(guildId, role, content) {
@@ -775,6 +830,7 @@ function addToHistory(guildId, role, content) {
   if (session.history.length > MAX_HISTORY) {
     session.history = session.history.slice(-MAX_HISTORY);
   }
+  persistSession(guildId);
 }
 
 function getPlayerDisplayName(guildId, userId) {
@@ -1566,6 +1622,14 @@ async function setPlayerName(interaction, characterName) {
   // Update the player's session name
   session.players[userId] = nameWithSuffix;
 
+  // Persist player identity to the database
+  try {
+    dbChars.ensurePlayer(userId, member.user.username);
+  } catch (err) {
+    console.warn("DB player upsert failed:", err.message);
+  }
+  persistSession(interaction.guildId);
+
   // Link to dashboard: find a dashState entry whose characterName matches and re-key it to this Discord userId
   const nameLower = characterName.toLowerCase().trim();
   for (const [existingId, player] of Object.entries(dashState.players)) {
@@ -1723,13 +1787,29 @@ const commands = [
   },
   {
     name: "roll",
-    description: "Roll dice (e.g. 1d20, 2d6) with optional DC for difficulty checking",
+    description: "Roll dice — defaults to d20. Pick a preset or type a custom expression.",
     options: [
       {
-        name: "dice",
-        description: "Dice to roll (e.g. 1d20)",
+        name: "preset",
+        description: "Quick-pick a common die",
         type: ApplicationCommandOptionType.String,
-        required: true,
+        required: false,
+        choices: [
+          { name: "d20 (ability check / attack)", value: "1d20" },
+          { name: "d12 (Barbarian hit die)", value: "1d12" },
+          { name: "d10 (Fighter / Ranger hit die)", value: "1d10" },
+          { name: "d8 (healing / hit die)", value: "1d8" },
+          { name: "d6 (damage / sneak attack)", value: "1d6" },
+          { name: "d4 (minor damage)", value: "1d4" },
+          { name: "2d6 (great sword)", value: "2d6" },
+          { name: "4d6 (stat roll)", value: "4d6" },
+        ],
+      },
+      {
+        name: "dice",
+        description: "Custom expression (e.g. 3d8, 2d6). Overrides preset.",
+        type: ApplicationCommandOptionType.String,
+        required: false,
       },
       {
         name: "dc",
@@ -1842,6 +1922,31 @@ const commands = [
     name: "help",
     description: "Show all commands",
   },
+  {
+    name: "debug",
+    description: "[Admin only] Developer/testing tools",
+    options: [
+      {
+        name: "action",
+        description: "What to do",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+        choices: [
+          { name: "nat20 — force next roll to be 20", value: "nat20" },
+          { name: "nat1 — force next roll to be 1", value: "nat1" },
+          { name: "startcombat — instantly trigger a combat encounter", value: "startcombat" },
+          { name: "spawn — spawn a test enemy", value: "spawn" },
+          { name: "status — show internal session state", value: "status" },
+        ],
+      },
+      {
+        name: "value",
+        description: "Optional argument (spawn: 'Name HP AC', startcombat: enemy name)",
+        type: ApplicationCommandOptionType.String,
+        required: false,
+      },
+    ],
+  },
 ];
 
 const rest = new REST().setToken(DISCORD_TOKEN);
@@ -1851,6 +1956,9 @@ const rest = new REST().setToken(DISCORD_TOKEN);
 // ============================================================
 
 client.once(Events.ClientReady, async (c) => {
+  // Initialize SQLite database (creates tables if they don't exist yet)
+  db.initializeDatabase();
+
   console.log(`\n🎲 Dungeon Master Bot is online as ${c.user.tag}`);
   console.log(`   LLM provider: ${LLM_PROVIDER}`);
   if (LLM_PROVIDER === "openai") {
@@ -2268,22 +2376,35 @@ Use the world's title or filename in the \`world\` parameter.
   //  /roll [dice] — Roll dice and tell the DM
   // ----------------------------------------------------------
   if (commandName === "roll") {
-    const diceArg = interaction.options.getString("dice") || "1d20";
+    // custom dice expression overrides preset; both fall back to 1d20
+    const diceArg = (interaction.options.getString("dice") || interaction.options.getString("preset") || "1d20").toLowerCase();
     const dcArg = interaction.options.getInteger("dc");
-    const [numDice, diceSides] = diceArg.toLowerCase().split("d").map(Number);
+    const [numDice, diceSides] = diceArg.split("d").map(Number);
 
-    if (!numDice || !diceSides) {
+    if (!numDice || !diceSides || isNaN(numDice) || isNaN(diceSides)) {
       return interaction.reply(
-        "Invalid dice format. Try `/roll 1d20` or `/roll 2d6`"
+        "❌ Invalid dice format. Try `/roll dice:2d6` or pick a preset."
       );
     }
 
     let total = 0;
     const rolls = [];
-    for (let i = 0; i < numDice; i++) {
-      const roll = Math.floor(Math.random() * diceSides) + 1;
-      rolls.push(roll);
-      total += roll;
+
+    // Consume any forced roll value set by /debug
+    const forced = session.forcedRoll;
+    if (forced !== null && numDice === 1) {
+      // Only applies to single-die rolls; clamp to valid range
+      const forcedVal = Math.min(Math.max(forced.value, 1), diceSides);
+      rolls.push(forcedVal);
+      total = forcedVal;
+      session.forcedRoll = null;
+    } else {
+      session.forcedRoll = null; // clear stale forced value on multi-dice
+      for (let i = 0; i < numDice; i++) {
+        const roll = Math.floor(Math.random() * diceSides) + 1;
+        rolls.push(roll);
+        total += roll;
+      }
     }
 
     // Build roll display with optional DC
@@ -2397,6 +2518,7 @@ Use the world's title or filename in the \`world\` parameter.
   if (commandName === "resetgame") {
     await revertAllNicknames(interaction);
     sessions[guildId] = null;
+    try { dbSession.clearSessionState(guildId); } catch (_) {}
     interaction.reply(
       "🗑️ Game state cleared. Type `/startgame` to begin a new adventure."
     );
@@ -2711,8 +2833,73 @@ Use the world's title or filename in the \`world\` parameter.
     session.nameCollectionActive = false;
     session.activePlayers = [];
     session.history = [];
-    
+    try { dbSession.clearSessionState(guildId); } catch (_) {}
+
     return;
+  }
+
+  // ----------------------------------------------------------
+  //  /debug — Admin/dev testing tools
+  // ----------------------------------------------------------
+  if (commandName === "debug") {
+    if (!isAdmin(interaction)) {
+      return interaction.reply({ content: "❌ This command is restricted to server admins.", ephemeral: true });
+    }
+
+    const debugAction = interaction.options.getString("action");
+    const debugValue = interaction.options.getString("value") || "";
+
+    if (debugAction === "nat20") {
+      session.forcedRoll = { value: 20 };
+      return interaction.reply({ content: "🎯 **NAT 20 loaded.** The next `/roll` (single die) will land on 20.", ephemeral: true });
+    }
+
+    if (debugAction === "nat1") {
+      session.forcedRoll = { value: 1 };
+      return interaction.reply({ content: "💀 **NAT 1 loaded.** The next `/roll` (single die) will land on 1.", ephemeral: true });
+    }
+
+    if (debugAction === "spawn") {
+      // Format: "Name HP AC"  e.g. "Goblin 15 12"
+      const parts = debugValue.trim().split(/\s+/);
+      const enemyName = parts[0] || "Test Enemy";
+      const hp = parseInt(parts[1]) || 20;
+      const ac = parseInt(parts[2]) || 12;
+      spawnEnemy(guildId, enemyName, hp, ac);
+      syncEncounterToDash(guildId);
+      return interaction.reply({ content: `👹 Spawned **${enemyName}** (HP: ${hp}, AC: ${ac}) on the map.`, ephemeral: true });
+    }
+
+    if (debugAction === "startcombat") {
+      if (!session.active) {
+        return interaction.reply({ content: "❌ No game running. Start one with `/startgame` first.", ephemeral: true });
+      }
+      const enemyName = debugValue.trim() || "Goblin";
+      spawnEnemy(guildId, enemyName, 20, 12);
+      syncEncounterToDash(guildId);
+      // Inject a combat-start message into DM history
+      const combatPrompt = `[DEBUG: Admin has force-started a combat encounter. A ${enemyName} suddenly appears and attacks! Begin the combat immediately.]`;
+      addToHistory(guildId, "user", combatPrompt);
+      const reply = await askDM(guildId, combatPrompt, playerName || "Admin");
+      addStoryEntry("dm", "Dungeon Master", reply);
+      await sendDMResponseWithVoice(interaction, connections[guildId], reply, guildId);
+      return;
+    }
+
+    if (debugAction === "status") {
+      const lines = [
+        `**Session active:** ${session.active}`,
+        `**Players:** ${JSON.stringify(session.players)}`,
+        `**Turn order:** ${session.turnOrder.join(", ") || "none"}`,
+        `**Encounter enemies:** ${session.encounter.enemies.map(e => `${e.name} ${e.hp}/${e.maxHp} HP`).join(", ") || "none"}`,
+        `**Forced roll:** ${session.forcedRoll ? session.forcedRoll.value : "none"}`,
+        `**History entries:** ${session.history.length}`,
+        `**Character sheets loaded:** ${Object.keys(session.characterSheets).length}`,
+      ];
+      return interaction.reply({ content: lines.join("\n"), ephemeral: true });
+    }
+
+    return interaction.reply({ content: "❓ Unknown debug action.", ephemeral: true });
   }
 
   // ----------------------------------------------------------

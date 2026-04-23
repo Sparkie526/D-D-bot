@@ -1,204 +1,12 @@
 {
   "location": {
-    "name": "The Adventure Begins",
+    "name": "Welcome to Aethoria",
     "description": "Your journey starts here...",
     "mapImage": "/uploads/map_1776717156948.webp"
   },
   "players": {
     "541385113074794516": {
       "discordId": "541385113074794516",
-      "discordName": "C_Scarp",
-      "characterName": "Noctis Oakensoul",
-      "hp": 9,
-      "maxHp": 9,
-      "ac": 11,
-      "class": "Druid",
-      "level": 1,
-      "image": null,
-      "inventory": [
-        "Arcane Focus",
-        "Backpack",
-        "Bedroll",
-        "Torch (×5)",
-        "Rations (×5)",
-        "Gold Pieces (×15)"
-      ],
-      "spells": [],
-      "background": "Outlander",
-      "alignment": "Lawful Evil",
-      "initiative": 0,
-      "proficiencyBonus": 2,
-      "abilities": {
-        "strength": 13,
-        "dexterity": 11,
-        "constitution": 13,
-        "intelligence": 12,
-        "wisdom": 13,
-        "charisma": 13
-      },
-      "skills": {
-        "acrobatics": {
-          "modifier": 2,
-          "proficient": true
-        },
-        "animal_handling": {
-          "modifier": 1,
-          "proficient": false
-        },
-        "arcana": {
-          "modifier": 3,
-          "proficient": true
-        },
-        "athletics": {
-          "modifier": 3,
-          "proficient": true
-        },
-        "deception": {
-          "modifier": 3,
-          "proficient": true
-        },
-        "history": {
-          "modifier": 3,
-          "proficient": true
-        },
-        "insight": {
-          "modifier": 3,
-          "proficient": true
-        },
-        "intimidation": {
-          "modifier": 1,
-          "proficient": false
-        },
-        "investigation": {
-          "modifier": 1,
-          "proficient": false
-        },
-        "medicine": {
-          "modifier": 3,
-          "proficient": true
-        },
-        "nature": {
-          "modifier": 1,
-          "proficient": false
-        },
-        "perception": {
-          "modifier": 1,
-          "proficient": false
-        },
-        "performance": {
-          "modifier": 3,
-          "proficient": true
-        },
-        "persuasion": {
-          "modifier": 3,
-          "proficient": true
-        },
-        "religion": {
-          "modifier": 3,
-          "proficient": true
-        },
-        "sleight_of_hand": {
-          "modifier": 2,
-          "proficient": true
-        },
-        "stealth": {
-          "modifier": 0,
-          "proficient": false
-        },
-        "survival": {
-          "modifier": 3,
-          "proficient": true
-        }
-      },
-      "saves": {
-        "strength": {
-          "modifier": 1,
-          "proficient": false
-        },
-        "dexterity": {
-          "modifier": 0,
-          "proficient": false
-        },
-        "constitution": {
-          "modifier": 1,
-          "proficient": false
-        },
-        "intelligence": {
-          "modifier": 3,
-          "proficient": true
-        },
-        "wisdom": {
-          "modifier": 3,
-          "proficient": true
-        },
-        "charisma": {
-          "modifier": 1,
-          "proficient": false
-        }
-      },
-      "armor": "Leather Armor",
-      "weapons": [
-        {
-          "name": "Dagger",
-          "type": "Melee",
-          "bonus": 3,
-          "damage": "1d4+1",
-          "damageType": "piercing"
-        },
-        {
-          "name": "Spear",
-          "type": "Thrown",
-          "bonus": 3,
-          "damage": "1d6+1",
-          "damageType": "piercing"
-        },
-        {
-          "name": "Sling",
-          "type": "Ranged",
-          "bonus": 2,
-          "damage": "1d4+0",
-          "damageType": "bludgeoning"
-        }
-      ],
-      "features": [
-        {
-          "name": "Druidic",
-          "description": "Secret druidic language. You can leave messages only other druids can read.",
-          "uses": null
-        },
-        {
-          "name": "Spellcasting",
-          "description": "Use Wisdom for spell attacks. Spell save DC = 8 + Prof + WIS mod.",
-          "uses": null
-        }
-      ],
-      "conditions": {
-        "blinded": false,
-        "charmed": false,
-        "deafened": false,
-        "frightened": false,
-        "grappled": false,
-        "incapacitated": false,
-        "invisible": false,
-        "paralyzed": false,
-        "petrified": false,
-        "poisoned": false,
-        "prone": false,
-        "restrained": false,
-        "stunned": false,
-        "unconscious": false,
-        "exhaustion": 0
-      },
-      "notes": {
-        "biography": "I am Noctis Oakensoul, an Outlander Druid who lives off the earth. Now more then a century and a half old,  I once was a console to the nobility to assist with seasonal harvests and helped with the heard of animals. After the great plague ravages my homelands and killed many innocents including the son and heir apparent of the kingdom, I was exiled deep into the forest to live on my own, with hopes that my skills and powers don't hurt anyone I love. It is a mystery whether it was indeed my powers that brought the great plague. No one truly knows. ",
-        "bonds": "In his youth and training, Noctis learned the value of friendship with others similar to him in his Druidic training and his connection with animals. Other long lost Druids truly have his respect and sees them as brothers. Animals all around him he sees as his growing family. ",
-        "ideals": "Noctis believes the connection between the living and the planet is essential for all to survive. It is a delicate balance that few can see. He is willing to use his powers and skills to help those he deems important and are willing to help keep this balance, and is not afraid to turn against someone he notices is going off course or becoming selfish for themselves. ",
-        "flaws": "It is hard for Noctis to trust others he newly meets. His personal devotion to the earth and animals comes first before any truly lasting bond. Even after his trust is made with another, he would be willing to betray or hurt others who seem to be deviating from the path he believes is right. This ultimately  makes it difficult from him to work with others. ",
-        "treasures": "Noctis carries and ancient Druid book with him which has the entire history of the Druids, their spells and powers of the planet, and maps to ancient relics which initially formed the earth. Only problem is with what Noctis currently know, he can only read about 1% of the book as it was written over several centuries using different languages and dialects, some which still do not even exist to this day. His hope is one day to gain the full knowledge of the book by questing through the land to one day be able to decipher the entire book to become a Druidic Lord and have full control of all earthly powers. But will he use them for good, or for evil? "
-      }
-    },
-    "local_1776715210514_r84sk": {
-      "discordId": "local_1776715210514_r84sk",
       "discordName": "C Scarp",
       "characterName": "Throatzilla",
       "hp": 10,
@@ -206,7 +14,7 @@
       "ac": 10,
       "class": "Adventurer",
       "level": 1,
-      "image": null,
+      "image": "C:\\Users\\PC\\Pictures\\Screenshots/Screenshot 2026-04-21 221641",
       "inventory": [],
       "spells": [],
       "features": [],
@@ -226,6 +34,51 @@
       "spells": [],
       "features": [],
       "conditions": {}
+    },
+    "250803410360729601": {
+      "discordId": "250803410360729601",
+      "discordName": "dexsword",
+      "characterName": "dexsword",
+      "hp": 10,
+      "maxHp": 10,
+      "ac": 10,
+      "class": "Adventurer",
+      "level": 1,
+      "image": null,
+      "inventory": [],
+      "spells": [],
+      "features": [],
+      "conditions": {}
+    },
+    "local_1776738573004_kb1xo": {
+      "discordId": "local_1776738573004_kb1xo",
+      "discordName": "dude",
+      "characterName": "dude",
+      "hp": 10,
+      "maxHp": 10,
+      "ac": 10,
+      "class": "Adventurer",
+      "level": 1,
+      "image": null,
+      "inventory": [],
+      "spells": [],
+      "features": [],
+      "conditions": {}
+    },
+    "web_1776740311363": {
+      "discordId": "web_1776740311363",
+      "discordName": "Lyria Nighthollow",
+      "characterName": "Lyria Nighthollow",
+      "hp": 6,
+      "maxHp": 6,
+      "ac": 12,
+      "class": "Sorcerer",
+      "level": 1,
+      "image": null,
+      "inventory": [],
+      "spells": [],
+      "features": [],
+      "conditions": {}
     }
   },
   "storyFeed": [
@@ -234,17 +87,578 @@
       "name": "Dungeon Master",
       "text": "(The scene is set in a dimly lit tavern, with patrons huddled around a roaring fire. The air is thick with smoke and the smell of ale. In the corner, a lone figure sits, cloaked in shadows. Suddenly, the door bursts open and a tall, imposing figure strides in.)\n\nFigure: (booming voice) \"Attention, travelers! Gather 'round and listen well! For tonight, under the watchful eyes of the celestial bodies, I shall introduce you to... Aethoria!\"\n\n(The patrons stare, awed by the sudden interruption. The fire crackles, and the shadows on the walls seem to shift and writhe like living things.)\n\nFigure: (eyes gleaming with an otherworldly intensity) \"A world of wonders, terrors, and mystery! A realm where ancient civilizations once thrived, only to crumble beneath the weight of their own hubris. Where darkness reigns supreme, and the whispers of forgotten lore echo through the desolate lands.\"\n\n(The figure steps closer, its eyes burning with an inner fire.)\n\nFigure: \"And you, brave adventurers? Who are you, that would dare to tread this forsaken land? What drives you, beyond the boundaries of mortal men?\"\n\n(The patrons lean in, eager for answers. The shadows seem to grow longer and more sinister, as if waiting for your response...)\n\nWhat do you say?",
       "timestamp": "2026-04-21T00:21:23.283Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "The curtains draw open, and the whispers of the wind fade away as I, your Game Master, greet you.\n\nWelcome, adventurers, to the land of darkness and mystery! As we embark on this perilous journey, I invite you to introduce yourselves with your character names. Please declare your names, and let us begin our tale of Ashmore Keep.\n\nDexsword, c_scarp, please step forward and reveal your characters' identities. What are their names, and what drives them to venture into the unknown?\n\n(Dramatic pause)\n\nPlease respond with your character names, and we shall weave the fabric of fate around you...",
+      "timestamp": "2026-04-21T01:43:47.333Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "Welcome, brave adventurers, to the shadowed realm of Millhaven. Please, introduce yourselves and declare your character names, so we may embark upon this dark journey together.",
+      "timestamp": "2026-04-21T01:48:45.988Z"
+    },
+    {
+      "type": "player",
+      "name": "Dexsword",
+      "text": "look around",
+      "timestamp": "2026-04-21T01:52:47.648Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "You take a moment to survey your surroundings. The streets of Millhaven are eerily quiet, with townsfolk avoiding your gaze, their faces etched with fear. A few missing persons flyers flutter on the noticeboard outside The Broken Antler, and the scent of damp earth hangs in the air. \n\nWhat catches your eye, Dexy? Do you wish to approach the inn, speak to a local, or perhaps investigate the noticeboard?\n\nOkay, **Throatzilla**, what do you do?",
+      "timestamp": "2026-04-21T01:52:49.859Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "Welcome, brave adventurers, to the world of Aethoria. Please, introduce yourselves and declare your character names. Who are you in this tale?",
+      "timestamp": "2026-04-21T01:59:36.205Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "Welcome, brave adventurers, to the world of Aethoria! Please, introduce yourselves and declare your character names. Let the tale begin with your stories.",
+      "timestamp": "2026-04-21T02:05:45.707Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "Welcome, brave adventurers, to the land of Aethoria. As we embark on this journey together, please introduce yourselves and declare your character names. Who shall we follow into the depths of this world?",
+      "timestamp": "2026-04-21T02:10:20.071Z"
+    },
+    {
+      "type": "player",
+      "name": "Dexsword",
+      "text": "look around",
+      "timestamp": "2026-04-21T02:11:31.959Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "You take a moment to survey your surroundings, the bioluminescent ice-moss casting an eerie glow on the frost-kissed streets. In the distance, you spot a group of shivering citizens huddled together, their eyes filled with a mix of fear and desperation. A few stalls still stand, their wares barely keeping the cold at bay. \n\nWhat catches your eye, Dexy? Do you wish to approach the citizens, investigate the stalls, or perhaps seek out a more secluded area to gather your thoughts?\n\nOkay, **c_scarp**, what do you do?",
+      "timestamp": "2026-04-21T02:11:34.904Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "i take a poop on the floor in the corner of the room and then kick the snow over it and pull up my pants and walk with Dexy",
+      "timestamp": "2026-04-21T02:12:48.043Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "In your haste, you misjudge your aim and the act becomes more conspicuous than intended. The nearby citizens turn their heads in shock, murmuring and pointing at your misdeed. The cold air seems to grow even colder with their disdain, and a few of them glare at you as you hastily cover your tracks. \n\nDexy, you notice the tension rising among the onlookers. How do you wish to respond to this unexpected turn of events?\n\nOkay, **c_scarp**, what do you do?",
+      "timestamp": "2026-04-21T02:13:41.063Z"
+    },
+    {
+      "type": "player",
+      "name": "Dexsword",
+      "text": "point at the dragon heading our way and when they look run toward the keep",
+      "timestamp": "2026-04-21T02:14:57.437Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "You dramatically point toward the sky, drawing the citizens' attention to an approaching silhouette that darkens the sun. As they gasp and turn, you seize the moment and sprint toward the keep, the sound of hurried footsteps echoing behind you. \n\nC_Scarp, caught up in the chaos, follows your lead as the crowd begins to scatter in panic. You reach the towering gates of the keep, its ancient stone walls looming above you. \n\nWhat do you wish to do next, Dexy? Will you enter the keep, or do you have another plan in mind?\n\nOkay, **c_scarp**, what do you do?",
+      "timestamp": "2026-04-21T02:14:59.930Z"
+    },
+    {
+      "type": "player",
+      "name": "Dexsword",
+      "text": "look around",
+      "timestamp": "2026-04-21T02:18:56.548Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "Inside the keep, the air is warmer, and the flickering torches cast dancing shadows across the stone walls. Guards bustle about, their faces etched with concern, and you can hear snippets of conversation about the dying geothermal vents and the council's growing desperation. \n\nAs you scan the interior, you notice a large map of Frostheim spread across a table, marked with various locations and notes. A few guards seem to be discussing something in hushed tones nearby.\n\nWhat do you wish to investigate further, Dexy? The map, the guards, or perhaps something else within the keep?\n\nOkay, **c_scarp**, what do you do?",
+      "timestamp": "2026-04-21T02:19:07.179Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "Welcome, brave adventurers, to the world of Aethoria. Please, introduce yourselves and declare your character names to the group. What tales shall we weave together?",
+      "timestamp": "2026-04-21T02:23:58.751Z"
+    },
+    {
+      "type": "player",
+      "name": "Dexsword",
+      "text": "sense magic",
+      "timestamp": "2026-04-21T02:25:03.589Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "You close your eyes and reach out with your senses, attuning yourself to the ebb and flow of magic around you. A faint, cold pulse resonates from the depths of the Underfrost, a presence that feels deliberate and ancient. \n\nThe air crackles with an unsettling energy, hinting that something powerful is at work below. \n\nImstupid, how do you wish to proceed?\n\nOkay, **imstupid**, what do you do?",
+      "timestamp": "2026-04-21T02:25:05.887Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I listen for any clues around us",
+      "timestamp": "2026-04-21T02:26:15.779Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "You strain your ears, tuning into the sounds of Frostheim. The distant creaking of ice and the low murmurs of the wind carry whispers of discontent from the few remaining citizens. \n\nSuddenly, a faint voice catches your attention, speaking urgently about \"the vents\" and \"the shadows below.\" The urgency in their tone suggests that time is running short.\n\nDexy, how do you wish to respond to this newfound information?\n\nOkay, **dexy**, what do you do?",
+      "timestamp": "2026-04-21T02:26:19.596Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "Welcome, brave adventurers! As we embark on this journey through the world of Aethoria, I invite you to introduce yourselves. Please share your character names and a glimpse of who they are. c_scarp, the floor is yours.",
+      "timestamp": "2026-04-22T02:07:04.084Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "Do i see any people around?",
+      "timestamp": "2026-04-22T02:08:42.770Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "As you scan the streets of Frostheim, you notice a handful of weary figures huddled together near a flickering streetlamp, their faces drawn and anxious. A few more pass by, heads down, as if trying to avoid the biting cold and the weight of their troubles. \n\nAmong the crowd, one figure catches your eye — a woman clutching a tattered map, looking lost and desperate. What do you wish to do next, Throatzilla?",
+      "timestamp": "2026-04-22T02:09:13.133Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I walk up to her and ask her to see her map",
+      "timestamp": "2026-04-22T02:10:19.631Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "You approach the woman, your voice cutting through the chill as you ask to see her map. Startled, she steps back, clutching it tighter to her chest, her eyes wide with suspicion. “What do you want with it?” she replies, her tone defensive, glancing around as if expecting trouble.\n\nThe tension in the air thickens, and the crowd nearby watches with bated breath. How will you proceed, Throatzilla?",
+      "timestamp": "2026-04-22T02:10:31.315Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I tell her i want to see it. I then grab it from her hands and look down at it. Do i know of the area?",
+      "timestamp": "2026-04-22T02:11:54.465Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "With a swift motion, you snatch the map from her hands, unfurling it before your eyes. The markings are familiar; you recognize key locations in Frostheim, including the abandoned districts where the geothermal vents have failed. \n\nThe woman gasps, her expression shifting from shock to anger. “Hey! Give that back!” she demands, her voice rising. You can see a few bystanders beginning to take an interest in the unfolding scene. \n\nWhat will you do next, Throatzilla?",
+      "timestamp": "2026-04-22T02:12:06.098Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "i tell her to fuck off and start to walk away and head down the street.",
+      "timestamp": "2026-04-22T02:13:24.560Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "You toss the woman a dismissive glare, muttering your disdain as you turn to stride away. Her protests fade behind you, replaced by the murmurs of the onlookers, some chuckling at her misfortune. \n\nAs you walk down the street, the map clutched in your hands reveals a path leading to the Underfrost tunnels, marked with a warning about dangers lurking within. The cold air bites at your skin, but a flicker of purpose ignites within you.\n\nWhat will you do next, Throatzilla?",
+      "timestamp": "2026-04-22T02:13:27.194Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "i put the map in my bag and follow the path",
+      "timestamp": "2026-04-22T02:14:15.162Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "You carefully stow the map in your bag, feeling a surge of determination as you follow the marked path. The streets grow quieter, and the shadows deepen as you approach the entrance to the Underfrost tunnels, a yawning maw carved into the icy ground. \n\nThe air grows colder still, and a faint echo of dripping water can be heard from within. A sense of foreboding washes over you, but so does the thrill of adventure.\n\nAs you stand before the entrance, do you choose to enter immediately, or would you like to prepare further?",
+      "timestamp": "2026-04-22T02:14:17.430Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "Can i see into the tunnel?",
+      "timestamp": "2026-04-22T02:15:16.716Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "Peering into the tunnel, your eyes adjust to the dim light, revealing a winding passageway lined with glistening ice and rough stone. The walls shimmer with bioluminescent ice-moss, casting an eerie glow that dances along the path ahead. \n\nYou notice faint scratch marks on the walls, remnants of something that may have passed through here — or perhaps something still lurking in the shadows. \n\nWhat course of action do you choose now, Throatzilla? Will you venture deeper into the Underfrost, or take a moment to prepare?",
+      "timestamp": "2026-04-22T02:15:29.376Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "The air hangs heavy with an ominous chill as the shadows of Ashmore Keep loom in the distance. You gather at the Broken Antler, the warm glow of the inn contrasting sharply with the dark tales whispered among the townsfolk. As you prepare to embark on your quest, the innkeeper Mira watches you with wary eyes, her hands trembling slightly as she serves drinks. \n\nNow, as the flicker of candlelight dances across your faces, I invite you to declare your names and the heroes you embody. Who stands ready to confront the mysteries of Ashmore Keep?",
+      "timestamp": "2026-04-22T02:20:20.818Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "The dim light of the inn flickers, casting long shadows across the worn wooden floor. The air is thick with the scent of smoke and ale, and the murmurs of anxious townsfolk fill the corners. As you gather around the central table, the innkeeper Mira glances at you with a mix of curiosity and concern. \n\n\"Who are you brave souls venturing into the cursed shadows of Ashmore Keep?\" she inquires, her voice barely rising above the din. \n\nDeclare your names, heroes, and let the tale unfold.",
+      "timestamp": "2026-04-22T02:29:24.001Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I ask her what she knows",
+      "timestamp": "2026-04-22T02:31:04.270Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "Mira's weary eyes meet yours, and she leans in closer, lowering her voice as if afraid of being overheard. \"Strange things have been happening since that scholar, Serafin, took up residence in the keep,\" she whispers. \"People have gone missing, and at night, lights flicker from the tower. I fear for my son; he was one of the first to vanish.\"\n\nThe flickering lanterns cast a warm glow, but an unsettling chill runs through the room. \"If you are truly going to investigate, be careful. The forest is unforgiving, and Ashmore Keep is said to be haunted.\"\n\nWhat will you do next, Throatzilla? Will you gather more information, prepare for your journey, or perhaps seek allies?",
+      "timestamp": "2026-04-22T02:31:08.302Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I ask her whats down there",
+      "timestamp": "2026-04-22T02:32:45.142Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "Mira's brow furrows as she glances toward the darkened corners of the inn, her voice dropping even lower. \"Down in the keep, I can't say for certain. The townsfolk whisper of undead soldiers and dark magic. They say the catacombs beneath the keep house the remains of those who fought long ago, but now... now they may not rest in peace.\"\n\nHer hands tremble slightly as she speaks, fear evident in her eyes. \"If you go down there, you must be prepared for whatever lurks in the shadows. The last group that ventured near never returned.\"\n\nWith the weight of her words hanging heavily in the air, what will you choose to do next? Will you gather supplies, seek out more information, or perhaps rally your companions for the journey ahead?",
+      "timestamp": "2026-04-22T02:32:49.183Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I lay my dagger on the bar and give her aunphased look and raise 1 eyebrow. \"what ever is down there has not met me yet\"",
+      "timestamp": "2026-04-22T02:34:30.310Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "Mira's eyes widen slightly at your boldness, a mixture of admiration and concern flickering across her face. The dagger glints ominously in the dim light, a testament to your resolve. She takes a moment, her breath hitching as she processes your confidence.\n\n\"You have a fire in you, Throatzilla,\" she replies, forcing a small smile despite her fear. \"Just remember that courage alone may not be enough. The keep is cursed, and whatever Serafin is doing... it isn't natural.\"\n\nThe atmosphere around you thickens with tension, the murmurs of the inn fading as nearby patrons steal glances at your exchange. With your dagger resting on the bar, the path ahead lies open before you. What will you do next? Will you prepare for the journey or seek out your companions?",
+      "timestamp": "2026-04-22T02:34:33.323Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I grab the mug next to me on the bar and put it in my bag. Then i take my dagger and leave the bar",
+      "timestamp": "2026-04-22T02:36:05.089Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "With deft hands, you snatch the mug from the bar and tuck it away into your bag, a small but clever addition to your supplies. The patrons around you remain engrossed in their own conversations, oblivious to your subtle theft. \n\nAs you slide your dagger back into its sheath, a sense of determination fills you. You step away from the bar, the heavy wooden door of The Broken Antler creaking as you push it open. The overcast sky looms above, casting a pallid light over the town of Millhaven, the air thick with the scent of damp earth and the distant rustle of leaves.\n\nOutside, the path leading to Ashmore Keep stretches before you, dark and foreboding. What will you do next? Will you head directly to the keep, seek out your companions, or perhaps gather more supplies from the town?",
+      "timestamp": "2026-04-22T02:36:29.256Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "As the heavy clouds loom over Millhaven, casting a pall on the town and its superstitious folk, the air is thick with tension. The Broken Antler inn, a refuge from the oppressive gloom, welcomes you with the scent of smoke and the murmur of wary patrons. \n\nA flickering candlelight reveals the faces of those gathered here, each one marked by concern and fear. As the innkeeper, Mira, serves drinks, she glances toward you, her eyes pleading for someone to uncover the truth behind the whispered tales of Ashmore Keep.\n\nNow, as you stand on the precipice of your journey, declare your names and the heroes you embody. Who are you?",
+      "timestamp": "2026-04-22T02:44:24.263Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I grab the mug of ale and put it in my bag",
+      "timestamp": "2026-04-22T02:46:22.403Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "With a swift glance around the inn, you deftly snatch a mug of ale from the bar and tuck it into your bag, the heavy ceramic clinking softly against your gear. Mira, distracted by another patron's request, remains oblivious to your nimble maneuver. \n\nAs you secure the drink, a sense of satisfaction washes over you. The townsfolk continue to murmur in hushed tones, their eyes darting toward the door as if expecting something ominous to emerge from the shadows. \n\nWhat will you do next? Will you engage with Mira, investigate the noticeboard, or perhaps prepare to leave for Ashmore Keep?",
+      "timestamp": "2026-04-22T02:46:32.272Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I take a second one",
+      "timestamp": "2026-04-22T02:47:17.190Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "You reach for another mug of ale, this time more brazenly, as the atmosphere grows tense with the weight of unspoken fears. The cool ceramic feels familiar in your grasp, and with a quick glance around the room, you lift it from the bar and slip it into your bag alongside the first.\n\nMira, still occupied with her patrons, remains unaware of your growing collection. The murmurs of the townsfolk intensify, their voices filled with dread as they recount tales of strange lights and eerie sounds from Ashmore Keep.\n\nWhat will you do next? Will you finally speak with Mira about the keep, check the noticeboard for more details, or prepare to set out on your quest?",
+      "timestamp": "2026-04-22T02:47:20.040Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "As the chill winds of Frostheim swirl around you, a sense of urgency fills the air. The streets, once bustling with life, now echo with the whispers of despair. You stand at the edge of a glacial cliff, overlooking the city carved from ice, where shadows deepen and hope wanes. \n\nA figure approaches, her breath misting in the cold. \"I am Sigra Halveld, envoy of the council,\" she says, her voice steady but tinged with worry. \"We need brave souls to descend into the Underfrost. Who among you will answer the call?\"\n\nWith that, the moment is ripe for introductions. What are your names, brave adventurers?",
+      "timestamp": "2026-04-22T02:55:33.899Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "\"Draw your sword and attack me before we move on\"",
+      "timestamp": "2026-04-22T02:57:01.551Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "As you draw your sword with a swift motion, the blade gleaming in the dim light, Sigra's eyes widen in surprise. \"What are you doing?\" she gasps, instinctively stepping back. Your swing, however, lacks the precision you intended, missing her entirely and slicing through the cold air.\n\nThe tension hangs thick for a moment, and Sigra regains her composure, a mix of confusion and concern on her face. \"We need to work together if we are to face the dangers below. This is not the time for conflict among allies.\" \n\nWith the momentary distraction passed, the entrance to the Underfrost still beckons. What will you do next?",
+      "timestamp": "2026-04-22T02:57:26.487Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "i stab her with my sword",
+      "timestamp": "2026-04-22T02:58:19.563Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "You lunge forward, sword aimed at Sigra, but your strike falters once more. She sidesteps with surprising agility, her eyes now burning with a mix of anger and fear. \"Enough!\" she cries, her voice echoing off the icy walls. \"This is madness! We have a city to save, and you would turn your blade on me?\"\n\nThe tension escalates, the air thick with uncertainty. The entrance to the Underfrost looms ominously behind you, a reminder of the real threat that awaits. Sigra stands ready, her stance defensive, as she prepares to confront the chaos unfolding before her.\n\nWhat will you do now? Will you attempt to reason with her, or is there another course of action you wish to take?",
+      "timestamp": "2026-04-22T02:58:28.927Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I kick up snow in her face and swipe at her again",
+      "timestamp": "2026-04-22T02:59:45.231Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "With a swift motion, you kick up a flurry of snow, blinding Sigra momentarily. She stumbles back, but as you swipe at her again, your strike fails to connect. She ducks out of reach, her breath quickening as she regains her footing. \"This is not the way!\" she shouts, frustration evident in her voice. \n\nThe cold winds howl around you, and the shadows of the Underfrost seem to deepen, as if sensing the discord among you. Sigra's resolve hardens, and she stands her ground, ready to defend herself if necessary. \n\nWhat will you do next? Will you continue this confrontation, or will you reconsider your approach?",
+      "timestamp": "2026-04-22T03:00:07.646Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I yell FIGHT ME. BEAT ME AND WE WILL MOVE ON",
+      "timestamp": "2026-04-22T03:01:15.567Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "\"FIGHT ME. BEAT ME AND WE WILL MOVE ON!\" Your voice rings out, challenging and defiant against the icy backdrop. Sigra's eyes narrow, and she takes a steadying breath, her posture shifting from defensive to resolute. \"If this is what you want, then so be it,\" she replies, steeling herself for the confrontation.\n\nThe air crackles with tension as she readies herself, determination replacing her earlier fear. The entrance to the Underfrost looms behind you, a reminder of the urgency of your mission. \n\nWith a fierce resolve, Sigra lunges forward, ready to engage. Roll for initiative!",
+      "timestamp": "2026-04-22T03:01:18.212Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "With a swift and decisive move, you seize the initiative, your instincts honed and ready for battle. Sigra, caught off guard by your quick reaction, barely has time to react as you prepare your next strike. \n\nWhat action do you take next? Will you attack her with your sword, or do you have another tactic in mind? The icy air around you crackles with anticipation.",
+      "timestamp": "2026-04-22T03:02:18.071Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I use my sword",
+      "timestamp": "2026-04-22T03:03:03.107Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "You swing your sword with fierce determination, the blade slicing through the cold air toward Sigra. She raises her arms to defend herself, but the strike is swift and precise. \n\nRoll to hit and let me know the result!",
+      "timestamp": "2026-04-22T03:03:04.509Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "Your strike lands true, the blade connecting with Sigra as she attempts to deflect it. She gasps, the impact sending her staggering back, but her resolve remains unbroken. \"You fight well,\" she admits, her voice strained, \"but this is not the way to save Frostheim!\"\n\nYou deal damage as she struggles to regain her footing. What will you do next? Will you press your advantage, attempt to reason with her, or perhaps reconsider your approach? The shadows of the Underfrost still beckon, and time is running short.",
+      "timestamp": "2026-04-22T03:03:40.492Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "As the chill winds whip through the glacial streets of Frostheim, you gather in the dimly lit tavern known as The Frosty Hearth. The air is thick with tension, whispers of discontent echoing from the shadows. A flickering lantern casts dancing shadows on the walls, illuminating a table where fate awaits. \n\n\"Adventurers,\" a voice calls out, filled with urgency, \"declare your names, for the challenges ahead will test your very souls.\" \n\nThe atmosphere hangs thick with anticipation as you prepare to introduce yourselves. What name will echo in the annals of this frozen city?",
+      "timestamp": "2026-04-22T03:07:08.766Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I draw my sword to fight the stone giant i notice lurking behind us",
+      "timestamp": "2026-04-22T03:08:37.078Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "With a swift motion, you draw your sword, the blade gleaming in the dim light of the tavern. The tension in the air shifts as you turn, catching sight of the stone giant looming ominously at the entrance, its massive form barely fitting through the doorway. \n\nThe patrons gasp, their conversations abruptly cut off as fear grips the room. The giant's eyes narrow, and it lets out a low growl that rumbles like distant thunder. Your decisive action has startled it, but it also draws the attention of every soul in the tavern.\n\nThe giant steps forward, its heavy footfalls shaking the wooden floor, but you stand ready, sword raised. What will you do next, Throatzilla? Will you charge at the creature, or perhaps attempt to negotiate with it? The choice is yours.",
+      "timestamp": "2026-04-22T03:08:50.160Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I charge it and start a fight",
+      "timestamp": "2026-04-22T03:10:03.350Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "With a fierce battle cry, you charge at the stone giant, your sword raised high. The tavern erupts into chaos as patrons scramble to find cover, their faces pale with fear. The giant, caught off guard by your audacity, swings a massive fist in your direction, but you are quick on your feet.\n\nAs you close the distance, you feel the rush of adrenaline coursing through your veins. The giant’s fist crashes down where you stood moments before, sending splinters flying from the floor. You have an opening now. \n\nRoll for your attack. What do you do next?",
+      "timestamp": "2026-04-22T03:10:05.644Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "As the heavy clouds loom over Millhaven, a chill wind rustles through the streets, carrying whispers of unease. The flickering lanterns cast long shadows, and the townsfolk eye newcomers with suspicion. \n\n\"Adventurers, step forth and introduce yourselves. Who are you in this darkened world?\" \n\nThe air is thick with anticipation, waiting for your names to echo through the gathering gloom.",
+      "timestamp": "2026-04-22T03:14:33.429Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I draw my sword and fight a bystander",
+      "timestamp": "2026-04-22T03:15:26.469Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "With a swift motion, you unsheathe your sword, the blade gleaming ominously in the dim light of the inn. Gasps ripple through the crowd as you turn toward a startled bystander, their eyes wide with fear. \n\nThe room falls silent, tension crackling like electricity in the air. The bystander stumbles back, hands raised in a gesture of surrender, their voice trembling as they plead, \"Please, there's no need for violence!\"\n\nWhat is your intent, Throatzilla? Will you strike or reconsider your actions?",
+      "timestamp": "2026-04-22T03:15:28.851Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "As the heavy clouds loom over the town of Millhaven, shadows stretch across the cobblestone streets. The air is thick with unease, whispers of disappearances echoing through the alleys. \n\nYou find yourselves gathered at The Broken Antler, the warm glow of the inn a stark contrast to the gloom outside. The innkeeper, Mira, watches you with cautious eyes, her expression a mix of hope and dread. \n\nPlease, introduce yourselves. What are your names?",
+      "timestamp": "2026-04-22T23:45:48.894Z"
+    },
+    {
+      "type": "player",
+      "name": "Dexsword",
+      "text": "fight everyone",
+      "timestamp": "2026-04-22T23:51:21.801Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "As the words leave your lips, a tense silence envelops the inn. The patrons freeze, eyes wide with shock and fear. Mira's face pales, and she takes a cautious step back, her hands trembling. \n\nWithout hesitation, you leap to your feet, fists clenched, ready to fight. The drunk guard, Pol, stirs from his slumber, blinking blearily as he tries to comprehend the chaos unfolding. \n\nThe townsfolk begin to murmur, some backing away, while others prepare to defend themselves. \n\nRoll for initiative as you prepare to engage the frightened patrons of The Broken Antler.",
+      "timestamp": "2026-04-22T23:51:24.747Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "With a swift motion, you spring into action, your heart pounding with adrenaline as you prepare to confront the frightened patrons. The tension in the inn thickens, and the air crackles with anticipation. \n\nYour roll of 16 sets you ahead of the terrified townsfolk, who scramble to react. The drunk guard, Pol, stands up, his spear clumsily grasped in one hand, a mix of bravery and confusion in his eyes. \n\nYou have the first move. What do you do? Do you attack a specific patron, intimidate them, or perhaps something else entirely?\n\nOkay, **Throatzilla**, what do you do?",
+      "timestamp": "2026-04-22T23:51:43.416Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I lean over the bar and grab Mira and pull her over the bar. I then draw my dagger and swing at her. yelling FIGHT ME",
+      "timestamp": "2026-04-22T23:52:23.647Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "In a sudden burst of aggression, you leap over the bar, grasping Mira by the arm and pulling her toward you. The innkeeper gasps, wide-eyed with fear as you brandish your dagger, demanding a fight. \n\nHowever, in your fervor, your grip slips, and Mira manages to twist away just in time, her voice trembling as she pleads for calm. The patrons watch in horror, and a few of them begin to inch toward the door, panic setting in. \n\nYour attempt to intimidate her fails, leaving the atmosphere charged with tension. \n\nDexsword, it is still your turn. What will you do next?\n\nOkay, **dexsword**, what do you do?",
+      "timestamp": "2026-04-22T23:52:39.814Z"
+    },
+    {
+      "type": "player",
+      "name": "Dexsword",
+      "text": "run at them naked",
+      "timestamp": "2026-04-22T23:53:42.050Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "In an unexpected twist, you decide to sprint toward the nearest patrons, shedding your garments in a wild display of audacity. The sight of a naked warrior charging at them sends the townsfolk into a frenzy of shock and confusion. \n\nSome scream, others stumble backward, and a few brave souls grasp for their weapons, unsure of how to respond to this bizarre spectacle. The drunk guard, Pol, drops his spear, gaping at you in disbelief as laughter mingles with fear in the air. \n\nWhat do you hope to achieve with this unconventional tactic? Will you attempt to intimidate, distract, or perhaps something else entirely?",
+      "timestamp": "2026-04-22T23:53:45.439Z"
+    },
+    {
+      "type": "player",
+      "name": "Dexsword",
+      "text": "distract while throatzilla kills the children",
+      "timestamp": "2026-04-22T23:54:52.811Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "As you dash through the inn, your naked form becomes a chaotic distraction, but your intentions to divert attention fall flat. The patrons, caught off guard, are more bewildered than intimidated. Their focus shifts from fear to confusion, and the laughter quickly turns to nervous murmurs as they try to comprehend the scene unfolding before them.\n\nMeanwhile, the mention of violence against children sends a wave of horror through the crowd. Mira gasps, her face a mask of disbelief, as she pleads with you both to stop. The tension escalates as the townsfolk prepare to defend themselves, eyes darting toward the exits.\n\nThroatzilla, it is now your turn. What will you do amidst this chaos?\n\nOkay, **Throatzilla**, what do you do?",
+      "timestamp": "2026-04-22T23:55:04.487Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "im going to pick up my dagger and drive the blade through my chest doing damage to myself",
+      "timestamp": "2026-04-22T23:56:30.781Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "In a moment of despair, you grasp your dagger and attempt to drive it into your own chest, seeking to inflict damage upon yourself. However, your aim falters, and the blade skims across your skin without penetrating deeply, leaving you with a sharp sting but no significant injury.\n\nThe patrons gasp collectively, horrified by the self-destructive act. Mira rushes forward, her voice trembling as she implores you to stop, her maternal instincts kicking in. The atmosphere is thick with fear and confusion as the townsfolk begin to back away, unsure of how to react to the escalating chaos.\n\nDexsword, it’s still your turn. What will you do next amidst the turmoil?\n\nOkay, **Throatzilla**, what do you do?",
+      "timestamp": "2026-04-22T23:56:42.479Z"
+    },
+    {
+      "type": "player",
+      "name": "C_Scarp",
+      "text": "I attempt to drive the blade through my chest again",
+      "timestamp": "2026-04-22T23:58:08.061Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "With determination etched on your face, you grip the dagger once more, intent on driving it through your chest. The inn falls silent, all eyes fixed on you as the patrons brace for the worst. \n\nRoll for your attack as you attempt to inflict harm upon yourself once again. The tension hangs heavy in the air, and the crowd watches with bated breath. What will be the outcome of this desperate act?",
+      "timestamp": "2026-04-22T23:58:11.825Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "Your dagger glints ominously in the dim light as you make another attempt to drive it into your chest. However, your aim is off once again, and the blade slips from your grasp, clattering to the floor without causing any harm. \n\nA wave of gasps and murmurs ripples through the inn, and Mira steps back, her face pale with concern. The patrons are now fully on edge, many preparing to flee, while others look to one another for guidance on how to handle this madness. \n\nDexsword, the chaos continues, and it’s your turn once more. What will you do in this escalating situation?\n\nOkay, **dexsword**, what do you do?",
+      "timestamp": "2026-04-22T23:58:50.312Z"
+    },
+    {
+      "type": "player",
+      "name": "Dexsword",
+      "text": "reduce my own hp by 2 points to heal throatzilla in a magical twist",
+      "timestamp": "2026-04-22T23:59:28.044Z"
+    },
+    {
+      "type": "dm",
+      "name": "Dungeon Master",
+      "text": "In a sudden surge of determination, you channel your energy, willing yourself to sacrifice a piece of your own vitality to heal Throatzilla. As you focus, a warm glow envelops you, and the air shimmers with a faint magic. \n\nYour selfless act resonates in the room, and the patrons momentarily pause, awe replacing their fear as they witness this unexpected display of power. Throatzilla, you feel a surge of energy as your wounds begin to mend, the warmth of healing washing over you.\n\nThe atmosphere shifts, tension giving way to a flicker of hope. \n\nWhat will you do next, Throatzilla? The townsfolk are still watching, uncertain of what comes next.\n\nOkay, **Throatzilla**, what do you do?",
+      "timestamp": "2026-04-22T23:59:39.925Z"
     }
   ],
   "diceLog": [
     {
+      "name": "Dexsword",
+      "dice": "1d20",
+      "rolls": [
+        12
+      ],
+      "total": 12,
+      "timestamp": "2026-04-22T23:59:37.392Z"
+    },
+    {
       "name": "C_Scarp",
       "dice": "1d20",
       "rolls": [
-        14
+        6
       ],
-      "total": 14,
-      "timestamp": "2026-04-20T01:47:47.675Z"
+      "total": 6,
+      "timestamp": "2026-04-22T23:58:47.200Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        8
+      ],
+      "total": 8,
+      "timestamp": "2026-04-22T23:56:38.019Z"
+    },
+    {
+      "name": "Dexsword",
+      "dice": "1d20",
+      "rolls": [
+        3
+      ],
+      "total": 3,
+      "timestamp": "2026-04-22T23:55:00.848Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        5
+      ],
+      "total": 5,
+      "timestamp": "2026-04-22T23:52:37.082Z"
+    },
+    {
+      "name": "Dexsword",
+      "dice": "1d20",
+      "rolls": [
+        16
+      ],
+      "total": 16,
+      "timestamp": "2026-04-22T23:51:40.326Z"
     },
     {
       "name": "C_Scarp",
@@ -253,7 +667,34 @@
         12
       ],
       "total": 12,
-      "timestamp": "2026-04-20T01:33:27.156Z"
+      "timestamp": "2026-04-22T03:08:47.138Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        16
+      ],
+      "total": 16,
+      "timestamp": "2026-04-22T03:03:38.561Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        17
+      ],
+      "total": 17,
+      "timestamp": "2026-04-22T03:02:16.155Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        8
+      ],
+      "total": 8,
+      "timestamp": "2026-04-22T02:59:58.939Z"
     },
     {
       "name": "C_Scarp",
@@ -262,7 +703,88 @@
         4
       ],
       "total": 4,
-      "timestamp": "2026-04-20T01:33:13.368Z"
+      "timestamp": "2026-04-22T02:58:25.919Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        1
+      ],
+      "total": 1,
+      "timestamp": "2026-04-22T02:57:18.221Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        20
+      ],
+      "total": 20,
+      "timestamp": "2026-04-22T02:46:29.760Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        13
+      ],
+      "total": 13,
+      "timestamp": "2026-04-22T02:36:25.841Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        14
+      ],
+      "total": 14,
+      "timestamp": "2026-04-22T02:15:27.113Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        13
+      ],
+      "total": 13,
+      "timestamp": "2026-04-22T02:12:03.319Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        8
+      ],
+      "total": 8,
+      "timestamp": "2026-04-22T02:10:29.480Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        13
+      ],
+      "total": 13,
+      "timestamp": "2026-04-22T02:09:10.669Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        9
+      ],
+      "total": 9,
+      "timestamp": "2026-04-21T21:39:25.611Z"
+    },
+    {
+      "name": "C_Scarp",
+      "dice": "1d20",
+      "rolls": [
+        14
+      ],
+      "total": 14,
+      "timestamp": "2026-04-21T15:17:28.097Z"
     }
   ],
   "tokens": [
@@ -273,8 +795,8 @@
       "shape": "circle",
       "color": "#c0392b",
       "image": null,
-      "x": 0.594799680330585,
-      "y": 0.5175239755884917,
+      "x": 0.4308248447204969,
+      "y": 0.6915796387520526,
       "owner": "541385113074794516"
     },
     {
@@ -284,8 +806,8 @@
       "shape": "circle",
       "color": "#c0392b",
       "image": null,
-      "x": 0.3266508728179551,
-      "y": 0.3705103668261563,
+      "x": 0.3889950124688279,
+      "y": 0.7071503267973857,
       "owner": "local_1776715210514_r84sk"
     },
     {
@@ -299,5 +821,9 @@
       "y": 0.276495278069255,
       "owner": "local_1776730442250_1zamn"
     }
-  ]
+  ],
+  "encounter": {
+    "active": false,
+    "enemies": []
+  }
 }

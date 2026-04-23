@@ -2281,15 +2281,15 @@ Use the world's title or filename in the \`world\` parameter.
     
     const forceSkipRoll = interaction.options.getBoolean("force") || false;
 
-    // ===== TURN-TAKING CHECK (for multiple players) =====
-    if (session.turnOrder.length > 1) {
+    // ===== TURN-TAKING CHECK (combat only — free-form outside combat) =====
+    if (session.encounter.active && session.turnOrder.length > 1) {
       const currentPlayer = getCurrentTurnPlayer(guildId);
       const isPlayersTurn = currentPlayer && currentPlayer.userId === interaction.user.id;
-      
+
       if (!isPlayersTurn) {
         const nextPlayerName = currentPlayer ? currentPlayer.characterName : "someone";
         return interaction.reply(
-          `⏳ It's not your turn yet! It's **${nextPlayerName}**'s turn. Use \`/pass\` to skip your turn or wait for the timeout.`
+          `⚔️ Combat is active! It's **${nextPlayerName}**'s turn. Use \`/pass\` to skip your turn or wait for the timeout.`
         );
       }
     }
@@ -2297,12 +2297,14 @@ Use the world's title or filename in the \`world\` parameter.
     await interaction.reply(`⚔️ *${playerName}: "${action}"*`);
     addStoryEntry("player", playerName, action);
 
-    // Start the timer immediately so the dashboard shows it ticking while the LLM thinks
-    io.emit("turn_timer", {
-      playerName,
-      duration: TURN_TIMEOUT_MS,
-      startedAt: Date.now(),
-    });
+    // Start the combat timer only during active encounters
+    if (session.encounter.active) {
+      io.emit("turn_timer", {
+        playerName,
+        duration: TURN_TIMEOUT_MS,
+        startedAt: Date.now(),
+      });
+    }
 
     // ===== ROLL PROMPT CHECK =====
     // Check if action requires a roll (unless force override is set)
@@ -2327,9 +2329,9 @@ Use the world's title or filename in the \`world\` parameter.
     }
 
     // ===== PROCESS ACTION (no roll needed) =====
-    // Add turn context if multiple players
+    // Add turn context only during active combat
     let actionMessage = action;
-    if (session.turnOrder.length > 1) {
+    if (session.encounter.active && session.turnOrder.length > 1) {
       actionMessage += `\n[TURN CONTEXT: It is now ${playerName}'s turn]`;
     }
 
@@ -2350,7 +2352,7 @@ Use the world's title or filename in the \`world\` parameter.
     finalReply = finalReply.replace(/\[ADVANCE_TURN\]/gi, '').trim();
     finalReply = finalReply.replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM):[^\]]+\]/gi, '').trim();
 
-    if (session.turnOrder.length > 1 && shouldAdvance) {
+    if (session.encounter.active && session.turnOrder.length > 1 && shouldAdvance) {
       // Send the DM's narration cleanly first
       addStoryEntry("dm", "Dungeon Master", finalReply);
       await sendDMResponseWithVoice(interaction, connection, finalReply, guildId);

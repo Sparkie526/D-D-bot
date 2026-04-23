@@ -953,20 +953,30 @@ function syncEncounterToDash(guildId) {
   io.emit('state_update', dashState);
 }
 
-function applyNpcDamage(guildId, name, amount) {
+function findEnemyByName(guildId, name) {
   const session = getSession(guildId);
-  const enemy = session.encounter.enemies.find(e => e.name.toLowerCase() === name.toLowerCase());
-  if (!enemy) return;
+  const needle = name.toLowerCase().trim().replace(/^the\s+/, '');
+  // Exact match first, then partial match (handles "Cave Troll" vs "cave troll 2")
+  return session.encounter.enemies.find(e => {
+    const hay = e.name.toLowerCase().replace(/^the\s+/, '');
+    return hay === needle || hay.startsWith(needle) || needle.startsWith(hay);
+  }) || null;
+}
+
+function applyNpcDamage(guildId, name, amount) {
+  const enemy = findEnemyByName(guildId, name);
+  if (!enemy) { console.log(`[DMG] Enemy not found: "${name}"`); return; }
+  const session = getSession(guildId);
   enemy.hp = Math.max(0, enemy.hp - amount);
-  if (enemy.hp === 0) enemy.dead = true;
-  const allDead = session.encounter.enemies.every(e => e.dead);
+  if (enemy.hp <= 0) enemy.dead = true;
+  const allDead = session.encounter.enemies.filter(e => !e.dead).length === 0;
   if (allDead) session.encounter.active = false;
+  console.log(`[DMG] ${enemy.name} → ${enemy.hp}/${enemy.maxHp} HP`);
   syncEncounterToDash(guildId);
 }
 
 function applyNpcHeal(guildId, name, amount) {
-  const session = getSession(guildId);
-  const enemy = session.encounter.enemies.find(e => e.name.toLowerCase() === name.toLowerCase());
+  const enemy = findEnemyByName(guildId, name);
   if (!enemy || enemy.dead) return;
   enemy.hp = Math.min(enemy.maxHp, enemy.hp + amount);
   syncEncounterToDash(guildId);
@@ -1000,7 +1010,7 @@ function startInitiativePhase(guildId) {
   }
 }
 
-function parseCombatTokens(text, guildId) {
+function parseCombatTokens(text, guildId, actingUserId) {
   const tokenMatches = text.match(/\[[A-Z_+\-]+:[^\]]+\]/g);
   if (tokenMatches) console.log(`[TOKENS] Found in LLM output:`, tokenMatches);
   else console.log(`[TOKENS] No tokens found. LLM tail: "${text.slice(-200)}"`);
@@ -1036,13 +1046,16 @@ function parseCombatTokens(text, guildId) {
   for (const m of text.matchAll(/\[ITEM:([^|]+)\|([^|]+)\|(\d+)\]/gi)) {
     givePlayerItem(m[1], m[2].trim(), parseInt(m[3]));
   }
-  // Damage roll request — store pending target for the current turn player
+  // Damage roll request — store pending target for the acting player
   for (const m of text.matchAll(/\[ROLL_DMG:([^\]]+)\]/gi)) {
     const session = getSession(guildId);
     const currentPlayer = getCurrentTurnPlayer(guildId);
-    if (currentPlayer) {
-      session.pendingDamageRoll = { enemyName: m[1].trim(), userId: currentPlayer.userId };
-      console.log(`[TOKENS] Damage roll pending: ${currentPlayer.userId} vs "${m[1].trim()}"`);
+    const userId = currentPlayer?.userId || actingUserId;
+    if (userId) {
+      session.pendingDamageRoll = { enemyName: m[1].trim(), userId };
+      console.log(`[TOKENS] Damage roll pending: ${userId} vs "${m[1].trim()}"`);
+    } else {
+      console.log(`[TOKENS] ROLL_DMG found but no player to assign it to`);
     }
   }
 }
@@ -1503,7 +1516,7 @@ Background: ${charData.background}
       ? await askOpenAI(messages) 
       : await askOllama(messages);
 
-    parseCombatTokens(fullText, guildId);
+    parseCombatTokens(fullText, guildId, userId);
     const reply = sanitizeLLMOutput(fullText);
     addToHistory(guildId, "assistant", reply);
     return reply;

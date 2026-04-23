@@ -21,7 +21,10 @@ socket.on('state_update', (state) => {
   const prev = gameState;
   gameState = state;
   if (state.encounter) {
-    gameEncounter = state.encounter.active ? (state.encounter.enemies || []) : [];
+    // Show all enemies (including dead) as long as there are any; clear only when encounter resets
+    gameEncounter = (state.encounter.enemies && state.encounter.enemies.length)
+      ? state.encounter.enemies
+      : [];
   }
   handleIdentityCheck();
   renderAll();

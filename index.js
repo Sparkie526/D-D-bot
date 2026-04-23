@@ -893,11 +893,11 @@ function pickTurnTransition(name) {
 // ── Combat token parsing ─────────────────────────────────────
 
 function findPlayerByCharacterName(name) {
-  const nameLower = name.toLowerCase().trim();
+  const needle = name.toLowerCase().trim();
   for (const [discordId, player] of Object.entries(dashState.players)) {
-    if ((player.characterName || '').toLowerCase() === nameLower) {
-      return { discordId, player };
-    }
+    const candidates = [player.characterName, player.discordName]
+      .filter(Boolean).map(n => n.toLowerCase());
+    if (candidates.some(n => n === needle)) return { discordId, player };
   }
   return null;
 }
@@ -1487,9 +1487,14 @@ async function askDMStream(guildId, userMessage, playerName, onToken, userId) {
       .map(k => `${k.toUpperCase().slice(0, 3)}: ${abilities[k]}(${mods[k] > 0 ? '+' : ''}${mods[k]})`)
       .join(" | ");
     
+    // Use the dashboard characterName (what /name set) so [DMG] tokens match findPlayerByCharacterName
+    const dashPlayer = dashState.players[userId] ||
+      Object.values(dashState.players).find(p => p.discordId === userId);
+    const displayName = dashPlayer?.characterName || charData.name;
+
     const characterContext = `
 [CHARACTER CONTEXT - ${playerName}]
-Name: ${charData.name} (${charData.class} Level ${charData.level})
+Name: ${displayName} (${charData.class} Level ${charData.level})
 Health: ${combat.hp.current}/${combat.hp.max} | AC: ${combat.ac} | Initiative: ${combat.initiative}
 Abilities: ${modStr}
 Background: ${charData.background}
@@ -1692,17 +1697,25 @@ async function setPlayerName(interaction, characterName) {
   }
   persistSession(interaction.guildId);
 
-  // Link to dashboard: find a dashState entry whose characterName matches and re-key it to this Discord userId
+  // Link to dashboard: find a character-creator entry (local_*) with matching name and re-key it
   const nameLower = characterName.toLowerCase().trim();
+  let matched = false;
   for (const [existingId, player] of Object.entries(dashState.players)) {
     if ((player.characterName || '').toLowerCase() === nameLower && existingId !== userId) {
-      // Move the entry to the real Discord userId
-      dashState.players[userId] = { ...player, discordId: userId };
+      dashState.players[userId] = { ...player, characterName: nameWithSuffix, discordId: userId };
       delete dashState.players[existingId];
+      matched = true;
       saveDashboardState();
       io.emit('state_update', dashState);
       break;
     }
+  }
+  // Fallback: player was auto-registered at game start — just update their name in dashState
+  if (!matched && dashState.players[userId]) {
+    dashState.players[userId].characterName = nameWithSuffix;
+    dashState.players[userId].discordName   = nameWithSuffix;
+    saveDashboardState();
+    io.emit('state_update', dashState);
   }
 
   const suffix_msg = suffix > 0 ? ` (numbered as "${nameWithSuffix}" because another player shares that name)` : '';
@@ -2436,6 +2449,26 @@ Use the world's title or filename in the \`world\` parameter.
     const shouldAdvance = finalReply.includes('[ADVANCE_TURN]');
     finalReply = finalReply.replace(/\[ADVANCE_TURN\]/gi, '').trim();
     finalReply = finalReply.replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, '').trim();
+
+    // Fallback: LLM asked for a roll in plain text without emitting a token
+    if (session.encounter.active && !session.pendingAttackRoll && !session.pendingDamageRoll) {
+      const rollHitPattern = /roll\s+(to\s+)?(hit|attack|your\s+(spell\s+)?attack)/i;
+      if (rollHitPattern.test(finalReply)) {
+        const target = session.encounter.enemies.find(e => !e.dead);
+        if (target) {
+          session.pendingAttackRoll = { enemyName: target.name, userId: interaction.user.id };
+          console.log(`[FALLBACK] Set pendingAttackRoll for ${target.name} from text detection`);
+        }
+      }
+      const rollDmgPattern = /roll\s+(for\s+)?(damage|your\s+damage)/i;
+      if (rollDmgPattern.test(finalReply)) {
+        const target = session.encounter.enemies.find(e => !e.dead);
+        if (target) {
+          session.pendingDamageRoll = { enemyName: target.name, userId: interaction.user.id };
+          console.log(`[FALLBACK] Set pendingDamageRoll for ${target.name} from text detection`);
+        }
+      }
+    }
 
     if (session.encounter.active && session.turnOrder.length > 1 && shouldAdvance) {
       // Send the DM's narration cleanly first

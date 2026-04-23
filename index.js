@@ -1677,17 +1677,19 @@ async function setPlayerName(interaction, characterName) {
     }
   }
 
-  // Try to update Discord nickname
+  const suffix_msg = suffix > 0 ? ` (numbered as "${nameWithSuffix}" because another player shares that name)` : '';
+
+  // Try to update Discord nickname — silently skip if bot lacks permission
   try {
     await member.setNickname(nameWithSuffix);
-    const suffix_msg = suffix > 0 ? ` (numbered as "${nameWithSuffix}" because another player shares that name)` : '';
-    interaction.reply(`✅ You are now **${nameWithSuffix}**${suffix_msg}!`);
   } catch (err) {
-    console.warn(`Failed to set nickname for ${userId}:`, err.message);
-    session.players[userId] = nameWithSuffix;
-    const suffix_msg = suffix > 0 ? ` (numbered as "${nameWithSuffix}" because another player shares that name)` : '';
-    interaction.reply(`✅ Character name set to **${nameWithSuffix}**${suffix_msg}! (⚠️ Bot lacks permission to update your Discord nickname, but your character name is saved.)`);
+    // Missing Permissions is expected when bot role is below the member or member is server owner
+    if (!err.message?.includes('Missing Permissions')) {
+      console.warn(`Failed to set nickname for ${userId}:`, err.message);
+    }
   }
+
+  interaction.reply(`✅ You are now **${nameWithSuffix}**${suffix_msg}!`);
 }
 
 async function revertAllNicknames(interaction) {

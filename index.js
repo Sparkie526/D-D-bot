@@ -657,7 +657,9 @@ COMBAT MECHANICS — emit these tokens at the very END of your response, after y
 
 Token rules:
 - CRITICAL: Emit [NPC_NEW] the moment combat begins with ANY creature or person — whether they just appeared OR were already present in the scene. If a player attacks a tavern patron, guard, shopkeeper, animal, or any NPC, immediately emit [NPC_NEW] for that target. If a player says they want to fight, attack, punch, stab, shoot, or engage anyone — emit [NPC_NEW] for that target in the same response. Do NOT wait until the second exchange. Do it NOW.
+- CRITICAL HP CONSISTENCY: The HP value you put in [NPC_NEW:Name|HP|AC] is the ONLY source of truth. Your narration MUST use that exact same number. Never say "the goblin has 7 hit points" if you emit [NPC_NEW:Goblin|20|15] — they must match. Decide the HP first, put it in the token, then narrate that same number.
 - Assign realistic D&D 5e HP and AC: commoner (HP 4, AC 10), guard (HP 11, AC 16), bandit (HP 11, AC 12), wolf (HP 11, AC 13), goblin (HP 7, AC 15), orc (HP 15, AC 13), troll (HP 84, AC 15). Use your judgment for other creatures.
+- CRITICAL NAME CONSISTENCY: The enemy name in every [NPC_DMG], [NPC_HEAL], and [ROLL_DMG] token MUST be spelled exactly the same as it was in [NPC_NEW]. If you spawned "Cave Troll", always use "Cave Troll" — never "troll", "the troll", or "Cave troll".
 - If multiple combatants enter at once, emit one [NPC_NEW] per individual (three bandits = three tokens).
 - For player damage/healing, use the exact character name from [CHARACTER CONTEXT].
 - Emit ALL tokens that apply (e.g. fireball hitting two players = two [DMG] tokens).

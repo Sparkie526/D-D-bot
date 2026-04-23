@@ -69,15 +69,13 @@ socket.on('encounter_update', (enemies) => {
 });
 
 function renderEnemies() {
-  const panel  = document.getElementById('encounterPanel');
-  const cards  = document.getElementById('enemyCards');
-  if (!panel || !cards) return;
+  const cards = document.getElementById('enemyCards');
+  if (!cards) return;
 
   if (!gameEncounter.length) {
-    panel.classList.add('hidden');
+    cards.innerHTML = '<div class="no-encounter">No active encounter</div>';
     return;
   }
-  panel.classList.remove('hidden');
 
   cards.innerHTML = gameEncounter.map(e => {
     const pct   = e.maxHp > 0 ? Math.max(0, Math.min(1, e.hp / e.maxHp)) : 0;

@@ -183,13 +183,28 @@
           </div>
         </div>
 
-        <div class="dice-section">
-          <div class="dice-section-header">
-            <span class="panel-icon">⚄</span>
-            <span class="dice-section-title">Recent Rolls</span>
+        <!-- ── Bottom Row: Enemies + Recent Rolls ───────── -->
+        <div class="bottom-row">
+          <!-- Enemies -->
+          <div class="encounter-panel" id="encounterPanel">
+            <div class="encounter-header">
+              <span class="encounter-icon">☠</span>
+              <span class="encounter-title">Enemies</span>
+            </div>
+            <div class="enemy-cards" id="enemyCards">
+              <div class="no-encounter">No active encounter</div>
+            </div>
           </div>
-          <div class="dice-log" id="diceLog">
-            <div class="no-rolls">No dice rolled yet...</div>
+
+          <!-- Recent Rolls -->
+          <div class="dice-section">
+            <div class="dice-section-header">
+              <span class="panel-icon">⚄</span>
+              <span class="dice-section-title">Recent Rolls</span>
+            </div>
+            <div class="dice-log" id="diceLog">
+              <div class="no-rolls">No dice rolled yet...</div>
+            </div>
           </div>
         </div>
       </section>
@@ -206,15 +221,6 @@
             <p>No adventurers registered</p>
             <p class="hint">Type <code>!register [name]</code> in Discord</p>
           </div>
-        </div>
-
-        <!-- ── Encounter: Enemies ─────────────────────── -->
-        <div class="encounter-panel hidden" id="encounterPanel">
-          <div class="encounter-header">
-            <span class="encounter-icon">☠</span>
-            <span class="encounter-title">Enemies</span>
-          </div>
-          <div class="enemy-cards" id="enemyCards"></div>
         </div>
       </section>
 

@@ -2257,6 +2257,14 @@ Use the world's title or filename in the \`world\` parameter.
     session.history = [];
     session.nameCollectionActive = true;
 
+    // Clear any leftover encounter from the previous game
+    session.encounter = { active: false, enemies: [] };
+    session.initiativePhase = false;
+    session.initiativeRolls = {};
+    dashState.encounter = { active: false, enemies: [] };
+    saveDashboardState();
+    io.emit('state_update', dashState);
+
     // Register players in dashboard
     for (const player of session.activePlayers) {
       if (!dashState.players[player.userId]) {

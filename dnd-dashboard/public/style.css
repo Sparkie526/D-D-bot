@@ -581,12 +581,22 @@ code {
 }
 
 /* Dice section */
-.dice-section {
+.bottom-row {
   flex-shrink: 0;
+  display: flex;
   border-top: 1px solid var(--border-deep);
+  height: 168px;
+  min-height: 0;
+}
+
+.dice-section {
+  flex: 0 0 45%;
+  border-top: none;
+  border-left: 1px solid var(--border-deep);
   background: rgba(0,0,0,0.35);
-  max-height: 168px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .dice-section-header {
@@ -2511,23 +2521,31 @@ code {
 
 /* ── Encounter / Enemy tracker ───────────────────────────────── */
 .encounter-panel {
-  margin-top: 12px;
-  border-top: 1px solid var(--border-mid);
-  padding-top: 10px;
+  flex: 0 0 55%;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 .encounter-header {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 4px 8px;
+  padding: 8px 14px 6px;
+  border-bottom: 1px solid var(--border-deep);
   font-family: 'Cinzel', serif;
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   color: var(--red-bright);
-  letter-spacing: 0.08em;
+  letter-spacing: 2.5px;
   text-transform: uppercase;
+  flex-shrink: 0;
 }
 .encounter-icon { font-size: 0.85rem; }
-.enemy-cards { display: flex; flex-direction: column; gap: 6px; }
+.enemy-cards { display: flex; flex-direction: column; gap: 6px; padding: 6px 10px; overflow-y: auto; }
+.no-encounter { font-size: 0.72rem; color: var(--text-dim); text-align: center; padding: 10px 0; font-style: italic; }
 .enemy-card {
   background: var(--bg-panel-light);
   border: 1px solid var(--border-dark);

@@ -653,7 +653,8 @@ COMBAT MECHANICS — emit these tokens at the very END of your response, after y
 - Enemy takes damage:           [NPC_DMG:EnemyName|amount]
 - Enemy is healed:              [NPC_HEAL:EnemyName|amount]
 - Player gains item/loot:       [ITEM:CharacterName|itemName|quantity]
-- Ask player to roll damage:    [ROLL_DMG:EnemyName]  — emit this when a player's attack hits and you need them to roll damage dice
+- Ask player to roll to hit:    [ROLL_HIT:EnemyName]  — emit this when a player attempts a melee, ranged, or spell attack and needs to roll to hit
+- Ask player to roll damage:    [ROLL_DMG:EnemyName]  — emit this ONLY after the system confirms the hit; do NOT emit this yourself
 
 Token rules:
 - CRITICAL: Emit [NPC_NEW] the moment combat begins with ANY creature or person — whether they just appeared OR were already present in the scene. If a player attacks a tavern patron, guard, shopkeeper, animal, or any NPC, immediately emit [NPC_NEW] for that target. If a player says they want to fight, attack, punch, stab, shoot, or engage anyone — emit [NPC_NEW] for that target in the same response. Do NOT wait until the second exchange. Do it NOW.
@@ -663,7 +664,8 @@ Token rules:
 - If multiple combatants enter at once, emit one [NPC_NEW] per individual (three bandits = three tokens).
 - For player damage/healing, use the exact character name from [CHARACTER CONTEXT].
 - Emit ALL tokens that apply (e.g. fireball hitting two players = two [DMG] tokens).
-- DAMAGE ROLLS: When a player's attack hits an enemy, narrate the hit and emit [ROLL_DMG:EnemyName] to ask them to roll damage. Do NOT invent a damage number — wait for the player to roll. Their roll result IS the damage dealt.
+- ATTACK ROLLS: When a player attacks (melee, ranged, spell attack), narrate the attempt and emit [ROLL_HIT:EnemyName]. The system will automatically check the roll against the enemy's AC and tell you if it hit or missed. Do NOT emit [ROLL_DMG] yourself — the system handles it.
+- DAMAGE ROLLS: After the system reports a hit, narrate the hit dramatically. The system will automatically ask the player to roll damage. Do NOT invent a damage number — the player's roll result IS the damage dealt.
 - ENEMY ATTACKS ON PLAYERS: When an enemy attacks and hits a player, YOU decide the damage (use D&D 5e stat block values), narrate it, and immediately emit [DMG:CharacterName|amount|damageType]. Do this every single time an enemy lands a hit — never skip it.
 - Only emit [DMG] if an attack actually hits. Do not emit if the attack missed or the player succeeded on a saving throw to avoid all damage.
 - Damage types: fire, cold, lightning, acid, poison, necrotic, radiant, psychic, bludgeoning, piercing, slashing, thunder, force.
@@ -697,7 +699,7 @@ function sanitizeLLMOutput(text) {
     .replace(/<system-reminder>[\s\S]*?<\/system-reminder>/gi, "")
     .replace(/<system[^>]*>[\s\S]*?<\/system[^>]*>/gi, "")
     .replace(/\[ADVANCE_TURN\]/gi, "")
-    .replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG):[^\]]+\]/gi, "")
+    .replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -789,7 +791,8 @@ function makeDefaultSession() {
     initiativePhase: false,
     initiativeRolls: {},
     lastTextChannel: null,
-    pendingDamageRoll: null, // { enemyName, userId } — set when LLM asks player to roll damage
+    pendingAttackRoll: null, // { enemyName, userId } — set when LLM asks player to roll to hit
+    pendingDamageRoll: null, // { enemyName, userId } — set when attack hit, player must roll damage
     lastRollResult: null,
     pendingAction: null,
     characterSheets: {},
@@ -1056,6 +1059,16 @@ function parseCombatTokens(text, guildId, actingUserId) {
       console.log(`[TOKENS] Damage roll pending: ${userId} vs "${m[1].trim()}"`);
     } else {
       console.log(`[TOKENS] ROLL_DMG found but no player to assign it to`);
+    }
+  }
+  // Attack roll request — store pending hit check for the acting player
+  for (const m of text.matchAll(/\[ROLL_HIT:([^\]]+)\]/gi)) {
+    const session = getSession(guildId);
+    const currentPlayer = getCurrentTurnPlayer(guildId);
+    const userId = currentPlayer?.userId || actingUserId;
+    if (userId) {
+      session.pendingAttackRoll = { enemyName: m[1].trim(), userId };
+      console.log(`[TOKENS] Attack roll pending: ${userId} vs "${m[1].trim()}"`);
     }
   }
 }
@@ -2422,7 +2435,7 @@ Use the world's title or filename in the \`world\` parameter.
     let finalReply = reply;
     const shouldAdvance = finalReply.includes('[ADVANCE_TURN]');
     finalReply = finalReply.replace(/\[ADVANCE_TURN\]/gi, '').trim();
-    finalReply = finalReply.replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG):[^\]]+\]/gi, '').trim();
+    finalReply = finalReply.replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, '').trim();
 
     if (session.encounter.active && session.turnOrder.length > 1 && shouldAdvance) {
       // Send the DM's narration cleanly first
@@ -2520,6 +2533,42 @@ Use the world's title or filename in the \`world\` parameter.
       return;
     }
 
+    // ===== ATTACK ROLL — check hit vs AC, then set up damage roll =====
+    if (session.pendingAttackRoll && session.pendingAttackRoll.userId === interaction.user.id) {
+      const { enemyName } = session.pendingAttackRoll;
+      session.pendingAttackRoll = null;
+      const enemy = findEnemyByName(guildId, enemyName);
+      const ac = enemy ? enemy.ac : 10;
+      const hit = total >= ac;
+      console.log(`[ATTACK] ${playerName} rolled ${total} vs AC ${ac} (${enemyName}) — ${hit ? 'HIT' : 'MISS'}`);
+
+      if (hit) {
+        session.pendingDamageRoll = { enemyName: enemy ? enemy.name : enemyName, userId: interaction.user.id };
+        const dmPrompt = `${playerName} rolled ${total} to hit ${enemyName} (AC ${ac}) — that's a HIT! Narrate the successful strike dramatically and tell the player to roll for damage.`;
+        const reply = await askDM(guildId, dmPrompt, playerName);
+        let finalReply = reply.replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, '').trim();
+        addStoryEntry("dm", "Dungeon Master", finalReply);
+        await sendDMResponseWithVoice(interaction, connections[guildId], finalReply, guildId);
+      } else {
+        const dmPrompt = `${playerName} rolled ${total} to hit ${enemyName} (AC ${ac}) — that's a MISS. Narrate the failed attack.`;
+        const reply = await askDM(guildId, dmPrompt, playerName);
+        let finalReply = reply.replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, '').trim();
+        addStoryEntry("dm", "Dungeon Master", finalReply);
+        await sendDMResponseWithVoice(interaction, connections[guildId], finalReply, guildId);
+        if (session.encounter.active && session.turnOrder.length > 1) {
+          const nextPlayer = advanceTurn(guildId);
+          if (nextPlayer) {
+            const transition = pickTurnTransition(nextPlayer.characterName);
+            addStoryEntry("dm", "Dungeon Master", transition);
+            await sendDMResponseWithVoice(interaction, connections[guildId], transition, guildId);
+          }
+        } else {
+          resetTurnTimeout(guildId);
+        }
+      }
+      return;
+    }
+
     // ===== DAMAGE ROLL — auto-apply to enemy =====
     if (session.pendingDamageRoll && session.pendingDamageRoll.userId === interaction.user.id) {
       const { enemyName } = session.pendingDamageRoll;
@@ -2530,7 +2579,7 @@ Use the world's title or filename in the \`world\` parameter.
       const hpText = enemy ? ` (${enemy.hp}/${enemy.maxHp} HP remaining)` : '';
       const dmPrompt = `${playerName} rolled ${total} for damage against ${enemyName}. Apply ${total} damage to ${enemyName}${hpText}. Narrate the hit dramatically.`;
       const reply = await askDM(guildId, dmPrompt, playerName);
-      let finalReply = reply.replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG):[^\]]+\]/gi, '').trim();
+      let finalReply = reply.replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, '').trim();
       addStoryEntry("dm", "Dungeon Master", finalReply);
       await sendDMResponseWithVoice(interaction, connections[guildId], finalReply, guildId);
       if (session.encounter.active && session.turnOrder.length > 1) {

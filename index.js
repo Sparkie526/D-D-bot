@@ -780,6 +780,7 @@ function makeDefaultSession() {
     currentTurnIndex: 0,
     lastActionTime: null,
     turnTimeoutHandle: null,
+    turnTimerDelayHandle: null,
     lastRollResult: null,
     pendingAction: null,
     characterSheets: {},
@@ -1024,30 +1025,31 @@ function advanceTurn(guildId) {
   return nextPlayer;
 }
 
-const TURN_TIMEOUT_MS = 90000; // 90 seconds
+const TURN_TIMEOUT_MS = 90000;  // 90 seconds once the timer starts
+const TURN_TIMER_DELAY_MS = 25000; // 25-second grace period before timer starts
 
 function resetTurnTimeout(guildId) {
   const session = getSession(guildId);
 
-  // Clear any existing timeout
-  if (session.turnTimeoutHandle) {
-    clearTimeout(session.turnTimeoutHandle);
-  }
+  // Clear any existing timeouts
+  if (session.turnTimeoutHandle) clearTimeout(session.turnTimeoutHandle);
+  if (session.turnTimerDelayHandle) clearTimeout(session.turnTimerDelayHandle);
 
-  // Broadcast timer reset to dashboard
   const currentPlayer = getCurrentTurnPlayer(guildId);
-  io.emit("turn_timer", {
-    playerName: currentPlayer?.characterName || null,
-    duration: TURN_TIMEOUT_MS,
-    startedAt: Date.now(),
-  });
 
-  // Set new 90-second timeout
-  session.turnTimeoutHandle = setTimeout(() => {
-    console.log(`⏱️ Turn timeout for ${session.players[session.turnOrder[session.currentTurnIndex]]}`);
-    // Auto-advance to next player
-    advanceTurn(guildId);
-  }, TURN_TIMEOUT_MS);
+  // After the grace period, start the visible countdown and the auto-advance timeout
+  session.turnTimerDelayHandle = setTimeout(() => {
+    io.emit("turn_timer", {
+      playerName: currentPlayer?.characterName || null,
+      duration: TURN_TIMEOUT_MS,
+      startedAt: Date.now(),
+    });
+
+    session.turnTimeoutHandle = setTimeout(() => {
+      console.log(`⏱️ Turn timeout for ${session.players[session.turnOrder[session.currentTurnIndex]]}`);
+      advanceTurn(guildId);
+    }, TURN_TIMEOUT_MS);
+  }, TURN_TIMER_DELAY_MS);
 }
 
 async function proceedAfterNames(interaction, guildId, connection) {

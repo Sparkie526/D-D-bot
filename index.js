@@ -966,6 +966,14 @@ function findEnemyByName(guildId, name) {
   }) || null;
 }
 
+function extractTargetFromAction(action, guildId) {
+  const m = action.match(
+    /(?:attack|hit|strike|slash|shoot|stab|cast\s+\w+\s+(?:at|on)|target|swing\s+at)\s+(?:the\s+)?([a-z][a-z\s]*?)(?:\s+with|\s+using|\s*$)/i
+  );
+  if (!m) return null;
+  return findEnemyByName(guildId, m[1].trim());
+}
+
 function applyNpcDamage(guildId, name, amount) {
   const enemy = findEnemyByName(guildId, name);
   if (!enemy) { console.log(`[DMG] Enemy not found: "${name}"`); return; }
@@ -2428,6 +2436,15 @@ Use the world's title or filename in the \`world\` parameter.
 
     // ===== PROCESS ACTION (no roll needed) =====
     // Add turn context only during active combat
+    // Pre-set attack target from player's own text so damage rolls land on the right enemy
+    if (session.encounter.active && !session.pendingAttackRoll) {
+      const target = extractTargetFromAction(action, guildId);
+      if (target) {
+        session.pendingAttackRoll = { enemyName: target.name, userId: interaction.user.id };
+        console.log(`[TARGET] Pre-set attack target: ${target.name} from player text`);
+      }
+    }
+
     let actionMessage = action;
     if (session.encounter.active && session.turnOrder.length > 1) {
       actionMessage += `\n[TURN CONTEXT: It is now ${playerName}'s turn]`;

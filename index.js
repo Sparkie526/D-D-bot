@@ -670,6 +670,8 @@ Token rules:
 - Only emit [DMG] if an attack actually hits. Do not emit if the attack missed or the player succeeded on a saving throw to avoid all damage.
 - Damage types: fire, cold, lightning, acid, poison, necrotic, radiant, psychic, bludgeoning, piercing, slashing, thunder, force.
 - Valid conditions: blinded, charmed, deafened, frightened, grappled, incapacitated, invisible, paralyzed, petrified, poisoned, prone, restrained, stunned, unconscious.
+- CRITICAL COMBAT DURATION: NEVER narrate an enemy as dead, defeated, dying, or collapsing unless their HP shown in [ENEMIES] context is exactly 0. If HP is above 0 they are still fighting — continue the battle. A goblin at 2/7 HP is bloodied and staggering but alive. Always describe wounds proportionally to remaining HP. The system tracks the real HP; your narration must follow it, not override it.
+- When an enemy reaches 0 HP (shown in [ENEMIES] as HP 0/X), THEN and only then narrate their death, and emit [NPC_DEAD:EnemyName].
 - Place ALL tokens after the narration on the final line. Never mid-sentence.
 - Emit [ITEM] whenever a player physically obtains an item in ANY way: picking it up off the ground, putting it in a pocket or bag, looting a corpse or chest, receiving it as a gift or reward from an NPC, finding it during exploration, buying it, or being handed it by another character. This includes mundane objects (mugs, rope, torches), weapons, armor, potions, gold coins, keys, letters, quest items, and treasures. Use quantity 1 if unspecified. If a player takes 3 gold coins, emit [ITEM:Name|Gold Coins|3]. Never skip this token when an item changes hands into a player's possession.`;
 
@@ -699,7 +701,7 @@ function sanitizeLLMOutput(text) {
     .replace(/<system-reminder>[\s\S]*?<\/system-reminder>/gi, "")
     .replace(/<system[^>]*>[\s\S]*?<\/system[^>]*>/gi, "")
     .replace(/\[ADVANCE_TURN\]/gi, "")
-    .replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, "")
+    .replace(/\[(NPC_NEW|NPC_DEAD|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -1056,6 +1058,20 @@ function parseCombatTokens(text, guildId, actingUserId) {
   // Player gains item
   for (const m of text.matchAll(/\[ITEM:([^|]+)\|([^|]+)\|(\d+)\]/gi)) {
     givePlayerItem(m[1], m[2].trim(), parseInt(m[3]));
+  }
+  // Mark enemy dead (only if HP is actually 0 in the system)
+  for (const m of text.matchAll(/\[NPC_DEAD:([^\]]+)\]/gi)) {
+    const enemy = findEnemyByName(guildId, m[1].trim());
+    if (enemy && enemy.hp <= 0) {
+      enemy.dead = true;
+      const session = getSession(guildId);
+      const allDead = session.encounter.enemies.every(e => e.dead);
+      if (allDead) session.encounter.active = false;
+      syncEncounterToDash(guildId);
+      console.log(`[TOKENS] ${enemy.name} marked dead via NPC_DEAD token`);
+    } else if (enemy) {
+      console.log(`[TOKENS] Ignored NPC_DEAD for ${enemy.name} — HP is ${enemy.hp}, not 0`);
+    }
   }
   // Damage roll request — store pending target for the acting player
   for (const m of text.matchAll(/\[ROLL_DMG:([^\]]+)\]/gi)) {
@@ -2465,7 +2481,7 @@ Use the world's title or filename in the \`world\` parameter.
     let finalReply = reply;
     const shouldAdvance = finalReply.includes('[ADVANCE_TURN]');
     finalReply = finalReply.replace(/\[ADVANCE_TURN\]/gi, '').trim();
-    finalReply = finalReply.replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, '').trim();
+    finalReply = finalReply.replace(/\[(NPC_NEW|NPC_DEAD|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, '').trim();
 
     // Fallback: LLM asked for a roll in plain text without emitting a token
     if (session.encounter.active && !session.pendingAttackRoll && !session.pendingDamageRoll) {
@@ -2596,13 +2612,13 @@ Use the world's title or filename in the \`world\` parameter.
         session.pendingDamageRoll = { enemyName: enemy ? enemy.name : enemyName, userId: interaction.user.id };
         const dmPrompt = `${playerName} rolled ${total} to hit ${enemyName} (AC ${ac}) — that's a HIT! Narrate the successful strike dramatically and tell the player to roll for damage.`;
         const reply = await askDM(guildId, dmPrompt, playerName);
-        let finalReply = reply.replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, '').trim();
+        let finalReply = reply.replace(/\[(NPC_NEW|NPC_DEAD|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, '').trim();
         addStoryEntry("dm", "Dungeon Master", finalReply);
         await sendDMResponseWithVoice(interaction, connections[guildId], finalReply, guildId);
       } else {
         const dmPrompt = `${playerName} rolled ${total} to hit ${enemyName} (AC ${ac}) — that's a MISS. Narrate the failed attack.`;
         const reply = await askDM(guildId, dmPrompt, playerName);
-        let finalReply = reply.replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, '').trim();
+        let finalReply = reply.replace(/\[(NPC_NEW|NPC_DEAD|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, '').trim();
         addStoryEntry("dm", "Dungeon Master", finalReply);
         await sendDMResponseWithVoice(interaction, connections[guildId], finalReply, guildId);
         if (session.encounter.active && session.turnOrder.length > 1) {
@@ -2629,7 +2645,7 @@ Use the world's title or filename in the \`world\` parameter.
       const hpText = enemy ? ` (${enemy.hp}/${enemy.maxHp} HP remaining)` : '';
       const dmPrompt = `${playerName} rolled ${total} for damage against ${enemyName}. Apply ${total} damage to ${enemyName}${hpText}. Narrate the hit dramatically.`;
       const reply = await askDM(guildId, dmPrompt, playerName);
-      let finalReply = reply.replace(/\[(NPC_NEW|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, '').trim();
+      let finalReply = reply.replace(/\[(NPC_NEW|NPC_DEAD|DMG|HEAL|COND[+-]|NPC_DMG|NPC_HEAL|ITEM|ROLL_DMG|ROLL_HIT):[^\]]+\]/gi, '').trim();
       addStoryEntry("dm", "Dungeon Master", finalReply);
       await sendDMResponseWithVoice(interaction, connections[guildId], finalReply, guildId);
       if (session.encounter.active && session.turnOrder.length > 1) {
